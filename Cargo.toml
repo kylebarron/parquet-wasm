@@ -37,7 +37,9 @@ js-sys = "0.3.53"
 
 lazy_static = "1.4.0"
 
-parquet = { git="https://github.com/my-liminal-space/parquet/", tag="6.5.0", default_features=false, features = ["snap", "arrow", "base64"] }
+getrandom = { version = "0.2.3", features = ["js"] }
+
+parquet = { git="https://github.com/my-liminal-space/arrow-rs/", tag="6.5.0", default_features=false, features = ["snap", "arrow", "base64"] }
 
 
 [dependencies.web-sys]
