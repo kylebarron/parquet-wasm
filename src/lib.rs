@@ -9,8 +9,7 @@ use js_sys::Uint8Array;
 
 use parquet::arrow::{ArrowReader, ParquetFileArrowReader};
 use parquet::file::reader::FileReader;
-use parquet::file::serialized_reader::SerializedFileReader;
-use parquet::util::cursor::SliceableCursor;
+use parquet::file::serialized_reader::{SerializedFileReader, SliceableCursor};
 
 use std::sync::Arc;
 
