@@ -89,7 +89,7 @@ impl PhysicalRiskRecordBatch {}
 pub fn read_geo_physical_risk_parquet(
     physical_risk_type_name: &str,
     parquet_file_bytes: &[u8],
-) -> Result<(), JsValue> {
+) -> Result<Uint8Array, JsValue> {
     log!(
         "In rust, parquet bytes array has size: {}",
         parquet_file_bytes.len()
@@ -107,15 +107,18 @@ pub fn read_geo_physical_risk_parquet(
             log!("created parquet reader mk2");
             let pq_file_metadata = parquet_reader.metadata().file_metadata();
             let pq_row_count = pq_file_metadata.num_rows() as usize;
-            //log!("got parquet metadata: {:?}", pq_file_metadata);
+            log!("got parquet metadata: {:?}", pq_file_metadata);
 
             let mut arrow_reader = ParquetFileArrowReader::new(Arc::new(parquet_reader));
 
             log!("Got an arrow reader.");
 
-            let mut record_batch_reader_result = arrow_reader.get_record_reader(pq_row_count);
+            let record_batch_reader_result = arrow_reader.get_record_reader(pq_row_count);
 
             log!("Got an arrow batch reader.");
+
+            let mut record_batch_vector: Vec<RecordBatch> = Vec::new();
+            log!("Initialized record batch vector");
 
             match record_batch_reader_result {
                 Ok(record_batch_reader) => {
@@ -123,19 +126,11 @@ pub fn read_geo_physical_risk_parquet(
 
                     for maybe_record_batch in record_batch_reader {
                         let record_batch = maybe_record_batch.expect("why not read batch");
-                        //if record_batch.num_rows() > 0 {
-                        log!("Read {} records.", &record_batch.num_rows());
-                        let new_parquet_record_batch = PhysicalRiskRecordBatch {
-                            external_name: "testing".to_string(),
-                            record_set: record_batch,
-                        };
-
-                        let data: &mut RiotData = &mut *DATA.lock().unwrap();
-
-                        data.geo_physical_risk_type_name_2_record_batch.insert(
-                            physical_risk_type_name.to_string(),
-                            new_parquet_record_batch,
+                        log!(
+                            "Read {} records from record batch.",
+                            &record_batch.num_rows()
                         );
+                        record_batch_vector.push(record_batch);
                     }
                 }
                 Err(batch_err) => {
@@ -144,8 +139,80 @@ pub fn read_geo_physical_risk_parquet(
                 }
             }
 
+            log!(
+                "Number of elements in record_batch_vector: {}",
+                record_batch_vector.len()
+            );
+
+            let result_buf: Vec<u8> = Vec::new();
+            log!("Initialized output data vector");
+
+            log!("Record batch schema: {}", &record_batch_vector[0].schema());
+
+            let arrow_stream_writer_result =
+                StreamWriter::try_new(result_buf, &record_batch_vector[0].schema());
+
+            match arrow_stream_writer_result {
+                Ok(mut arrow_stream_writer) => {
+                    for record_batch in &record_batch_vector {
+                        let rec_batch_write_result = arrow_stream_writer.write(&record_batch);
+                        match rec_batch_write_result {
+                            Ok(_0) => {}
+                            Err(rec_batch_write_err) => {
+                                let err_str = format!(
+                                    "Failed to write rec batch into stream reader: {}",
+                                    rec_batch_write_err
+                                );
+                                log!("{}", err_str);
+                                return Err(JsValue::from_str(err_str.as_str()));
+                            }
+                        }
+                    }
+
+                    let finish_write_result = arrow_stream_writer.finish();
+                    match finish_write_result {
+                        Ok(_0) => {
+                            let completed_result = arrow_stream_writer.into_inner();
+                            match completed_result {
+                                Ok(stream_data) => {
+                                    log!(
+                                        "In rust, arrow bytes array has size: {}",
+                                        stream_data.len()
+                                    );
+
+                                    return Ok(unsafe {
+                                        Uint8Array::view(&Arc::new(stream_data).clone())
+                                    });
+                                }
+                                Err(completed_err) => {
+                                    let err_str =
+                                        format!("Completing write failed: {}", completed_err);
+                                    log!("{}", err_str);
+                                    return Err(JsValue::from_str(err_str.as_str()));
+                                }
+                            }
+                        }
+                        Err(finsh_batch_write_err) => {
+                            let err_str = format!(
+                                "Failed to finish record batch write: {}",
+                                finsh_batch_write_err
+                            );
+                            log!("{}", err_str);
+                            return Err(JsValue::from_str(err_str.as_str()));
+                        }
+                    }
+                }
+                Err(create_stream_writer_err) => {
+                    let err_str = format!(
+                        "Failed to create arrow stream reader: {}",
+                        create_stream_writer_err
+                    );
+                    log!("{}", err_str);
+                    return Err(JsValue::from_str(err_str.as_str()));
+                }
+            }
+
             log!("Finished reading records into arrow.");
-            Ok(())
         }
         Err(parquet_reader_err) => {
             log!("Failed to create parquet reader: {}", parquet_reader_err);
