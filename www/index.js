@@ -2,13 +2,17 @@ import * as arrow from "@apache-arrow/es2015-cjs/Arrow.dom";
 import * as wasm from "read-parquet-browser";
 
 window.arrow = arrow;
+// const filePath = "./water-stress_rcp26and85_2020-2040-10.parquet";
+
+const filePath = "./data-brotli.parquet";
+// const filePath = "./data-gzip.parquet";
+// const filePath = "./data-no-compression.parquet";
+// const filePath = "./data-snappy.parquet";
 
 async function fetchData() {
   let fileByteArray;
   try {
-    let fetchResponse = await fetch(
-      "./water-stress_rcp26and85_2020-2040-10.parquet"
-    );
+    let fetchResponse = await fetch(filePath);
     fileByteArray = new Uint8Array(await fetchResponse.arrayBuffer());
   } catch (fetchErr) {
     console.error("Fetch error: " + fetchErr);
@@ -35,7 +39,7 @@ async function main() {
   console.timeEnd("fetchData");
 
   try {
-    const record_batch_reader = await arrow.RecordBatchReader.from(
+    const record_batch_reader = arrow.RecordBatchReader.from(
       arrow_result_ipc_msg_bytes
     );
     for (const batch of record_batch_reader) {

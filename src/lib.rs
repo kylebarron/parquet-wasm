@@ -8,6 +8,7 @@ use arrow::record_batch::RecordBatch;
 use js_sys::Uint8Array;
 
 use parquet::arrow::{ArrowReader, ParquetFileArrowReader};
+use parquet::basic::Compression;
 use parquet::file::reader::FileReader;
 use parquet::file::serialized_reader::{SerializedFileReader, SliceableCursor};
 
@@ -50,17 +51,19 @@ pub fn greet() {
 */
 
 #[wasm_bindgen]
-pub fn read_parquet(
-    parquet_file_bytes: &[u8],
-) -> Result<Uint8Array, JsValue> {
+pub fn read_parquet(parquet_file_bytes: &[u8]) -> Result<Uint8Array, JsValue> {
     log!(
         "In rust, parquet bytes array has size: {}",
         parquet_file_bytes.len()
     );
 
+    let supported_compressions: Vec<Compression> =
+        vec![Compression::SNAPPY, Compression::UNCOMPRESSED];
+
     let parquet_bytes_as_vec = parquet_file_bytes.to_vec();
     let parquet_vec_arc = Arc::new(parquet_bytes_as_vec);
     let sliceable_cursor = SliceableCursor::new(parquet_vec_arc);
+
     log!("created sliceable cursor");
 
     let parquet_reader_result = SerializedFileReader::new(sliceable_cursor);
@@ -68,7 +71,23 @@ pub fn read_parquet(
     match parquet_reader_result {
         Ok(parquet_reader) => {
             log!("created parquet reader mk2");
-            let pq_file_metadata = parquet_reader.metadata().file_metadata();
+            let pq_metadata = parquet_reader.metadata();
+
+            // Check if any column chunk has an unsupported compression type
+            for row_group_metadata in pq_metadata.row_groups() {
+                for column_chunk_metadata in row_group_metadata.columns() {
+                    let column_chunk_compression = &column_chunk_metadata.compression();
+                    if !supported_compressions.contains(column_chunk_compression) {
+                        return Err(JsValue::from_str(
+                            format!("Unsupported compression {}", column_chunk_compression)
+                                .as_str(),
+                        ));
+                    }
+                }
+            }
+
+            let pq_file_metadata = pq_metadata.file_metadata();
+
             let pq_row_count = pq_file_metadata.num_rows() as usize;
             log!("got parquet metadata: {:?}", pq_file_metadata);
 
