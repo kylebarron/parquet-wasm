@@ -1,7 +1,7 @@
 [package]
-name = "read-parquet-browser"
+name = "parquet-wasm"
 version = "0.1.0"
-authors = ["Andy Redhead <andy@far2gone.com>"]
+authors = ["Kyle Barron <kylebarron2@gmail.com>"]
 edition = "2021"
 
 [lib]

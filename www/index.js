@@ -1,5 +1,5 @@
 import * as arrow from "@apache-arrow/es2015-cjs/Arrow.dom";
-import * as wasm from "read-parquet-browser";
+import * as wasm from "parquet-wasm";
 
 window.arrow = arrow;
 // const filePath = "./water-stress_rcp26and85_2020-2040-10.parquet";
