@@ -30,16 +30,10 @@ console_error_panic_hook = { version = "0.1.6", optional = true }
 
 # AR - project dependencies
 
-#arrow = { git="https://github.com/my-liminal-space/arrow-rs/", tag="6.5.0" , default-features = false, features = ["js"]}
-arrow = { git="https://github.com/my-liminal-space/arrow-rs/", tag="6.5.0" }
-
 js-sys = "0.3.53"
-
-lazy_static = "1.4.0"
-
 getrandom = { version = "0.2.3", features = ["js"] }
-
-parquet = { git="https://github.com/my-liminal-space/arrow-rs/", tag="6.5.0", default_features=false, features = ["snap", "arrow", "base64"] }
+arrow = { version = "9.1.0", default-features = false }
+parquet = { version = "9.1.0", default_features=false, features = ["snap", "arrow", "base64", "experimental"] }
 
 
 [dependencies.web-sys]
