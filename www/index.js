@@ -1,5 +1,3 @@
-//let arrow = require("./node_modules/apache-arrow/Arrow");
-// import * as arrow from "./node_modules/apache-arrow/Arrow.es2015.min";
 import * as arrow from "@apache-arrow/es2015-cjs/Arrow.dom";
 import * as wasm from "read-parquet-browser";
 
@@ -18,9 +16,9 @@ async function fetchData() {
 
   console.log("Parquet data bytelength: " + fileByteArray.byteLength);
 
-  const test = wasm.read_geo_physical_risk_parquet("water-stress", fileByteArray);
-  console.log('finished reading')
-  window.test = test;
+  const arrow_result_ipc_msg_bytes = wasm.read_parquet(fileByteArray);
+  console.log("finished reading");
+  window.data = arrow_result_ipc_msg_bytes;
 
   // var file = new Blob(test, { type: 'application/octet-stream' });
   // var a = document.createElement('a');
@@ -28,52 +26,25 @@ async function fetchData() {
   // a.download = 'data.arrow';
   // a.click();
 
+  return arrow_result_ipc_msg_bytes;
 }
-
-/*
-window.onload = async function() {
-    console.log("window onload called...");
-
-    //wasm.init();
-
-    //await fetchData();
-
-    document
-        .getElementById("button-trigger-read-parquet")
-        .addEventListener("click", async function() {
-                console.log("the button was clicked");
-                await fetchData();
-            });
-
-    console.log("button click event listener added");
-
-    console.log("end window onload.");
-}
-*/
 
 async function main() {
-  console.time('fetchData')
-  await fetchData();
-  console.timeEnd('fetchData')
-
-  console.time('filter')
-
-  console.log("filtering for specific rcp...");
-  let arrow_result_ipc_msg_bytes = wasm.find_for_rcp("water-stress", 2);
-  console.log(
-    "filtering for specific rcp complete, returned buffer byte count: " +
-      arrow_result_ipc_msg_bytes.byteLength
-  );
-  console.timeEnd('filter')
+  console.time("fetchData");
+  const arrow_result_ipc_msg_bytes = await fetchData();
+  console.timeEnd("fetchData");
 
   try {
-    let record_batch_reader = arrow.RecordBatchStreamReader.from(
+    const record_batch_reader = await arrow.RecordBatchReader.from(
       arrow_result_ipc_msg_bytes
     );
-    record_batch_reader.open();
-    console.log("schema is: " + record_batch_reader.schema);
-    let result_record_batch = record_batch_reader.next();
-    console.log("result rowcount: " + result_record_batch.value.length);
+    for (const batch of record_batch_reader) {
+      window.batch = batch;
+
+      console.log("schema is: " + batch.schema);
+
+      console.log("result rowcount: " + batch.data.length);
+    }
   } catch (record_batch_reader_err) {
     console.log("problem with record_batch_reader: " + record_batch_reader_err);
   }

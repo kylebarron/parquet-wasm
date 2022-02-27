@@ -2,12 +2,8 @@ extern crate web_sys;
 
 mod utils;
 
-use arrow::array::{ArrayRef, BooleanArray, Int32Array};
-use arrow::compute::filter;
-use arrow::datatypes::{DataType, Field, Schema};
-use arrow::error::Result as ArrowResult;
 use arrow::ipc::writer::StreamWriter;
-use arrow::record_batch::{RecordBatch, RecordBatchReader};
+use arrow::record_batch::RecordBatch;
 
 use js_sys::Uint8Array;
 
@@ -16,18 +12,10 @@ use parquet::file::reader::FileReader;
 use parquet::file::serialized_reader::SerializedFileReader;
 use parquet::util::cursor::SliceableCursor;
 
-use std::collections::HashMap;
-use std::convert::TryFrom;
-use std::error;
-//use std::rc::Arc;
 use std::sync::Arc;
-use std::sync::Mutex;
 
 use wasm_bindgen;
 use wasm_bindgen::prelude::*;
-
-#[macro_use]
-extern crate lazy_static;
 
 // A macro to provide `println!(..)`-style syntax for `console.log` logging.
 #[cfg(target_arch = "wasm32")]
@@ -41,22 +29,6 @@ macro_rules! log {
 macro_rules! log {
     ( $( $t:tt )* ) => {
         println!("LOG - {}", format!( $( $t )* ));
-    }
-}
-
-lazy_static! {
-    static ref DATA: Mutex<RiotData> = Mutex::new(new_riot_data());
-}
-
-struct RiotData {
-    geo_physical_risk_type_name_2_record_batch: HashMap<String, PhysicalRiskRecordBatch>,
-    rcp_id_2_record_batch: HashMap<i32, Arc<Vec<u8>>>,
-}
-
-fn new_riot_data() -> RiotData {
-    RiotData {
-        geo_physical_risk_type_name_2_record_batch: HashMap::new(),
-        rcp_id_2_record_batch: HashMap::new(),
     }
 }
 
@@ -78,16 +50,8 @@ pub fn greet() {
 }
 */
 
-pub struct PhysicalRiskRecordBatch {
-    external_name: String,
-    record_set: RecordBatch,
-}
-
-impl PhysicalRiskRecordBatch {}
-
 #[wasm_bindgen]
-pub fn read_geo_physical_risk_parquet(
-    physical_risk_type_name: &str,
+pub fn read_parquet(
     parquet_file_bytes: &[u8],
 ) -> Result<Uint8Array, JsValue> {
     log!(
@@ -224,153 +188,6 @@ pub fn read_geo_physical_risk_parquet(
 }
 
 #[wasm_bindgen]
-pub fn find_for_rcp(physical_risk_type_name: &str, rcp_id: i32) -> Result<Uint8Array, JsValue> {
-    let cached_result_ipc = internal_find_for_rcp(physical_risk_type_name, rcp_id)?;
-    return Ok(unsafe { Uint8Array::view(&cached_result_ipc) });
-}
-
-pub fn internal_find_for_rcp(
-    physical_risk_type_name: &str,
-    rcp_id: i32,
-) -> Result<Arc<Vec<u8>>, JsValue> {
-    let riot_data: &mut RiotData = &mut *DATA.lock().unwrap();
-
-    if riot_data.rcp_id_2_record_batch.contains_key(&rcp_id) {
-        log!("already got rcp: {} in cache", rcp_id);
-        let cached_result_ipc = riot_data.rcp_id_2_record_batch.get(&rcp_id).unwrap();
-        return Ok(cached_result_ipc.clone());
-    } else {
-        let physical_risk_geo_data_option = riot_data
-            .geo_physical_risk_type_name_2_record_batch
-            .get(physical_risk_type_name);
-        match physical_risk_geo_data_option {
-            Some(physical_risk_geo_data) => {
-                let physical_risk_data_for_rcp_result =
-                    filter_for_rcp(rcp_id, &physical_risk_geo_data.record_set);
-                match physical_risk_data_for_rcp_result {
-                    Ok(physical_risk_data_for_rcp) => {
-                        log!(
-                            "Filtered RCP vals count: {}",
-                            physical_risk_data_for_rcp.num_rows()
-                        );
-
-                        let result_buf: Vec<u8> = Vec::new();
-                        let mut arrow_stream_writer_result =
-                            StreamWriter::try_new(result_buf, &physical_risk_data_for_rcp.schema());
-                        match arrow_stream_writer_result {
-                            Ok(mut arrow_stream_writer) => {
-                                let rec_batch_write_result =
-                                    arrow_stream_writer.write(&physical_risk_data_for_rcp);
-                                match rec_batch_write_result {
-                                    Ok(_0) => {
-                                        let finish_write_result = arrow_stream_writer.finish();
-                                        match finish_write_result {
-                                            Ok(_0) => {
-                                                let completed_result =
-                                                    arrow_stream_writer.into_inner();
-                                                match completed_result {
-                                                    Ok(stream_data) => {
-                                                        log!("Got stream writer data :)");
-                                                        riot_data
-                                                            .rcp_id_2_record_batch
-                                                            .insert(rcp_id, Arc::new(stream_data));
-                                                        let cached_result_ipc = riot_data
-                                                            .rcp_id_2_record_batch
-                                                            .get(&rcp_id)
-                                                            .unwrap();
-
-                                                        return Ok(cached_result_ipc.clone());
-                                                    }
-                                                    Err(completed_err) => {
-                                                        let err_str = format!(
-                                                            "Completing write failed: {}",
-                                                            completed_err
-                                                        );
-                                                        log!("{}", err_str);
-                                                        return Err(JsValue::from_str(
-                                                            err_str.as_str(),
-                                                        ));
-                                                    }
-                                                }
-                                            }
-                                            Err(finsh_batch_write_err) => {
-                                                let err_str = format!(
-                                                    "Failed to finish record batch write: {}",
-                                                    finsh_batch_write_err
-                                                );
-                                                log!("{}", err_str);
-                                                return Err(JsValue::from_str(err_str.as_str()));
-                                            }
-                                        }
-                                    }
-                                    Err(rec_batch_write_err) => {
-                                        let err_str = format!(
-                                            "Failed to write rec batch into stream reader: {}",
-                                            rec_batch_write_err
-                                        );
-                                        log!("{}", err_str);
-                                        return Err(JsValue::from_str(err_str.as_str()));
-                                    }
-                                }
-                            }
-                            Err(create_stream_writer_err) => {
-                                let err_str = format!(
-                                    "Failed to create arrow stream reader: {}",
-                                    create_stream_writer_err
-                                );
-                                log!("{}", err_str);
-                                return Err(JsValue::from_str(err_str.as_str()));
-                            }
-                        }
-                    }
-                    Err(arrow_err) => {
-                        let err_str = format!(
-                            "Failed to find rcp vals: {} for physical risk: {} due to: {}",
-                            rcp_id, physical_risk_type_name, arrow_err
-                        );
-                        log!("{}", err_str);
-                        return Err(JsValue::from_str(err_str.as_str()));
-                    }
-                }
-            }
-            None => {
-                let err_str = format!(
-                    "Failed to find record batch for physical risk type: {}",
-                    physical_risk_type_name
-                );
-                log!("{}", err_str);
-                return Err(JsValue::from_str(err_str.as_str()));
-            }
-        }
-    }
-}
-
-/*pub fn actually_find_for_rcp(physical_risk_type_name: &str, rcp_id: i32) -> Result<(), JsValue> {
-
-}*/
-
-pub fn filter_for_rcp(rcp_id: i32, batch: &RecordBatch) -> ArrowResult<RecordBatch> {
-    let filter_array = batch
-        .column(0)
-        .as_any()
-        .downcast_ref::<Int32Array>()
-        .unwrap()
-        .iter()
-        .map(|value| Some(value == Some(rcp_id)))
-        .collect::<BooleanArray>();
-
-    let mut arrays: Vec<ArrayRef> = Vec::new();
-
-    for idx in 00..batch.num_columns() {
-        let array = batch.column(idx).as_ref();
-        let filtered = filter(array, &filter_array)?;
-        arrays.push(filtered);
-    }
-
-    RecordBatch::try_new(batch.schema(), arrays)
-}
-
-#[wasm_bindgen]
 pub fn init() {
     log!("init - start...");
 
@@ -384,8 +201,6 @@ mod tests {
 
     use super::*;
 
-    //#[cfg(not(target_arch = "wasm32"))]
-    use std::convert::TryInto;
     //#[cfg(not(target_arch = "wasm32"))]
     use std::fs::File;
     //#[cfg(not(target_arch = "wasm32"))]
@@ -403,11 +218,9 @@ mod tests {
         f.read(&mut buffer)
             .expect("buffer overflow reading data file");
 
-        read_geo_physical_risk_parquet("testing", &buffer);
+        read_parquet(&buffer);
 
         println!("read_parquet finished");
-
-        internal_find_for_rcp("testing", 2);
 
         assert!(true);
     }
