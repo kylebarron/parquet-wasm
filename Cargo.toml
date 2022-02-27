@@ -22,25 +22,20 @@ console_error_panic_hook = { version = "0.1.6", optional = true }
 # `wee_alloc` is a tiny allocator for wasm that is only ~1K in code size
 # compared to the default allocator's ~10K. It is slower than the default
 # allocator, however.
-#
-# Unfortunately, `wee_alloc` requires nightly Rust when targeting wasm for now.
-# (2021/07/31, AR - dont think thats true any more, looks ok on stable Rust 1.33+ )
-#wee_alloc = { version = "0.4.5", optional = true }
-
-
-# AR - project dependencies
+# if wee_alloc only saves 10KB, might not be worth the slower allocation speed?
+# wee_alloc = "0.4.5"
 
 js-sys = "0.3.53"
 getrandom = { version = "0.2.3", features = ["js"] }
 arrow = { version = "9.1.0", default-features = false }
-parquet = { version = "9.1.0", default_features=false, features = ["snap", "arrow", "base64", "experimental"] }
-
-
-[dependencies.web-sys]
-version = "0.3"
-features = [
-    "console",
-]
+parquet = { version = "9.1.0", default-features = false, features = [
+  "snap",
+  "arrow",
+  "base64",
+  # Include experimental to use parquet::util::cursor::SliceableCursor
+  "experimental",
+] }
+web-sys = { version = "0.3", features = ["console"] }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.13"
@@ -48,3 +43,4 @@ wasm-bindgen-test = "0.3.13"
 [profile.release]
 # Tell `rustc` to optimize for small code size.
 opt-level = "s"
+lto = true
