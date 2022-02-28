@@ -2,7 +2,8 @@ extern crate web_sys;
 
 mod utils;
 
-use arrow::ipc::writer::StreamWriter;
+use arrow::error::ArrowError;
+use arrow::ipc::writer::{FileWriter, IpcWriteOptions, StreamWriter};
 use arrow::record_batch::RecordBatch;
 
 use js_sys::Uint8Array;
@@ -114,75 +115,59 @@ pub fn read_parquet(parquet_file_bytes: &[u8]) -> Result<Uint8Array, JsValue> {
                 record_batch_vector.len()
             );
 
-            let result_buf: Vec<u8> = Vec::new();
-            log!("Initialized output data vector");
-
             log!("Record batch schema: {}", &record_batch_vector[0].schema());
 
-            let arrow_stream_writer_result =
-                StreamWriter::try_new(result_buf, &record_batch_vector[0].schema());
+            // Cleaner writing to file than I had previously
+            // From https://github.com/domoritz/arrow-wasm/blob/159bb145fd93bf7746db3c7d66986468cffd3fdd/src/table.rs#L57-L76
+            let mut file = Vec::new();
+            {
+                let mut writer =
+                    StreamWriter::try_new(&mut file, &record_batch_vector[0].schema()).unwrap();
 
-            match arrow_stream_writer_result {
-                Ok(mut arrow_stream_writer) => {
-                    for record_batch in &record_batch_vector {
-                        let rec_batch_write_result = arrow_stream_writer.write(&record_batch);
-                        match rec_batch_write_result {
-                            Ok(_0) => {}
-                            Err(rec_batch_write_err) => {
-                                let err_str = format!(
-                                    "Failed to write rec batch into stream reader: {}",
-                                    rec_batch_write_err
-                                );
-                                log!("{}", err_str);
-                                return Err(JsValue::from_str(err_str.as_str()));
-                            }
-                        }
-                    }
-
-                    let finish_write_result = arrow_stream_writer.finish();
-                    match finish_write_result {
-                        Ok(_0) => {
-                            let completed_result = arrow_stream_writer.into_inner();
-                            match completed_result {
-                                Ok(stream_data) => {
-                                    log!(
-                                        "In rust, arrow bytes array has size: {}",
-                                        stream_data.len()
-                                    );
-
-                                    return Ok(unsafe {
-                                        Uint8Array::view(&Arc::new(stream_data).clone())
-                                    });
-                                }
-                                Err(completed_err) => {
-                                    let err_str =
-                                        format!("Completing write failed: {}", completed_err);
-                                    log!("{}", err_str);
-                                    return Err(JsValue::from_str(err_str.as_str()));
-                                }
-                            }
-                        }
-                        Err(finsh_batch_write_err) => {
-                            let err_str = format!(
-                                "Failed to finish record batch write: {}",
-                                finsh_batch_write_err
-                            );
-                            log!("{}", err_str);
-                            return Err(JsValue::from_str(err_str.as_str()));
-                        }
-                    }
-                }
-                Err(create_stream_writer_err) => {
-                    let err_str = format!(
-                        "Failed to create arrow stream reader: {}",
-                        create_stream_writer_err
-                    );
-                    log!("{}", err_str);
+                let result: Result<Vec<()>, ArrowError> = record_batch_vector
+                    .iter()
+                    .map(|batch| writer.write(batch))
+                    .collect();
+                if let Err(error) = result {
+                    let err_str = format!("{}", error);
                     return Err(JsValue::from_str(err_str.as_str()));
                 }
-            }
 
-            log!("Finished reading records into arrow.");
+                if let Err(error) = writer.finish() {
+                    let err_str = format!("{}", error);
+                    return Err(JsValue::from_str(err_str.as_str()));
+                }
+            };
+
+            return Ok(unsafe { Uint8Array::view(&file) });
+
+            // log!("Try to read back file");
+            // let cursor = std::io::Cursor::new(&file);
+            // let reader = match arrow::ipc::reader::StreamReader::try_new(cursor) {
+            //     Ok(reader) => reader,
+            //     Err(error) => return Err(format!("{}", error).into()),
+            // };
+
+            // let schema = reader.schema();
+            // log!("New schema: {}", schema);
+
+            // for record_batch_result in reader {
+            //     let record_batch = record_batch_result.unwrap();
+            //     log!("New record batch rows: {}", &record_batch.num_rows());
+
+
+            // }
+
+            // let record_batches = reader.collect().unwrap();
+            // match reader.collect() {
+            //     Ok(record_batches) => Ok(Table {
+            //         schema,
+            //         record_batches,
+            //     }),
+            //     Err(error) => Err(format!("{}", error).into()),
+            // }
+
+            // return Ok(unsafe { Uint8Array::view(&file) });
         }
         Err(parquet_reader_err) => {
             log!("Failed to create parquet reader: {}", parquet_reader_err);
