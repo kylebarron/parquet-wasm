@@ -8,10 +8,13 @@ window.arrow = arrow;
 // const filePath = "./data/1-partition-gzip.parquet";
 // const filePath = "./data/1-partition-none.parquet";
 // const filePath = "./data/1-partition-snappy.parquet";
-const filePath = "./data/1-partition-none.parquet";
+// const filePath = "./data/1-partition-none.parquet";
 // const filePath = "./data/1-partition-zstd.parquet";
 // const filePath = './water-stress_rcp26and85_2020-2040-10.parquet'
 // const filePath = './test.parquet'
+
+// const filePath = './data/works.parquet';
+const filePath = './data/not_work.parquet';
 
 async function fetchData() {
   let fileByteArray;
@@ -28,7 +31,7 @@ async function fetchData() {
   console.log("finished reading");
   window.data = arrow_result_ipc_msg_bytes;
 
-  // var file = new Blob(data, { type: 'application/octet-stream' });
+  // var file = new Blob(arrow_result_ipc_msg_bytes, { type: 'application/octet-stream' });
   // var a = document.createElement('a');
   // a.href = URL.createObjectURL(file);
   // a.download = 'data.arrow';
@@ -42,10 +45,16 @@ async function main() {
   const arrow_result_ipc_msg_bytes = await fetchData();
   console.timeEnd("fetchData");
 
+  let record_batch_reader;
   try {
-    const record_batch_reader = arrow.RecordBatchReader.from(
+    record_batch_reader = arrow.RecordBatchReader.from(
       arrow_result_ipc_msg_bytes
     );
+  } catch (err) {
+    console.error("problem with arrow.RecordBatchReader: " + err)
+  }
+
+  try {
     for (const batch of record_batch_reader) {
       window.batch = batch;
 
@@ -54,7 +63,7 @@ async function main() {
       console.log("result rowcount: " + batch.data.length);
     }
   } catch (record_batch_reader_err) {
-    console.error("problem with record_batch_reader: " + record_batch_reader_err);
+    console.error("problem with reading batch: " + record_batch_reader_err);
   }
 
   console.log("end of js");
