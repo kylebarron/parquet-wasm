@@ -4,10 +4,14 @@ import * as wasm from "parquet-wasm";
 window.arrow = arrow;
 // const filePath = "./water-stress_rcp26and85_2020-2040-10.parquet";
 
-const filePath = "./data-brotli.parquet";
-// const filePath = "./data-gzip.parquet";
-// const filePath = "./data-no-compression.parquet";
-// const filePath = "./data-snappy.parquet";
+// const filePath = "./data/1-partition-brotli.parquet";
+// const filePath = "./data/1-partition-gzip.parquet";
+// const filePath = "./data/1-partition-none.parquet";
+// const filePath = "./data/1-partition-snappy.parquet";
+const filePath = "./data/1-partition-none.parquet";
+// const filePath = "./data/1-partition-zstd.parquet";
+// const filePath = './water-stress_rcp26and85_2020-2040-10.parquet'
+// const filePath = './test.parquet'
 
 async function fetchData() {
   let fileByteArray;
@@ -24,7 +28,7 @@ async function fetchData() {
   console.log("finished reading");
   window.data = arrow_result_ipc_msg_bytes;
 
-  // var file = new Blob(test, { type: 'application/octet-stream' });
+  // var file = new Blob(data, { type: 'application/octet-stream' });
   // var a = document.createElement('a');
   // a.href = URL.createObjectURL(file);
   // a.download = 'data.arrow';
@@ -50,7 +54,7 @@ async function main() {
       console.log("result rowcount: " + batch.data.length);
     }
   } catch (record_batch_reader_err) {
-    console.log("problem with record_batch_reader: " + record_batch_reader_err);
+    console.error("problem with record_batch_reader: " + record_batch_reader_err);
   }
 
   console.log("end of js");

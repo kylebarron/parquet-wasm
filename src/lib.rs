@@ -38,18 +38,6 @@ macro_rules! log {
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;*/
 
-/*
-#[wasm_bindgen]
-extern {
-    fn alert(s: &str);
-}
-
-#[wasm_bindgen]
-pub fn greet() {
-    alert("Hello, read-parquet-browser!");
-}
-*/
-
 #[wasm_bindgen]
 pub fn read_parquet(parquet_file_bytes: &[u8]) -> Result<Uint8Array, JsValue> {
     log!(
@@ -212,39 +200,4 @@ pub fn init() {
     utils::set_panic_hook();
 
     log!("init - complete.");
-}
-
-#[cfg(test)]
-mod tests {
-
-    use super::*;
-
-    //#[cfg(not(target_arch = "wasm32"))]
-    use std::fs::File;
-    //#[cfg(not(target_arch = "wasm32"))]
-    use std::io::Read;
-
-    //#[cfg(not(target_arch = "wasm32"))]
-    #[test]
-    fn test_read_parquet() {
-        let filename = "./data/water-stress_rcp26and85_2020-2040-10.parquet";
-
-        let mut f = File::open(&filename).expect("no data file found");
-        let metadata = std::fs::metadata(&filename).expect("unable to read data file fs metadata");
-        let file_size = metadata.len();
-        let mut buffer = vec![0; metadata.len() as usize];
-        f.read(&mut buffer)
-            .expect("buffer overflow reading data file");
-
-        read_parquet(&buffer);
-
-        println!("read_parquet finished");
-
-        assert!(true);
-    }
-
-    /*fn my_vec_to_array<T, const N: usize>(v: Vec<T>) -> [T; N] {
-        v.try_into()
-            .unwrap_or_else(|v: Vec<T>| panic!("Expected a Vec of length {} but it was {}", N, v.len()))
-    }*/
 }
