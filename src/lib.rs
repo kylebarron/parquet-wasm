@@ -46,8 +46,11 @@ pub fn read_parquet(parquet_file_bytes: &[u8]) -> Result<Uint8Array, JsValue> {
         parquet_file_bytes.len()
     );
 
-    let supported_compressions: Vec<Compression> =
-        vec![Compression::SNAPPY, Compression::UNCOMPRESSED];
+    let supported_compressions: Vec<Compression> = vec![
+        Compression::SNAPPY,
+        Compression::UNCOMPRESSED,
+        Compression::GZIP,
+    ];
 
     let parquet_bytes_as_vec = parquet_file_bytes.to_vec();
     let parquet_vec_arc = Arc::new(parquet_bytes_as_vec);

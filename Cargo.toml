@@ -32,6 +32,7 @@ parquet = { version = "9.1.0", default-features = false, features = [
   "snap",
   "arrow",
   "base64",
+  "flate2",
 ] }
 web-sys = { version = "0.3", features = ["console"] }
 
