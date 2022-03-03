@@ -3,7 +3,7 @@ extern crate web_sys;
 mod utils;
 
 use arrow::error::ArrowError;
-use arrow::ipc::writer::{FileWriter, IpcWriteOptions, StreamWriter};
+use arrow::ipc::writer::FileWriter;
 use arrow::record_batch::RecordBatch;
 
 use js_sys::Uint8Array;
@@ -53,13 +53,10 @@ pub fn read_parquet(parquet_file_bytes: &[u8]) -> Result<Uint8Array, JsValue> {
     let parquet_vec_arc = Arc::new(parquet_bytes_as_vec);
     let sliceable_cursor = SliceableCursor::new(parquet_vec_arc);
 
-    log!("created sliceable cursor");
-
     let parquet_reader_result = SerializedFileReader::new(sliceable_cursor);
 
     match parquet_reader_result {
         Ok(parquet_reader) => {
-            log!("created parquet reader mk2");
             let pq_metadata = parquet_reader.metadata();
 
             // Check if any column chunk has an unsupported compression type
@@ -85,6 +82,7 @@ pub fn read_parquet(parquet_file_bytes: &[u8]) -> Result<Uint8Array, JsValue> {
             log!("Got an arrow reader.");
 
             let record_batch_reader_result = arrow_reader.get_record_reader(pq_row_count);
+            let arrow_schema = arrow_reader.get_schema().unwrap();
 
             log!("Got an arrow batch reader.");
 
@@ -121,9 +119,7 @@ pub fn read_parquet(parquet_file_bytes: &[u8]) -> Result<Uint8Array, JsValue> {
             // From https://github.com/domoritz/arrow-wasm/blob/159bb145fd93bf7746db3c7d66986468cffd3fdd/src/table.rs#L57-L76
             let mut file = Vec::new();
             {
-                let mut writer =
-                    StreamWriter::try_new(&mut file, &record_batch_vector[0].schema()).unwrap();
-
+                let mut writer = FileWriter::try_new(&mut file, &arrow_schema).unwrap();
                 let result: Result<Vec<()>, ArrowError> = record_batch_vector
                     .iter()
                     .map(|batch| writer.write(batch))
@@ -138,36 +134,7 @@ pub fn read_parquet(parquet_file_bytes: &[u8]) -> Result<Uint8Array, JsValue> {
                     return Err(JsValue::from_str(err_str.as_str()));
                 }
             };
-
             return Ok(unsafe { Uint8Array::view(&file) });
-
-            // log!("Try to read back file");
-            // let cursor = std::io::Cursor::new(&file);
-            // let reader = match arrow::ipc::reader::StreamReader::try_new(cursor) {
-            //     Ok(reader) => reader,
-            //     Err(error) => return Err(format!("{}", error).into()),
-            // };
-
-            // let schema = reader.schema();
-            // log!("New schema: {}", schema);
-
-            // for record_batch_result in reader {
-            //     let record_batch = record_batch_result.unwrap();
-            //     log!("New record batch rows: {}", &record_batch.num_rows());
-
-
-            // }
-
-            // let record_batches = reader.collect().unwrap();
-            // match reader.collect() {
-            //     Ok(record_batches) => Ok(Table {
-            //         schema,
-            //         record_batches,
-            //     }),
-            //     Err(error) => Err(format!("{}", error).into()),
-            // }
-
-            // return Ok(unsafe { Uint8Array::view(&file) });
         }
         Err(parquet_reader_err) => {
             log!("Failed to create parquet reader: {}", parquet_reader_err);

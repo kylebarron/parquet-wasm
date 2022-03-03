@@ -31,11 +31,11 @@ async function fetchData() {
   console.log("finished reading");
   window.data = arrow_result_ipc_msg_bytes;
 
-  // var file = new Blob(arrow_result_ipc_msg_bytes, { type: 'application/octet-stream' });
-  // var a = document.createElement('a');
-  // a.href = URL.createObjectURL(file);
-  // a.download = 'data.arrow';
-  // a.click();
+  // var blob=new Blob([arrow_result_ipc_msg_bytes], {type: "application/pdf"});// change resultByte to bytes
+  // var link=document.createElement('a');
+  // link.href=window.URL.createObjectURL(blob);
+  // link.download=filePath + '.arrow';
+  // link.click();
 
   return arrow_result_ipc_msg_bytes;
 }
@@ -45,26 +45,8 @@ async function main() {
   const arrow_result_ipc_msg_bytes = await fetchData();
   console.timeEnd("fetchData");
 
-  let record_batch_reader;
-  try {
-    record_batch_reader = arrow.RecordBatchReader.from(
-      arrow_result_ipc_msg_bytes
-    );
-  } catch (err) {
-    console.error("problem with arrow.RecordBatchReader: " + err)
-  }
-
-  try {
-    for (const batch of record_batch_reader) {
-      window.batch = batch;
-
-      console.log("schema is: " + batch.schema);
-
-      console.log("result rowcount: " + batch.data.length);
-    }
-  } catch (record_batch_reader_err) {
-    console.error("problem with reading batch: " + record_batch_reader_err);
-  }
+  const table = arrow.tableFromIPC(arrow_result_ipc_msg_bytes);
+  console.log('table', table);
 
   console.log("end of js");
 }
