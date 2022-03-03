@@ -50,6 +50,7 @@ pub fn read_parquet(parquet_file_bytes: &[u8]) -> Result<Uint8Array, JsValue> {
         Compression::SNAPPY,
         Compression::UNCOMPRESSED,
         Compression::GZIP,
+        Compression::LZ4,
     ];
 
     let parquet_bytes_as_vec = parquet_file_bytes.to_vec();
