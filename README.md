@@ -22,6 +22,8 @@ Takes as input a `Uint8Array` containing bytes in [Arrow IPC **File** format](ht
 
 [^1]: I'm not great at Rust and the IPC File format seemed easier to parse in Rust than the IPC Stream format :slightly_smiling_face:.
 
+For the initial release, `writeParquet` is hard-coded to use Snappy compression and Plain encoding. In the future these should be made configurable.
+
 ### `setPanicHook`
 
 `setPanicHook(): void`
@@ -71,14 +73,11 @@ The Parquet specification permits several compression codecs. This library curre
 
 LZ4 compression appears not to work yet. When trying to parse a file with LZ4 compression I get an error: `Uncaught (in promise) External format error: underlying IO error: WrongMagicNumber`.
 
-## Notes
-
--
-- Writing
-
 ## Future work
 
-- [ ]
+- [ ] Tests :smile:
+- [ ] User-specified column-specific encodings when writing
+- [ ] User-specified compression codec when writing
 
 ## Credits
 

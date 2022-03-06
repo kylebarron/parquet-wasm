@@ -9,6 +9,6 @@ module.exports = {
   },
   mode: "development",
   plugins: [
-    new CopyWebpackPlugin(['index.html', 'water-stress_rcp26and85_2020-2040-10.parquet'])
+    new CopyWebpackPlugin(['index.html'])
   ],
 };
