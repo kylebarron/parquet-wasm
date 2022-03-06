@@ -86,10 +86,13 @@ pub fn read_parquet(parquet_file: &[u8]) -> Result<Uint8Array, JsValue> {
 pub fn write_parquet(arrow_stream: &[u8]) -> Result<Uint8Array, JsValue> {
     // Create IPC reader
     let mut input_file = Cursor::new(arrow_stream);
-    let stream_metadata = read_file_metadata(&mut input_file).unwrap().clone();
-    let stream_reader = IPCFileReader::new(input_file, stream_metadata.clone(), None);
 
-    log!("Created IPC Reader");
+    let stream_metadata = match read_file_metadata(&mut input_file) {
+        Ok(stream_metadata) => stream_metadata,
+        Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
+    };
+
+    let arrow_ipc_reader = IPCFileReader::new(input_file, stream_metadata.clone(), None);
 
     // Create Parquet writer
     let mut output_file: Vec<u8> = vec![];
@@ -98,24 +101,27 @@ pub fn write_parquet(arrow_stream: &[u8]) -> Result<Uint8Array, JsValue> {
         compression: Compression::Snappy,
         version: Version::V2,
     };
-    let mut parquet_writer =
-        FileWriter::try_new(&mut output_file, stream_metadata.schema.clone(), options).unwrap();
-    log!("Created Parquet writer");
 
-    parquet_writer.start().unwrap();
-    log!("Started Parquet writer");
+    let schema = stream_metadata.schema.clone();
+    let mut parquet_writer = match FileWriter::try_new(&mut output_file, schema, options) {
+        Ok(parquet_writer) => parquet_writer,
+        Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
+    };
 
-    for maybe_chunk in stream_reader {
+    match parquet_writer.start() {
+        Ok(_) => {}
+        Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
+    };
+
+    for maybe_chunk in arrow_ipc_reader {
         let chunk = match maybe_chunk {
             Ok(chunk) => chunk,
             Err(error) => {
                 return Err(JsValue::from_str(format!("{}", error).as_str()));
             }
         };
-        log!("Read chunk");
 
         let iter = vec![Ok(chunk)];
-        log!("Created chunk iter");
 
         // Need to create an encoding for each column
         let mut encodings: Vec<Encoding> = vec![];
@@ -129,21 +135,23 @@ pub fn write_parquet(arrow_stream: &[u8]) -> Result<Uint8Array, JsValue> {
             options,
             encodings,
         );
-        log!("Created row group iter");
 
         for group in row_groups {
-            log!("Read group");
-            for test in group {
-                log!("Column?");
-                let test2 = test.unwrap();
-                let (group, len) = test2;
-                parquet_writer.write(group, len).unwrap();
-                log!("Write column");
+            for maybe_column in group {
+                let column = match maybe_column {
+                    Ok(column) => column,
+                    Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
+                };
+
+                let (group, len) = column;
+                match parquet_writer.write(group, len) {
+                    Ok(_) => {}
+                    Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
+                };
             }
         }
     }
     let _size = parquet_writer.end(None);
-    log!("End parquet");
 
     return Ok(unsafe { Uint8Array::view(&output_file) });
 }
