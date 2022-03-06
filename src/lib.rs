@@ -7,7 +7,8 @@ use js_sys::Uint8Array;
 use arrow2::array::Array;
 use arrow2::chunk::Chunk;
 use arrow2::io::ipc::write;
-use arrow2::io::parquet::read::RecordReader;
+// NOTE: It's FileReader on latest main but RecordReader in 0.9.2
+use arrow2::io::parquet::read::FileReader;
 use std::io::Cursor;
 use std::sync::Arc;
 
@@ -43,7 +44,7 @@ pub fn read_parquet2(parquet_file_bytes: &[u8]) -> Result<Uint8Array, JsValue> {
     );
 
     let mut file = Cursor::new(parquet_file_bytes);
-    let mut file_reader = RecordReader::try_new(&mut file, None, None, None, None).unwrap();
+    let mut file_reader = FileReader::try_new(&mut file, None, None, None, None).unwrap();
 
     let mut chunk_vector: Vec<Chunk<Arc<dyn Array>>> = Vec::new();
     for maybe_chunk in &mut file_reader {
