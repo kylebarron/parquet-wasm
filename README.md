@@ -6,6 +6,16 @@ This is designed to be used alongside a JavaScript [Arrow](https://arrow.apache.
 
 Including all compression codecs, the generated brotli-encoded WASM bundle is 881KB.
 
+## Install
+
+`parquet-wasm` is published to NPM. Install with
+
+```
+yarn add parquet-wasm
+# or
+npm install parquet-wasm
+```
+
 ## Usage
 
 ### `readParquet`
