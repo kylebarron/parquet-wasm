@@ -3,6 +3,7 @@ import * as wasm from "parquet-wasm";
 
 window.wasm = wasm;
 window.arrow = arrow;
+wasm.init();
 // const filePath = "./water-stress_rcp26and85_2020-2040-10.parquet";
 
 // const filePath = "./data/2-partition-brotli.parquet";
@@ -12,7 +13,9 @@ window.arrow = arrow;
 // const filePath = "./data/1-partition-none.parquet";
 // const filePath = "./data/2-partition-brotli.parquet";
 // const filePath = "./data/2-partition-zstd.parquet";
-const filePath = "./data/2-partition-brotli.parquet";
+const filePath = "./data/part.parquet";
+// const filePath = "./data/nz-small.parquet";
+// const filePath = "./data/2021-01-01_performance_fixed_tiles.parquet";
 // const filePath = './water-stress_rcp26and85_2020-2040-10.parquet'
 // const filePath = './test.parquet'
 
@@ -34,13 +37,17 @@ async function fetchData() {
   console.log("finished reading");
   window.data = arrow_result_ipc_msg_bytes;
 
-  // var blob=new Blob([arrow_result_ipc_msg_bytes], {type: "application/pdf"});// change resultByte to bytes
-  // var link=document.createElement('a');
-  // link.href=window.URL.createObjectURL(blob);
-  // link.download=filePath + '.arrow';
-  // link.click();
-
   return arrow_result_ipc_msg_bytes;
+}
+
+function saveFile(bytes, fname) {
+  const blob = new Blob([bytes], {
+    type: "application/pdf",
+  });
+  const link = document.createElement("a");
+  link.href = window.URL.createObjectURL(blob);
+  link.download = fname;
+  link.click();
 }
 
 async function main() {
@@ -50,7 +57,13 @@ async function main() {
 
   const table = arrow.tableFromIPC(arrow_result_ipc_msg_bytes);
   window.table = table;
-  console.log('table', table);
+  console.log("table", table);
+
+  const fileBytes = arrow.tableToIPC(table, "file");
+  const test = wasm.write_parquet(fileBytes);
+  window.written_parquet = test;
+
+  // saveFile(test, "written_parquet.parquet");
 
   console.log("end of js");
 }
