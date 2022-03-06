@@ -4,6 +4,8 @@ WebAssembly bindings to read and write the Parquet format to Apache Arrow.
 
 This is designed to be used alongside a JavaScript [Arrow](https://arrow.apache.org/) implementation, such as the canonical [JS Arrow library](https://arrow.apache.org/docs/js/) or potentially [`arrow-wasm`](https://github.com/domoritz/arrow-wasm).
 
+Including all compression codecs, the generated brotli-encoded WASM bundle is 881KB.
+
 ## Usage
 
 ### `readParquet`
