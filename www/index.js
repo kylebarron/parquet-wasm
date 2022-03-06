@@ -1,19 +1,20 @@
 import * as arrow from "@apache-arrow/es2015-cjs/Arrow.dom";
-import * as wasm from "parquet-wasm";
+import {readParquet, writeParquet} from "parquet-wasm";
 
-window.wasm = wasm;
+// window.wasm = wasm;
 window.arrow = arrow;
-wasm.init();
+
 // const filePath = "./water-stress_rcp26and85_2020-2040-10.parquet";
 
 // const filePath = "./data/2-partition-brotli.parquet";
 // const filePath = "./data/1-partition-gzip.parquet";
-// const filePath = "./data/1-partition-none.parquet";
+const filePath = "./data/1-partition-none.parquet";
 // const filePath = "./data/1-partition-snappy.parquet";
 // const filePath = "./data/1-partition-none.parquet";
 // const filePath = "./data/2-partition-brotli.parquet";
 // const filePath = "./data/2-partition-zstd.parquet";
-const filePath = "./data/part.parquet";
+// const filePath = "./data/1-partition-lz4.parquet";
+// const filePath = "./data/part.parquet";
 // const filePath = "./data/nz-small.parquet";
 // const filePath = "./data/2021-01-01_performance_fixed_tiles.parquet";
 // const filePath = './water-stress_rcp26and85_2020-2040-10.parquet'
@@ -33,7 +34,7 @@ async function fetchData() {
 
   console.log("Parquet data bytelength: " + fileByteArray.byteLength);
 
-  const arrow_result_ipc_msg_bytes = wasm.read_parquet(fileByteArray);
+  const arrow_result_ipc_msg_bytes = readParquet(fileByteArray);
   console.log("finished reading");
   window.data = arrow_result_ipc_msg_bytes;
 
@@ -60,7 +61,7 @@ async function main() {
   console.log("table", table);
 
   const fileBytes = arrow.tableToIPC(table, "file");
-  const test = wasm.write_parquet(fileBytes);
+  const test = writeParquet(fileBytes);
   window.written_parquet = test;
 
   // saveFile(test, "written_parquet.parquet");

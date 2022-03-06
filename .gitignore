@@ -6,3 +6,6 @@ bin/
 pkg/
 wasm-pack.log
 .idea/
+www/data
+www/data/
+data/
