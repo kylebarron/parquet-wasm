@@ -79,6 +79,12 @@ LZ4 compression appears not to work yet. When trying to parse a file with LZ4 co
 - [ ] User-specified column-specific encodings when writing
 - [ ] User-specified compression codec when writing
 
+## Development
+
+- Install [wasm-pack](https://rustwasm.github.io/wasm-pack/)
+- Compile: `wasm-pack build`, or change targets, e.g. `wasm-pack build --target nodejs`
+- Publish `wasm-pack publish`.
+
 ## Credits
 
 A starting point of my work came from @my-liminal-space's [`read-parquet-browser`](https://github.com/my-liminal-space/read-parquet-browser) (which is also dual licensed MIT and Apache 2).
