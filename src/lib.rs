@@ -8,7 +8,6 @@ use arrow2::array::Array;
 use arrow2::chunk::Chunk;
 use arrow2::io::ipc::write;
 use arrow2::io::parquet::read::RecordReader;
-// use arrow2::io::parquet::read::{RowGroupReader};
 use std::io::Cursor;
 use std::sync::Arc;
 
@@ -38,8 +37,6 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;*/
 
 #[wasm_bindgen]
 pub fn read_parquet2(parquet_file_bytes: &[u8]) -> Result<Uint8Array, JsValue> {
-    // Result<Uint8Array, JsValue>
-
     log!(
         "In rust, parquet bytes array has size: {}",
         parquet_file_bytes.len()
