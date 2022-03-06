@@ -1,20 +1,23 @@
 import * as arrow from "@apache-arrow/es2015-cjs/Arrow.dom";
 import * as wasm from "parquet-wasm";
 
+window.wasm = wasm;
 window.arrow = arrow;
 // const filePath = "./water-stress_rcp26and85_2020-2040-10.parquet";
 
-// const filePath = "./data/1-partition-brotli.parquet";
+// const filePath = "./data/2-partition-brotli.parquet";
 // const filePath = "./data/1-partition-gzip.parquet";
 // const filePath = "./data/1-partition-none.parquet";
 // const filePath = "./data/1-partition-snappy.parquet";
 // const filePath = "./data/1-partition-none.parquet";
-// const filePath = "./data/1-partition-zstd.parquet";
+// const filePath = "./data/2-partition-brotli.parquet";
+// const filePath = "./data/2-partition-zstd.parquet";
+const filePath = "./data/2-partition-brotli.parquet";
 // const filePath = './water-stress_rcp26and85_2020-2040-10.parquet'
 // const filePath = './test.parquet'
 
 // const filePath = './data/works.parquet';
-const filePath = './data/not_work.parquet';
+// const filePath = './data/not_work.parquet';
 
 async function fetchData() {
   let fileByteArray;
@@ -46,6 +49,7 @@ async function main() {
   console.timeEnd("fetchData");
 
   const table = arrow.tableFromIPC(arrow_result_ipc_msg_bytes);
+  window.table = table;
   console.log('table', table);
 
   console.log("end of js");

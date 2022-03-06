@@ -27,14 +27,8 @@ console_error_panic_hook = { version = "0.1.6", optional = true }
 
 js-sys = "0.3.53"
 getrandom = { version = "0.2.3", features = ["js"] }
-arrow = { version = "9.1.0", default-features = false }
-parquet = { version = "9.1.0", default-features = false, features = [
-  "snap",
-  "arrow",
-  "base64",
-  "flate2",
-] }
 web-sys = { version = "0.3", features = ["console"] }
+arrow2 = { git = "https://github.com/kylebarron/arrow2", branch = "kyle/io_parquet_wasm_compression", features = ["io_ipc", "io_parquet", "io_parquet_wasm_compression"] }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.13"
