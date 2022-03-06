@@ -3,7 +3,7 @@ extern crate web_sys;
 mod utils;
 
 use arrow::error::ArrowError;
-use arrow::ipc::writer::FileWriter;
+use arrow::ipc::writer::StreamWriter;
 use arrow::record_batch::RecordBatch;
 
 use js_sys::Uint8Array;
@@ -51,6 +51,7 @@ pub fn read_parquet(parquet_file_bytes: &[u8]) -> Result<Uint8Array, JsValue> {
         Compression::UNCOMPRESSED,
         Compression::GZIP,
         Compression::ZSTD,
+        Compression::BROTLI,
     ];
 
     let parquet_bytes_as_vec = parquet_file_bytes.to_vec();
@@ -67,6 +68,9 @@ pub fn read_parquet(parquet_file_bytes: &[u8]) -> Result<Uint8Array, JsValue> {
             for row_group_metadata in pq_metadata.row_groups() {
                 for column_chunk_metadata in row_group_metadata.columns() {
                     let column_chunk_compression = &column_chunk_metadata.compression();
+
+                    log!("Compression: {}", column_chunk_compression);
+
                     if !supported_compressions.contains(column_chunk_compression) {
                         return Err(JsValue::from_str(
                             format!("Unsupported compression {}", column_chunk_compression)
@@ -121,9 +125,15 @@ pub fn read_parquet(parquet_file_bytes: &[u8]) -> Result<Uint8Array, JsValue> {
 
             // Cleaner writing to file than I had previously
             // From https://github.com/domoritz/arrow-wasm/blob/159bb145fd93bf7746db3c7d66986468cffd3fdd/src/table.rs#L57-L76
-            let mut file = Vec::new();
+            let file: Vec<u8> = Vec::new();
             {
-                let mut writer = FileWriter::try_new(&mut file, &arrow_schema).unwrap();
+                // let buf: Vec<u8> = Vec::new();
+                // let mut writer = StreamWriter::try_new(buf, &batch.schema())?;
+                // writer.write(batch)?;
+                // writer.finish()?;
+                // let buf = writer.into_inner()?;
+
+                let mut writer = StreamWriter::try_new(file, &arrow_schema).unwrap();
                 let result: Result<Vec<()>, ArrowError> = record_batch_vector
                     .iter()
                     .map(|batch| writer.write(batch))
@@ -137,8 +147,11 @@ pub fn read_parquet(parquet_file_bytes: &[u8]) -> Result<Uint8Array, JsValue> {
                     let err_str = format!("{}", error);
                     return Err(JsValue::from_str(err_str.as_str()));
                 }
-            };
-            return Ok(unsafe { Uint8Array::view(&file) });
+
+                let buf = writer.into_inner().unwrap();
+                return Ok(unsafe { Uint8Array::view(&buf) });
+        };
+            // return Ok(unsafe { Uint8Array::view(&file) });
         }
         Err(parquet_reader_err) => {
             log!("Failed to create parquet reader: {}", parquet_reader_err);
