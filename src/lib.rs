@@ -4,13 +4,10 @@ mod utils;
 
 use js_sys::Uint8Array;
 
-use arrow2::array::Array;
-use arrow2::chunk::Chunk;
 use arrow2::io::ipc::write;
 // NOTE: It's FileReader on latest main but RecordReader in 0.9.2
 use arrow2::io::parquet::read::FileReader;
 use std::io::Cursor;
-use std::sync::Arc;
 
 use wasm_bindgen;
 use wasm_bindgen::prelude::*;
@@ -37,37 +34,32 @@ macro_rules! log {
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;*/
 
 #[wasm_bindgen]
-pub fn read_parquet2(parquet_file_bytes: &[u8]) -> Result<Uint8Array, JsValue> {
+pub fn read_parquet(parquet_file_bytes: &[u8]) -> Result<Uint8Array, JsValue> {
     log!(
         "In rust, parquet bytes array has size: {}",
         parquet_file_bytes.len()
     );
 
-    let mut file = Cursor::new(parquet_file_bytes);
-    let mut file_reader = FileReader::try_new(&mut file, None, None, None, None).unwrap();
+    // Create Parquet reader
+    let input_file = Cursor::new(parquet_file_bytes);
+    let file_reader = FileReader::try_new(input_file, None, None, None, None).unwrap();
+    let schema = file_reader.schema().clone();
 
-    let mut chunk_vector: Vec<Chunk<Arc<dyn Array>>> = Vec::new();
-    for maybe_chunk in &mut file_reader {
+    // Create IPC writer
+    let mut output_file = Vec::new();
+    let options = write::WriteOptions { compression: None };
+    let mut writer = write::FileWriter::try_new(&mut output_file, &schema, None, options).unwrap();
+
+    // Iterate over reader chunks, writing each into the IPC writer
+    for maybe_chunk in file_reader {
         match maybe_chunk {
             Ok(chunk) => {
-                chunk_vector.push(chunk);
+                writer.write(&chunk, None).unwrap();
             }
             Err(chunk_err) => {
                 log!("Failed to read chunk: {}", chunk_err);
             }
         }
-    }
-
-    // No idea why but this needs to be after the above block?
-    // file_reader.schema() is an immutable borrow
-    let schema = &mut file_reader.schema();
-
-    let mut output_file = Vec::new();
-    let options = write::WriteOptions { compression: None };
-    let mut writer = write::FileWriter::try_new(&mut output_file, &schema, None, options).unwrap();
-
-    for chunk in chunk_vector {
-        writer.write(&chunk, None).unwrap();
     }
 
     writer.finish().unwrap();

@@ -28,7 +28,7 @@ async function fetchData() {
 
   console.log("Parquet data bytelength: " + fileByteArray.byteLength);
 
-  const arrow_result_ipc_msg_bytes = wasm.read_parquet2(fileByteArray);
+  const arrow_result_ipc_msg_bytes = wasm.read_parquet(fileByteArray);
   console.log("finished reading");
   window.data = arrow_result_ipc_msg_bytes;
 
