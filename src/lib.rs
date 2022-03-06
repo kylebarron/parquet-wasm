@@ -38,7 +38,7 @@ macro_rules! log {
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;*/
 
-#[wasm_bindgen]
+#[wasm_bindgen(js_name = readParquet)]
 pub fn read_parquet(parquet_file: &[u8]) -> Result<Uint8Array, JsValue> {
     // Create Parquet reader
     let input_file = Cursor::new(parquet_file);
@@ -80,10 +80,10 @@ pub fn read_parquet(parquet_file: &[u8]) -> Result<Uint8Array, JsValue> {
     return Ok(unsafe { Uint8Array::view(&output_file) });
 }
 
-#[wasm_bindgen]
-pub fn write_parquet(arrow_stream: &[u8]) -> Result<Uint8Array, JsValue> {
+#[wasm_bindgen(js_name = writeParquet)]
+pub fn write_parquet(arrow_file: &[u8]) -> Result<Uint8Array, JsValue> {
     // Create IPC reader
-    let mut input_file = Cursor::new(arrow_stream);
+    let mut input_file = Cursor::new(arrow_file);
 
     let stream_metadata = match read_file_metadata(&mut input_file) {
         Ok(stream_metadata) => stream_metadata,
@@ -154,7 +154,7 @@ pub fn write_parquet(arrow_stream: &[u8]) -> Result<Uint8Array, JsValue> {
     return Ok(unsafe { Uint8Array::view(&output_file) });
 }
 
-#[wasm_bindgen]
-pub fn init() {
+#[wasm_bindgen(js_name = setPanicHook)]
+pub fn set_panic_hook() {
     utils::set_panic_hook();
 }

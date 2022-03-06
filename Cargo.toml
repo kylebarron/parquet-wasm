@@ -3,6 +3,12 @@ name = "parquet-wasm"
 version = "0.1.0"
 authors = ["Kyle Barron <kylebarron2@gmail.com>"]
 edition = "2021"
+description = "WebAssembly Parquet reader and writer."
+readme = "README.md"
+repository = "https://github.com/kylebarron/parquet-wasm"
+license = "MIT OR Apache-2.0"
+keywords = ["parquet", "webassembly", "arrow"]
+categories = ["wasm"]
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -28,7 +34,11 @@ console_error_panic_hook = { version = "0.1.6", optional = true }
 js-sys = "0.3.53"
 getrandom = { version = "0.2.3", features = ["js"] }
 web-sys = { version = "0.3", features = ["console"] }
-arrow2 = { git = "https://github.com/kylebarron/arrow2", branch = "kyle/io_parquet_wasm_compression", features = ["io_ipc", "io_parquet", "io_parquet_wasm_compression"] }
+arrow2 = { git = "https://github.com/kylebarron/arrow2", branch = "kyle/io_parquet_wasm_compression", features = [
+  "io_ipc",
+  "io_parquet",
+  "io_parquet_compression",
+] }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.13"
