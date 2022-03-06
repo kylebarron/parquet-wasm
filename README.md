@@ -33,7 +33,7 @@ Sets [`console_error_panic_hook`](https://github.com/rustwasm/console_error_pani
 ## Example
 
 ```js
-import { tableFromArrays, tableFromIPC, tableToIPC } from 'apache-arrow';
+import {tableFromArrays, tableFromIPC, tableToIPC} from 'apache-arrow';
 import {readParquet, writeParquet} from "parquet-wasm";
 
 // Create Arrow Table in JS
