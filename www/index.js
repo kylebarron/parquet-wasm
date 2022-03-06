@@ -63,7 +63,7 @@ async function main() {
   const test = wasm.write_parquet(fileBytes);
   window.written_parquet = test;
 
-  saveFile(test, "written_parquet.parquet");
+  // saveFile(test, "written_parquet.parquet");
 
   console.log("end of js");
 }

@@ -4,14 +4,12 @@ mod utils;
 
 use js_sys::Uint8Array;
 
-use arrow2::io::ipc::read::{
-    read_file_metadata, FileReader as IPCFileReader,
-};
-use arrow2::io::ipc::write::{StreamWriter, WriteOptions as IPCWriteOptions};
+use arrow2::io::ipc::read::{read_file_metadata, FileReader as IPCFileReader};
+use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};
 // NOTE: It's FileReader on latest main but RecordReader in 0.9.2
-use arrow2::io::parquet::read::FileReader;
+use arrow2::io::parquet::read::FileReader as ParquetFileReader;
 use arrow2::io::parquet::write::{
-    Compression, Encoding, FileWriter, RowGroupIterator, Version,
+    Compression, Encoding, FileWriter as ParquetFileWriter, RowGroupIterator, Version,
     WriteOptions as ParquetWriteOptions,
 };
 use std::io::Cursor;
@@ -44,7 +42,7 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;*/
 pub fn read_parquet(parquet_file: &[u8]) -> Result<Uint8Array, JsValue> {
     // Create Parquet reader
     let input_file = Cursor::new(parquet_file);
-    let file_reader = match FileReader::try_new(input_file, None, None, None, None) {
+    let file_reader = match ParquetFileReader::try_new(input_file, None, None, None, None) {
         Ok(file_reader) => file_reader,
         Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
     };
@@ -53,7 +51,7 @@ pub fn read_parquet(parquet_file: &[u8]) -> Result<Uint8Array, JsValue> {
     // Create IPC writer
     let mut output_file = Vec::new();
     let options = IPCWriteOptions { compression: None };
-    let mut writer = StreamWriter::new(&mut output_file, options);
+    let mut writer = IPCStreamWriter::new(&mut output_file, options);
     match writer.start(&schema, None) {
         Ok(_) => {}
         Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
@@ -103,7 +101,7 @@ pub fn write_parquet(arrow_stream: &[u8]) -> Result<Uint8Array, JsValue> {
     };
 
     let schema = stream_metadata.schema.clone();
-    let mut parquet_writer = match FileWriter::try_new(&mut output_file, schema, options) {
+    let mut parquet_writer = match ParquetFileWriter::try_new(&mut output_file, schema, options) {
         Ok(parquet_writer) => parquet_writer,
         Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
     };
