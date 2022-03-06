@@ -3,14 +3,16 @@ import * as wasm from "parquet-wasm";
 
 window.wasm = wasm;
 window.arrow = arrow;
-const filePath = "./water-stress_rcp26and85_2020-2040-10.parquet";
+// const filePath = "./water-stress_rcp26and85_2020-2040-10.parquet";
 
-// const filePath = "./data/1-partition-brotli.parquet";
+// const filePath = "./data/2-partition-brotli.parquet";
 // const filePath = "./data/1-partition-gzip.parquet";
 // const filePath = "./data/1-partition-none.parquet";
 // const filePath = "./data/1-partition-snappy.parquet";
 // const filePath = "./data/1-partition-none.parquet";
-// const filePath = "./data/1-partition-zstd.parquet";
+// const filePath = "./data/2-partition-brotli.parquet";
+// const filePath = "./data/2-partition-zstd.parquet";
+const filePath = "./data/2-partition-brotli.parquet";
 // const filePath = './water-stress_rcp26and85_2020-2040-10.parquet'
 // const filePath = './test.parquet'
 

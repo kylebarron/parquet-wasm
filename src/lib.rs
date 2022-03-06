@@ -57,7 +57,10 @@ pub fn read_parquet(parquet_file_bytes: &[u8]) -> Result<Uint8Array, JsValue> {
                 writer.write(&chunk, None).unwrap();
             }
             Err(chunk_err) => {
-                log!("Failed to read chunk: {}", chunk_err);
+                return Err(JsValue::from_str(
+                    format!("Failed to read chunk: {}", chunk_err)
+                        .as_str(),
+                ));
             }
         }
     }
