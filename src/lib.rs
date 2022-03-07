@@ -14,7 +14,6 @@ use arrow2::io::parquet::write::{
 };
 use std::io::Cursor;
 
-use wasm_bindgen;
 use wasm_bindgen::prelude::*;
 
 // A macro to provide `println!(..)`-style syntax for `console.log` logging.
@@ -77,7 +76,7 @@ pub fn read_parquet(parquet_file: &[u8]) -> Result<Uint8Array, JsValue> {
         Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
     };
 
-    return Ok(unsafe { Uint8Array::view(&output_file) });
+    Ok(unsafe { Uint8Array::view(&output_file) })
 }
 
 #[wasm_bindgen(js_name = writeParquet)]
@@ -134,6 +133,8 @@ pub fn write_parquet(arrow_file: &[u8]) -> Result<Uint8Array, JsValue> {
             encodings,
         );
 
+        // TODO: from clippy:
+        // for loop over `row_groups`, which is a `Result`. This is more readably written as an `if let` statement
         for group in row_groups {
             for maybe_column in group {
                 let column = match maybe_column {
@@ -151,7 +152,7 @@ pub fn write_parquet(arrow_file: &[u8]) -> Result<Uint8Array, JsValue> {
     }
     let _size = parquet_writer.end(None);
 
-    return Ok(unsafe { Uint8Array::view(&output_file) });
+    Ok(unsafe { Uint8Array::view(&output_file) })
 }
 
 #[wasm_bindgen(js_name = setPanicHook)]
