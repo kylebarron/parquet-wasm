@@ -16,7 +16,7 @@ yarn add parquet-wasm
 npm install parquet-wasm
 ```
 
-## Usage
+## API
 
 ### `readParquet`
 
@@ -41,6 +41,14 @@ For the initial release, `writeParquet` is hard-coded to use Snappy compression 
 `setPanicHook(): void`
 
 Sets [`console_error_panic_hook`](https://github.com/rustwasm/console_error_panic_hook) in Rust, which provides better debugging of panics by having more informative `console.error` messages. Initialize this first if you're getting errors such as `RuntimeError: Unreachable executed`.
+
+## Using
+
+`parquet-wasm` is distributed with three bindings for use in different environments.
+
+- Default, to be used in bundlers such as Webpack: `import * as parquet from 'parquet-wasm'`
+- Node, to be used with `require` in NodeJS: `const parquet = require('parquet-wasm/node');`
+- ESM, to be used directly from the Web as an ES Module: `import * as parquet from 'parquet-wasm/web';`
 
 ## Example
 
@@ -97,6 +105,25 @@ LZ4 compression appears not to work yet. When trying to parse a file with LZ4 co
 - Compile: `wasm-pack build`, or change targets, e.g. `wasm-pack build --target nodejs`
 - Publish `wasm-pack publish`.
 
-## Credits
+### Publishing
+
+`wasm-pack` supports [three different targets](https://rustwasm.github.io/docs/wasm-pack/commands/build.html#target):
+
+- `bundler` (used with bundlers like Webpack)
+- `nodejs` (used with Node, supports `require`)
+- `web` (used as an ES module directly from the web)
+
+There are good reasons to distribute as any of these... so why not distribute as all three? `wasm-pack` doesn't support this directly but the build script in `scripts/build.sh` calls `wasm-pack` three times and merges the outputs. This means that bundler users can use the default, Node users can use `parquet-wasm/node` and ES Modules users can use `parquet-wasm/web` in their imports.
+
+To publish:
+
+```
+bash ./scripts/build.sh
+wasm-pack publish
+```
+
+## Acknowledgements
 
 A starting point of my work came from @my-liminal-space's [`read-parquet-browser`](https://github.com/my-liminal-space/read-parquet-browser) (which is also dual licensed MIT and Apache 2).
+
+@domoritz's [`arrow-wasm`](https://github.com/domoritz/arrow-wasm) was a very helpful reference for bootstrapping Rust-WASM bindings.

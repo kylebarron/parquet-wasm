@@ -4,6 +4,8 @@ node_modules
 Cargo.lock
 bin/
 pkg/
+pkg_node/
+pkg_web/
 wasm-pack.log
 .idea/
 www/data
