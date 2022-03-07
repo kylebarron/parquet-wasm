@@ -16,6 +16,9 @@ crate-type = ["cdylib", "rlib"]
 [features]
 default = ["console_error_panic_hook"]
 
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = true
+
 [dependencies]
 wasm-bindgen = "0.2"
 
@@ -23,13 +26,14 @@ wasm-bindgen = "0.2"
 # logging them with `console.error`. This is great for development, but requires
 # all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
 # code size when deploying.
-console_error_panic_hook = { version = "0.1.6", optional = true }
+console_error_panic_hook = { version = "*", optional = true }
 
 # `wee_alloc` is a tiny allocator for wasm that is only ~1K in code size
 # compared to the default allocator's ~10K. It is slower than the default
 # allocator, however.
-# if wee_alloc only saves 10KB, might not be worth the slower allocation speed?
-# wee_alloc = "0.4.5"
+#
+# Unfortunately, `wee_alloc` requires nightly Rust when targeting wasm for now.
+wee_alloc = { version = "*", optional = true }
 
 js-sys = "0.3.53"
 getrandom = { version = "0.2.3", features = ["js"] }

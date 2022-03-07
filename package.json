@@ -1,0 +1,41 @@
+{
+  "name": "parquet-wasm",
+  "collaborators": [
+    "Kyle Barron <kylebarron2@gmail.com>"
+  ],
+  "description": "Apache Parquet in WebAssembly",
+  "version": "0.1.0",
+  "license": "MIT OR Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kylebarron/parquet-wasm"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "dist/parquet.js",
+  "scripts": {
+    "prebuild": "yarn clean",
+    "build": "rollup --config",
+    "watch": "rollup --config --watch",
+    "build:web": "wasm-pack build --target web",
+    "build:node": "wasm-pack build --target nodejs",
+    "clean": "rimraf dist pkg",
+    "prepublishOnly": "yarn build",
+    "preserve": "yarn build:web",
+    "serve": "light-server -s ."
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^8.2.3",
+    "@wasm-tool/rollup-plugin-rust": "^1.0.7",
+    "light-server": "^2.9.1",
+    "rimraf": "^3.0.2",
+    "rollup": "^2.53.3",
+    "tslib": "^2.3.1",
+    "typescript": "^4.3.5"
+  },
+  "resolutions": {
+    "wasm-pack": "<0.10.0"
+  },
+  "sideEffects": false
+}
