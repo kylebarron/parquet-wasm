@@ -1,15 +1,20 @@
 extern crate web_sys;
 
+mod enums;
 mod utils;
+mod write_options;
 
 use js_sys::Uint8Array;
 
 use arrow2::io::ipc::read::{read_file_metadata, FileReader as IPCFileReader};
 use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};
 // NOTE: It's FileReader on latest main but RecordReader in 0.9.2
+use crate::enums::{Compression as CompressionOption, Encoding as EncodingOption};
+use crate::write_options::WriteOptions;
 use arrow2::io::parquet::read::FileReader as ParquetFileReader;
 use arrow2::io::parquet::write::{
-    Compression, Encoding, FileWriter as ParquetFileWriter, RowGroupIterator, Version,
+    Compression as ParquetCompression, Encoding as ParquetEncoding,
+    FileWriter as ParquetFileWriter, RowGroupIterator, Version,
     WriteOptions as ParquetWriteOptions,
 };
 use std::io::Cursor;
@@ -80,7 +85,7 @@ pub fn read_parquet(parquet_file: &[u8]) -> Result<Uint8Array, JsValue> {
 }
 
 #[wasm_bindgen(js_name = writeParquet)]
-pub fn write_parquet(arrow_file: &[u8]) -> Result<Uint8Array, JsValue> {
+pub fn write_parquet(arrow_file: &[u8], options: WriteOptions) -> Result<Uint8Array, JsValue> {
     // Create IPC reader
     let mut input_file = Cursor::new(arrow_file);
 
@@ -93,17 +98,41 @@ pub fn write_parquet(arrow_file: &[u8]) -> Result<Uint8Array, JsValue> {
 
     // Create Parquet writer
     let mut output_file: Vec<u8> = vec![];
-    let options = ParquetWriteOptions {
+
+    let parquet_compression = match options.compression {
+        CompressionOption::UNCOMPRESSED => ParquetCompression::Uncompressed,
+        CompressionOption::SNAPPY => ParquetCompression::Snappy,
+        CompressionOption::GZIP => ParquetCompression::Gzip,
+        CompressionOption::BROTLI => ParquetCompression::Brotli,
+        CompressionOption::LZ4 => ParquetCompression::Lz4,
+        CompressionOption::ZSTD => ParquetCompression::Zstd,
+    };
+
+    let parquet_writer_options = ParquetWriteOptions {
         write_statistics: true,
-        compression: Compression::Snappy,
+        compression: parquet_compression,
         version: Version::V2,
     };
 
     let schema = stream_metadata.schema.clone();
-    let mut parquet_writer = match ParquetFileWriter::try_new(&mut output_file, schema, options) {
-        Ok(parquet_writer) => parquet_writer,
-        Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
+
+    let parquet_encoding = match options.encoding {
+        EncodingOption::PLAIN => ParquetEncoding::Plain,
+        EncodingOption::PLAIN_DICTIONARY => ParquetEncoding::PlainDictionary,
+        EncodingOption::RLE => ParquetEncoding::Rle,
+        EncodingOption::BIT_PACKED => ParquetEncoding::BitPacked,
+        EncodingOption::DELTA_BINARY_PACKED => ParquetEncoding::DeltaBinaryPacked,
+        EncodingOption::DELTA_LENGTH_BYTE_ARRAY => ParquetEncoding::DeltaLengthByteArray,
+        EncodingOption::DELTA_BYTE_ARRAY => ParquetEncoding::DeltaByteArray,
+        EncodingOption::RLE_DICTIONARY => ParquetEncoding::RleDictionary,
+        EncodingOption::BYTE_STREAM_SPLIT => ParquetEncoding::ByteStreamSplit,
     };
+
+    let mut parquet_writer =
+        match ParquetFileWriter::try_new(&mut output_file, schema, parquet_writer_options) {
+            Ok(parquet_writer) => parquet_writer,
+            Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
+        };
 
     match parquet_writer.start() {
         Ok(_) => {}
@@ -121,15 +150,15 @@ pub fn write_parquet(arrow_file: &[u8]) -> Result<Uint8Array, JsValue> {
         let iter = vec![Ok(chunk)];
 
         // Need to create an encoding for each column
-        let mut encodings: Vec<Encoding> = vec![];
+        let mut encodings: Vec<ParquetEncoding> = vec![];
         for _ in &stream_metadata.schema.fields {
-            encodings.push(Encoding::Plain);
+            encodings.push(parquet_encoding);
         }
 
         let row_groups = RowGroupIterator::try_new(
             iter.into_iter(),
             &stream_metadata.schema,
-            options,
+            parquet_writer_options,
             encodings,
         );
 
