@@ -1,8 +1,10 @@
 import * as arrow from "@apache-arrow/es2015-cjs/Arrow.dom";
-import {readParquet, writeParquet} from "parquet-wasm";
+import {readParquet1, readParquet2, writeParquet, setPanicHook} from "parquet-wasm";
+import * as wasm from "parquet-wasm";
 
-// window.wasm = wasm;
+window.wasm = wasm;
 window.arrow = arrow;
+setPanicHook();
 
 // const filePath = "./water-stress_rcp26and85_2020-2040-10.parquet";
 
@@ -34,11 +36,21 @@ async function fetchData() {
 
   console.log("Parquet data bytelength: " + fileByteArray.byteLength);
 
-  const arrow_result_ipc_msg_bytes = readParquet(fileByteArray);
-  console.log("finished reading");
-  window.data = arrow_result_ipc_msg_bytes;
+  console.time('parquet1')
+  const arrow_ipc_bytes = readParquet1(fileByteArray);
+  console.timeEnd('parquet1')
 
-  return arrow_result_ipc_msg_bytes;
+  console.time('parquet2')
+  const arrow_ipc_bytes2 = readParquet2(fileByteArray);
+  console.timeEnd('parquet2')
+
+  console.log(arrow_ipc_bytes);
+  console.log("finished reading");
+  window.data = arrow_ipc_bytes;
+
+  // saveFile(arrow_ipc_bytes, "out-file-ipc-js.arrow");
+
+  return arrow_ipc_bytes;
 }
 
 function saveFile(bytes, fname) {
@@ -60,9 +72,9 @@ async function main() {
   window.table = table;
   console.log("table", table);
 
-  const fileBytes = arrow.tableToIPC(table, "file");
-  const test = writeParquet(fileBytes);
-  window.written_parquet = test;
+  // const fileBytes = arrow.tableToIPC(table, "file");
+  // const test = writeParquet(fileBytes);
+  // window.written_parquet = test;
 
   // saveFile(test, "written_parquet.parquet");
 
