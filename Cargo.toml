@@ -14,7 +14,8 @@ categories = ["wasm"]
 crate-type = ["cdylib", "rlib"]
 
 [features]
-default = ["console_error_panic_hook"]
+default = ["console_error_panic_hook", "arrow1"]
+arrow1 = ["arrow", "parquet"]
 
 [dependencies]
 wasm-bindgen = "0.2"
@@ -38,7 +39,15 @@ arrow2 = { git = "https://github.com/kylebarron/arrow2", branch = "kyle/io_parqu
   "io_ipc",
   "io_parquet",
   "io_parquet_compression",
-] }
+], optional = true }
+arrow = { version = "10.0", default-features = false, optional = true }
+parquet = { version = "10.0", default-features = false, features = [
+  "snap",
+  "arrow",
+  "base64",
+  "flate2",
+  "brotli",
+], optional = true }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.13"
