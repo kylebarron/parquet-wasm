@@ -34,14 +34,12 @@ pub fn read_parquet(parquet_file: &[u8]) -> Result<Vec<u8>, ParquetError> {
     let sliceable_cursor = SliceableCursor::new(Arc::new(parquet_file.to_vec()));
     let parquet_reader = SerializedFileReader::new(sliceable_cursor)?;
     let parquet_metadata = parquet_reader.metadata();
-    let parquet_file_metadata = parquet_metadata.file_metadata();
-    let row_count = parquet_file_metadata.num_rows() as usize;
+    let first_row_group_metadata = parquet_metadata.row_group(0);
+    let row_group_count = first_row_group_metadata.num_rows() as usize;
 
     // Create Arrow reader from Parquet reader
     let mut arrow_reader = ParquetFileArrowReader::new(Arc::new(parquet_reader));
-    // TODO: use Parquet column group row count for arrow record reader row count (i.e. don't read
-    // entire file into one IPC batch)
-    let record_batch_reader = arrow_reader.get_record_reader(row_count)?;
+    let record_batch_reader = arrow_reader.get_record_reader(row_group_count)?;
     let arrow_schema = arrow_reader.get_schema()?;
 
     // Create IPC Writer
