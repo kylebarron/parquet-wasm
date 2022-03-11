@@ -1,4 +1,17 @@
-use parquet::errors::ParquetError;
+#[cfg(feature = "arrow1")]
+use {
+    arrow::ipc::reader::StreamReader,
+    arrow::ipc::writer::StreamWriter,
+    parquet::arrow::arrow_writer::ArrowWriter,
+    parquet::arrow::{ArrowReader, ParquetFileArrowReader},
+    parquet::errors::ParquetError,
+    parquet::file::properties::WriterProperties,
+    parquet::file::reader::{FileReader, SerializedFileReader},
+    parquet::file::serialized_reader::SliceableCursor,
+    parquet::file::writer::InMemoryWriteableCursor,
+    std::io::Cursor,
+    std::sync::Arc,
+};
 
 // A macro to provide `println!(..)`-style syntax for `console.log` logging.
 #[cfg(target_arch = "wasm32")]
@@ -17,12 +30,6 @@ macro_rules! log {
 
 #[cfg(feature = "arrow1")]
 pub fn read_parquet(parquet_file: &[u8]) -> Result<Vec<u8>, ParquetError> {
-    use arrow::ipc::writer::StreamWriter;
-    use parquet::arrow::{ArrowReader, ParquetFileArrowReader};
-    use parquet::file::reader::{FileReader, SerializedFileReader};
-    use parquet::file::serialized_reader::SliceableCursor;
-    use std::sync::Arc;
-
     // Create Parquet reader
     let sliceable_cursor = SliceableCursor::new(Arc::new(parquet_file.to_vec()));
     let parquet_reader = SerializedFileReader::new(sliceable_cursor)?;
@@ -54,12 +61,6 @@ pub fn read_parquet(parquet_file: &[u8]) -> Result<Vec<u8>, ParquetError> {
 
 #[cfg(feature = "arrow1")]
 pub fn write_parquet(arrow_file: &[u8]) -> Result<Vec<u8>, ParquetError> {
-    use arrow::ipc::reader::StreamReader;
-    use parquet::arrow::arrow_writer::ArrowWriter;
-    use parquet::file::properties::WriterProperties;
-    use parquet::file::writer::InMemoryWriteableCursor;
-    use std::io::Cursor;
-
     // Create IPC reader
     let input_file = Cursor::new(arrow_file);
     let arrow_ipc_reader = StreamReader::try_new(input_file)?;
