@@ -1,3 +1,6 @@
+// To be deleted in the future
+// Was originally used for debugging https://github.com/kylebarron/parquet-wasm/issues/19
+
 use arrow::error::ArrowError;
 use arrow::ipc::writer::{FileWriter, StreamWriter};
 use arrow::record_batch::RecordBatch;
@@ -43,4 +46,3 @@ fn main() {
     result.unwrap();
     writer.finish().unwrap();
 }
-
