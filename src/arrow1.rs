@@ -34,6 +34,7 @@ pub fn read_parquet(parquet_file: &[u8]) -> Result<Vec<u8>, ParquetError> {
     let sliceable_cursor = SliceableCursor::new(Arc::new(parquet_file.to_vec()));
     let parquet_reader = SerializedFileReader::new(sliceable_cursor)?;
     let parquet_metadata = parquet_reader.metadata();
+    // TODO check that there exists at least one row group
     let first_row_group_metadata = parquet_metadata.row_group(0);
     let row_group_count = first_row_group_metadata.num_rows() as usize;
 
