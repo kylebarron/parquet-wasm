@@ -84,3 +84,55 @@ pub fn read_parquet(parquet_file: &[u8]) -> Result<Uint8Array, JsValue> {
     return_vec.copy_from(&writer_buffer);
     return Ok(return_vec);
 }
+
+#[cfg(feature = "arrow1")]
+#[wasm_bindgen(js_name = writeParquet1)]
+pub fn write_parquet(arrow_file: &[u8]) -> Result<Uint8Array, JsValue> {
+    use arrow::ipc::reader::StreamReader;
+    use parquet::arrow::arrow_writer::ArrowWriter;
+    use parquet::file::properties::WriterProperties;
+    use parquet::file::writer::InMemoryWriteableCursor;
+    use std::io::Cursor;
+
+    // Create IPC reader
+    let input_file = Cursor::new(arrow_file);
+    let arrow_ipc_reader = match StreamReader::try_new(input_file) {
+        Ok(arrow_ipc_reader) => arrow_ipc_reader,
+        Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
+    };
+    let arrow_schema = arrow_ipc_reader.schema();
+
+    // Create Parquet writer
+    let cursor = InMemoryWriteableCursor::default();
+    let props = WriterProperties::builder().build();
+    let mut writer = match ArrowWriter::try_new(cursor.clone(), arrow_schema, Some(props)) {
+        Ok(writer) => writer,
+        Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
+    };
+
+    // Iterate over IPC chunks, writing each batch to Parquet
+    for maybe_record_batch in arrow_ipc_reader {
+        let record_batch = match maybe_record_batch {
+            Ok(record_batch) => record_batch,
+            Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
+        };
+
+        match writer.write(&record_batch) {
+            Ok(_) => {}
+            Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
+        };
+    }
+    match writer.close() {
+        Ok(_) => {}
+        Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
+    };
+
+    let return_buffer = cursor.data();
+    let return_len = match (return_buffer.len() as usize).try_into() {
+        Ok(return_len) => return_len,
+        Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
+    };
+    let return_vec = Uint8Array::new_with_length(return_len);
+    return_vec.copy_from(&return_buffer);
+    return Ok(return_vec);
+}
