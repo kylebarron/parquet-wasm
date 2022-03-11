@@ -14,7 +14,7 @@ categories = ["wasm"]
 crate-type = ["cdylib", "rlib"]
 
 [features]
-default = ["console_error_panic_hook", "arrow", "parquet"]
+default = ["console_error_panic_hook", "arrow1"]
 arrow1 = ["arrow", "parquet"]
 
 [dependencies]

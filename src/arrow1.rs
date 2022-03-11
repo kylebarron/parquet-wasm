@@ -21,9 +21,7 @@ macro_rules! log {
 pub fn read_parquet(parquet_file: &[u8]) -> Result<Uint8Array, JsValue> {
     use js_sys::Uint8Array;
 
-    use arrow::error::ArrowError;
-    use arrow::ipc::writer::FileWriter;
-    use arrow::record_batch::RecordBatch;
+    use arrow::ipc::writer::StreamWriter;
     use parquet::arrow::{ArrowReader, ParquetFileArrowReader};
     use parquet::file::reader::{FileReader, SerializedFileReader};
     use parquet::file::serialized_reader::SliceableCursor;
@@ -42,29 +40,47 @@ pub fn read_parquet(parquet_file: &[u8]) -> Result<Uint8Array, JsValue> {
     // Create Arrow reader from Parquet reader
     let mut arrow_reader = ParquetFileArrowReader::new(Arc::new(parquet_reader));
     // TODO: use Parquet column group row count for arrow record reader row count (i.e. don't read
-    // entire file)
+    // entire file into one IPC batch)
     let record_batch_reader = match arrow_reader.get_record_reader(row_count) {
         Ok(record_batch_reader) => record_batch_reader,
         Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
     };
-    let arrow_schema = arrow_reader.get_schema().unwrap();
+    let arrow_schema = match arrow_reader.get_schema() {
+        Ok(arrow_schema) => arrow_schema,
+        Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
+    };
 
     // Create IPC Writer
     let mut output_file = Vec::new();
-    let mut writer = FileWriter::try_new(&mut output_file, &arrow_schema).unwrap();
+    let mut writer = match StreamWriter::try_new(&mut output_file, &arrow_schema) {
+        Ok(writer) => writer,
+        Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
+    };
 
     for maybe_record_batch in record_batch_reader {
         let record_batch = match maybe_record_batch {
             Ok(record_batch) => record_batch,
             Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
         };
-        writer.write(&record_batch).unwrap();
+        match writer.write(&record_batch) {
+            Ok(_) => {}
+            Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
+        };
     }
-    writer.finish().unwrap();
-    let buf = writer.into_inner().unwrap();
+    match writer.finish() {
+        Ok(_) => {}
+        Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
+    };
 
-    let return_len = (buf.len() as usize).try_into().unwrap();
+    let writer_buffer = match writer.into_inner() {
+        Ok(writer_buffer) => writer_buffer,
+        Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
+    };
+    let return_len = match (writer_buffer.len() as usize).try_into() {
+        Ok(return_len) => return_len,
+        Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
+    };
     let return_vec = Uint8Array::new_with_length(return_len);
-    return_vec.copy_from(&buf);
+    return_vec.copy_from(&writer_buffer);
     return Ok(return_vec);
 }
