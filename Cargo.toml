@@ -44,7 +44,7 @@ web-sys = { version = "0.3", features = ["console"] }
 arrow2 = { git = "https://github.com/kylebarron/arrow2", branch = "kyle/io_parquet_wasm_compression", features = [
   "io_ipc",
   "io_parquet",
-  "io_parquet_compression",
+  # "io_parquet_compression",
 ], optional = true }
 parquet2 = { git = "https://github.com/kylebarron/parquet2", branch = "kyle/lz4-flex", optional = true, default_features = false, features = [
   "stream",

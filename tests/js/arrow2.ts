@@ -1,5 +1,5 @@
 import * as test from "tape";
-import * as wasm from "../../pkg/node";
+import * as wasm from "../../pkg/node2";
 import { readFileSync } from "fs";
 import { tableFromIPC, Table } from "apache-arrow";
 
