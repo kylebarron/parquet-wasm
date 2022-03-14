@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "test": "node ./tests/js/index.js"
+  },
+  "devDependencies": {
+    "apache-arrow": "^7.0.0",
+    "tape": "^5.5.2",
+    "tape-promise": "^4.0.0"
+  }
+}
