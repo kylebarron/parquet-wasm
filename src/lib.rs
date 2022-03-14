@@ -14,8 +14,8 @@ use wasm_bindgen::prelude::*;
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;*/
 
 #[cfg(feature = "arrow1")]
-#[wasm_bindgen(js_name = readParquet1)]
-pub fn read_parquet1(parquet_file: &[u8]) -> Result<Uint8Array, JsValue> {
+#[wasm_bindgen(js_name = readParquet)]
+pub fn read_parquet(parquet_file: &[u8]) -> Result<Uint8Array, JsValue> {
     let buffer = match crate::arrow1::read_parquet(parquet_file) {
         // This function would return a rust vec that would be copied to a Uint8Array here
         Ok(buffer) => buffer,
@@ -32,8 +32,8 @@ pub fn read_parquet1(parquet_file: &[u8]) -> Result<Uint8Array, JsValue> {
 }
 
 #[cfg(feature = "arrow1")]
-#[wasm_bindgen(js_name = writeParquet1)]
-pub fn write_parquet1(arrow_file: &[u8]) -> Result<Uint8Array, JsValue> {
+#[wasm_bindgen(js_name = writeParquet)]
+pub fn write_parquet(arrow_file: &[u8]) -> Result<Uint8Array, JsValue> {
     let buffer = match crate::arrow1::write_parquet(arrow_file) {
         // This function would return a rust vec that would be copied to a Uint8Array here
         Ok(buffer) => buffer,
