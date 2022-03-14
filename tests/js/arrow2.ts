@@ -8,7 +8,7 @@ const dataDir = "tests/data";
 const testFiles = [
   "1-partition-brotli.parquet",
   "1-partition-gzip.parquet",
-  // "1-partition-lz4.parquet",
+  "1-partition-lz4.parquet",
   "1-partition-none.parquet",
   "1-partition-snappy.parquet",
   // "1-partition-zstd.parquet",
