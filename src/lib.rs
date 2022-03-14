@@ -3,6 +3,7 @@ extern crate web_sys;
 mod arrow1;
 mod arrow2;
 mod utils;
+mod writer_properties1;
 
 use js_sys::Uint8Array;
 use wasm_bindgen::prelude::*;

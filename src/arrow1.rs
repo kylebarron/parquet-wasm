@@ -59,7 +59,11 @@ pub fn read_parquet(parquet_file: &[u8]) -> Result<Vec<u8>, ParquetError> {
 }
 
 #[cfg(feature = "arrow1")]
-pub fn write_parquet(arrow_file: &[u8]) -> Result<Vec<u8>, ParquetError> {
+pub fn write_parquet(
+    arrow_file: &[u8],
+    // TODO: make this param optional?
+    writer_properties: crate::writer_properties1::WriterProperties,
+) -> Result<Vec<u8>, ParquetError> {
     // Create IPC reader
     let input_file = Cursor::new(arrow_file);
     let arrow_ipc_reader = StreamReader::try_new(input_file)?;
@@ -67,7 +71,7 @@ pub fn write_parquet(arrow_file: &[u8]) -> Result<Vec<u8>, ParquetError> {
 
     // Create Parquet writer
     let cursor = InMemoryWriteableCursor::default();
-    let props = WriterProperties::builder().build();
+    let props = writer_properties.to_upstream();
     let mut writer = ArrowWriter::try_new(cursor.clone(), arrow_schema, Some(props))?;
 
     // Iterate over IPC chunks, writing each batch to Parquet

@@ -19,20 +19,147 @@ macro_rules! log {
     }
 }
 
+/// Encodings supported by Parquet.
+/// Not all encodings are valid for all types. These enums are also used to specify the
+/// encoding of definition and repetition levels.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[allow(non_camel_case_types)]
+#[wasm_bindgen]
+pub enum Encoding {
+    /// Default byte encoding.
+    /// - BOOLEAN - 1 bit per value, 0 is false; 1 is true.
+    /// - INT32 - 4 bytes per value, stored as little-endian.
+    /// - INT64 - 8 bytes per value, stored as little-endian.
+    /// - FLOAT - 4 bytes per value, stored as little-endian.
+    /// - DOUBLE - 8 bytes per value, stored as little-endian.
+    /// - BYTE_ARRAY - 4 byte length stored as little endian, followed by bytes.
+    /// - FIXED_LEN_BYTE_ARRAY - just the bytes are stored.
+    PLAIN,
+
+    /// **Deprecated** dictionary encoding.
+    ///
+    /// The values in the dictionary are encoded using PLAIN encoding.
+    /// Since it is deprecated, RLE_DICTIONARY encoding is used for a data page, and
+    /// PLAIN encoding is used for dictionary page.
+    PLAIN_DICTIONARY,
+
+    /// Group packed run length encoding.
+    ///
+    /// Usable for definition/repetition levels encoding and boolean values.
+    RLE,
+
+    /// Bit packed encoding.
+    ///
+    /// This can only be used if the data has a known max width.
+    /// Usable for definition/repetition levels encoding.
+    BIT_PACKED,
+
+    /// Delta encoding for integers, either INT32 or INT64.
+    ///
+    /// Works best on sorted data.
+    DELTA_BINARY_PACKED,
+
+    /// Encoding for byte arrays to separate the length values and the data.
+    ///
+    /// The lengths are encoded using DELTA_BINARY_PACKED encoding.
+    DELTA_LENGTH_BYTE_ARRAY,
+
+    /// Incremental encoding for byte arrays.
+    ///
+    /// Prefix lengths are encoded using DELTA_BINARY_PACKED encoding.
+    /// Suffixes are stored using DELTA_LENGTH_BYTE_ARRAY encoding.
+    DELTA_BYTE_ARRAY,
+
+    /// Dictionary encoding.
+    ///
+    /// The ids are encoded using the RLE encoding.
+    RLE_DICTIONARY,
+
+    /// Encoding for floating-point data.
+    ///
+    /// K byte-streams are created where K is the size in bytes of the data type.
+    /// The individual bytes of an FP value are scattered to the corresponding stream and
+    /// the streams are concatenated.
+    /// This itself does not reduce the size of the data but can lead to better compression
+    /// afterwards.
+    BYTE_STREAM_SPLIT,
+}
+
+impl Encoding {
+    pub fn to_upstream(self) -> parquet::basic::Encoding {
+        match self {
+            Encoding::PLAIN => parquet::basic::Encoding::PLAIN,
+            Encoding::PLAIN_DICTIONARY => parquet::basic::Encoding::PLAIN_DICTIONARY,
+            Encoding::RLE => parquet::basic::Encoding::RLE,
+            Encoding::BIT_PACKED => parquet::basic::Encoding::BIT_PACKED,
+            Encoding::DELTA_BINARY_PACKED => parquet::basic::Encoding::DELTA_BINARY_PACKED,
+            Encoding::DELTA_LENGTH_BYTE_ARRAY => parquet::basic::Encoding::DELTA_LENGTH_BYTE_ARRAY,
+            Encoding::DELTA_BYTE_ARRAY => parquet::basic::Encoding::DELTA_BYTE_ARRAY,
+            Encoding::RLE_DICTIONARY => parquet::basic::Encoding::RLE_DICTIONARY,
+            Encoding::BYTE_STREAM_SPLIT => parquet::basic::Encoding::BYTE_STREAM_SPLIT,
+        }
+    }
+}
+
+/// Supported compression algorithms.
+#[derive(Debug, Clone, Copy, PartialEq)]
+#[allow(non_camel_case_types)]
+#[wasm_bindgen]
+pub enum Compression {
+    UNCOMPRESSED,
+    SNAPPY,
+    GZIP,
+    LZO,
+    BROTLI,
+    LZ4,
+    ZSTD,
+}
+
+impl Compression {
+    pub fn to_upstream(self) -> parquet::basic::Compression {
+        match self {
+            Compression::UNCOMPRESSED => parquet::basic::Compression::UNCOMPRESSED,
+            Compression::SNAPPY => parquet::basic::Compression::SNAPPY,
+            Compression::GZIP => parquet::basic::Compression::GZIP,
+            Compression::LZO => parquet::basic::Compression::LZO,
+            Compression::BROTLI => parquet::basic::Compression::BROTLI,
+            Compression::LZ4 => parquet::basic::Compression::LZ4,
+            Compression::ZSTD => parquet::basic::Compression::ZSTD,
+        }
+    }
+}
+
+#[allow(non_camel_case_types)]
 #[wasm_bindgen]
 pub enum WriterVersion {
     PARQUET_1_0,
     PARQUET_2_0,
 }
 
+impl WriterVersion {
+    pub fn to_upstream(self) -> parquet::file::properties::WriterVersion {
+        match self {
+            WriterVersion::PARQUET_1_0 => properties::WriterVersion::PARQUET_1_0,
+            WriterVersion::PARQUET_2_0 => properties::WriterVersion::PARQUET_2_0,
+        }
+    }
+}
+
 #[wasm_bindgen]
 pub struct WriterProperties(parquet::file::properties::WriterProperties);
+
+impl WriterProperties {
+    pub fn to_upstream(self) -> parquet::file::properties::WriterProperties {
+        self.0
+    }
+}
 
 #[wasm_bindgen]
 pub struct WriterPropertiesBuilder(parquet::file::properties::WriterPropertiesBuilder);
 
 #[wasm_bindgen]
 impl WriterPropertiesBuilder {
+    /// Returns default state of the builder.
     #[wasm_bindgen(constructor)]
     pub fn new() -> WriterPropertiesBuilder {
         WriterPropertiesBuilder {
@@ -41,21 +168,19 @@ impl WriterPropertiesBuilder {
     }
 
     /// Finalizes the configuration and returns immutable writer properties struct.
+    #[wasm_bindgen]
     pub fn build(self) -> WriterProperties {
-        let props = self.0.build();
-        log!("{:?}", props);
-        WriterProperties { 0: props }
+        WriterProperties { 0: self.0.build() }
     }
+
+    // ----------------------------------------------------------------------
+    // Writer properties related to a file
 
     /// Sets writer version.
     #[wasm_bindgen(js_name = setWriterVersion)]
     pub fn set_writer_version(self, value: WriterVersion) -> Self {
-        let parquet_writer_version = match value {
-            WriterVersion::PARQUET_1_0 => properties::WriterVersion::PARQUET_1_0,
-            WriterVersion::PARQUET_2_0 => properties::WriterVersion::PARQUET_2_0,
-        };
         Self {
-            0: self.0.set_writer_version(parquet_writer_version),
+            0: self.0.set_writer_version(value.to_upstream()),
         }
     }
 
@@ -109,6 +234,114 @@ impl WriterPropertiesBuilder {
     //         0: self.0.set_key_value_metadata(value),
     //     }
     // }
+
+    // ----------------------------------------------------------------------
+    // Setters for any column (global)
+
+    /// Sets encoding for any column.
+    ///
+    /// If dictionary is not enabled, this is treated as a primary encoding for all
+    /// columns. In case when dictionary is enabled for any column, this value is
+    /// considered to be a fallback encoding for that column.
+    ///
+    /// Panics if user tries to set dictionary encoding here, regardless of dictionary
+    /// encoding flag being set.
+    #[wasm_bindgen(js_name = setEncoding)]
+    pub fn set_encoding(self, value: Encoding) -> Self {
+        Self {
+            0: self.0.set_encoding(value.to_upstream()),
+        }
+    }
+
+    /// Sets compression codec for any column.
+    pub fn set_compression(self, value: Compression) -> Self {
+        Self {
+            0: self.0.set_compression(value.to_upstream()),
+        }
+    }
+
+    /// Sets flag to enable/disable dictionary encoding for any column.
+    ///
+    /// Use this method to set dictionary encoding, instead of explicitly specifying
+    /// encoding in `set_encoding` method.
+    pub fn set_dictionary_enabled(self, value: bool) -> Self {
+        Self {
+            0: self.0.set_dictionary_enabled(value),
+        }
+    }
+
+    /// Sets flag to enable/disable statistics for any column.
+    pub fn set_statistics_enabled(self, value: bool) -> Self {
+        Self {
+            0: self.0.set_statistics_enabled(value),
+        }
+    }
+
+    /// Sets max statistics size for any column.
+    /// Applicable only if statistics are enabled.
+    pub fn set_max_statistics_size(self, value: usize) -> Self {
+        Self {
+            0: self.0.set_max_statistics_size(value),
+        }
+    }
+
+    // ----------------------------------------------------------------------
+    // Setters for a specific column
+
+    /// Sets encoding for a column.
+    /// Takes precedence over globally defined settings.
+    ///
+    /// If dictionary is not enabled, this is treated as a primary encoding for this
+    /// column. In case when dictionary is enabled for this column, either through
+    /// global defaults or explicitly, this value is considered to be a fallback
+    /// encoding for this column.
+    ///
+    /// Panics if user tries to set dictionary encoding here, regardless of dictionary
+    /// encoding flag being set.
+    pub fn set_column_encoding(self, col: String, value: Encoding) -> Self {
+        let column_path = parquet::schema::types::ColumnPath::from(col);
+        Self {
+            0: self.0.set_column_encoding(column_path, value.to_upstream()),
+        }
+    }
+
+    /// Sets compression codec for a column.
+    /// Takes precedence over globally defined settings.
+    pub fn set_column_compression(self, col: String, value: Compression) -> Self {
+        let column_path = parquet::schema::types::ColumnPath::from(col);
+        Self {
+            0: self
+                .0
+                .set_column_compression(column_path, value.to_upstream()),
+        }
+    }
+
+    /// Sets flag to enable/disable dictionary encoding for a column.
+    /// Takes precedence over globally defined settings.
+    pub fn set_column_dictionary_enabled(self, col: String, value: bool) -> Self {
+        let column_path = parquet::schema::types::ColumnPath::from(col);
+        Self {
+            0: self.0.set_column_dictionary_enabled(column_path, value),
+        }
+    }
+
+    /// Sets flag to enable/disable statistics for a column.
+    /// Takes precedence over globally defined settings.
+    pub fn set_column_statistics_enabled(self, col: String, value: bool) -> Self {
+        let column_path = parquet::schema::types::ColumnPath::from(col);
+        Self {
+            0: self.0.set_column_statistics_enabled(column_path, value),
+        }
+    }
+
+    /// Sets max size for statistics for a column.
+    /// Takes precedence over globally defined settings.
+    pub fn set_column_max_statistics_size(self, col: String, value: usize) -> Self {
+        let column_path = parquet::schema::types::ColumnPath::from(col);
+        Self {
+            0: self.0.set_column_max_statistics_size(column_path, value),
+        }
+    }
 }
 
 impl WriterPropertiesBuilder {
@@ -118,120 +351,3 @@ impl WriterPropertiesBuilder {
         }
     }
 }
-
-// #[wasm_bindgen]
-// pub struct WriterProperties(parquet::file::properties::WriterProperties);
-
-// impl WriterProperties {
-//     /// Returns builder for writer properties with default values.
-//     pub fn builder() -> WriterPropertiesBuilder {
-//         WriterPropertiesBuilder::with_defaults()
-//     }
-
-//     /// Returns data page size limit.
-//     #[wasm_bindgen(getter, js_name = dataPagesizeLimit)]
-//     pub fn data_pagesize_limit(&self) -> usize {
-//         self.data_pagesize_limit
-//     }
-
-//     /// Returns dictionary page size limit.
-//     pub fn dictionary_pagesize_limit(&self) -> usize {
-//         self.dictionary_pagesize_limit
-//     }
-
-//     /// Returns configured batch size for writes.
-//     ///
-//     /// When writing a batch of data, this setting allows to split it internally into
-//     /// smaller batches so we can better estimate the size of a page currently being
-//     /// written.
-//     pub fn write_batch_size(&self) -> usize {
-//         self.write_batch_size
-//     }
-
-//     /// Returns maximum number of rows in a row group.
-//     pub fn max_row_group_size(&self) -> usize {
-//         self.max_row_group_size
-//     }
-
-//     /// Returns configured writer version.
-//     pub fn writer_version(&self) -> WriterVersion {
-//         self.writer_version
-//     }
-
-//     /// Returns `created_by` string.
-//     pub fn created_by(&self) -> &str {
-//         &self.created_by
-//     }
-
-//     /// Returns `key_value_metadata` KeyValue pairs.
-//     pub fn key_value_metadata(&self) -> &Option<Vec<KeyValue>> {
-//         &self.key_value_metadata
-//     }
-
-//     /// Returns encoding for a data page, when dictionary encoding is enabled.
-//     /// This is not configurable.
-//     #[inline]
-//     pub fn dictionary_data_page_encoding(&self) -> Encoding {
-//         // PLAIN_DICTIONARY encoding is deprecated in writer version 1.
-//         // Dictionary values are encoded using RLE_DICTIONARY encoding.
-//         Encoding::RLE_DICTIONARY
-//     }
-
-//     /// Returns encoding for dictionary page, when dictionary encoding is enabled.
-//     /// This is not configurable.
-//     #[inline]
-//     pub fn dictionary_page_encoding(&self) -> Encoding {
-//         // PLAIN_DICTIONARY is deprecated in writer version 1.
-//         // Dictionary is encoded using plain encoding.
-//         Encoding::PLAIN
-//     }
-
-//     /// Returns encoding for a column, if set.
-//     /// In case when dictionary is enabled, returns fallback encoding.
-//     ///
-//     /// If encoding is not set, then column writer will choose the best encoding
-//     /// based on the column type.
-//     pub fn encoding(&self, col: &ColumnPath) -> Option<Encoding> {
-//         self.column_properties
-//             .get(col)
-//             .and_then(|c| c.encoding())
-//             .or_else(|| self.default_column_properties.encoding())
-//     }
-
-//     /// Returns compression codec for a column.
-//     pub fn compression(&self, col: &ColumnPath) -> Compression {
-//         self.column_properties
-//             .get(col)
-//             .and_then(|c| c.compression())
-//             .or_else(|| self.default_column_properties.compression())
-//             .unwrap_or(DEFAULT_COMPRESSION)
-//     }
-
-//     /// Returns `true` if dictionary encoding is enabled for a column.
-//     pub fn dictionary_enabled(&self, col: &ColumnPath) -> bool {
-//         self.column_properties
-//             .get(col)
-//             .and_then(|c| c.dictionary_enabled())
-//             .or_else(|| self.default_column_properties.dictionary_enabled())
-//             .unwrap_or(DEFAULT_DICTIONARY_ENABLED)
-//     }
-
-//     /// Returns `true` if statistics are enabled for a column.
-//     pub fn statistics_enabled(&self, col: &ColumnPath) -> bool {
-//         self.column_properties
-//             .get(col)
-//             .and_then(|c| c.statistics_enabled())
-//             .or_else(|| self.default_column_properties.statistics_enabled())
-//             .unwrap_or(DEFAULT_STATISTICS_ENABLED)
-//     }
-
-//     /// Returns max size for statistics.
-//     /// Only applicable if statistics are enabled.
-//     pub fn max_statistics_size(&self, col: &ColumnPath) -> usize {
-//         self.column_properties
-//             .get(col)
-//             .and_then(|c| c.max_statistics_size())
-//             .or_else(|| self.default_column_properties.max_statistics_size())
-//             .unwrap_or(DEFAULT_MAX_STATISTICS_SIZE)
-//     }
-// }
