@@ -1,22 +1,4 @@
-extern crate web_sys;
-// #[cfg(feature = "arrow1")]
-
 use wasm_bindgen::prelude::*;
-
-// A macro to provide `println!(..)`-style syntax for `console.log` logging.
-#[cfg(target_arch = "wasm32")]
-macro_rules! log {
-    ( $( $t:tt )* ) => {
-        web_sys::console::log_1(&format!( $( $t )* ).into());
-    }
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-macro_rules! log {
-    ( $( $t:tt )* ) => {
-        println!("LOG - {}", format!( $( $t )* ));
-    }
-}
 
 /// Encodings supported by Parquet.
 /// Not all encodings are valid for all types. These enums are also used to specify the
