@@ -61,7 +61,6 @@ pub fn read_parquet(parquet_file: &[u8]) -> Result<Vec<u8>, ParquetError> {
 #[cfg(feature = "arrow1")]
 pub fn write_parquet(
     arrow_file: &[u8],
-    // TODO: make this param optional?
     writer_properties: crate::writer_properties1::WriterProperties,
 ) -> Result<Vec<u8>, ParquetError> {
     // Create IPC reader
