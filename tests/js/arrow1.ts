@@ -1,9 +1,7 @@
-const test = require("tape-promise/tape");
-const wasm = require("../../pkg/node");
-const { readFileSync } = require("fs");
-const { tableFromIPC, tableToIPC } = require("apache-arrow");
-
-wasm.setPanicHook();
+import * as test from "tape";
+import * as wasm from "../../pkg/node";
+import { readFileSync } from "fs";
+import { tableFromIPC, tableToIPC, Table } from "apache-arrow";
 
 // Path from repo root
 const dataDir = "tests/data";
@@ -22,7 +20,7 @@ const testFiles = [
   // "2-partition-zstd.parquet",
 ];
 
-function testArrow(t, table) {
+function testArrow(t: test.Test, table: Table) {
   t.equals(table.numRows, 4, "correct number of rows");
   t.deepEquals(
     table.schema.fields.map((f) => f.name),
@@ -31,7 +29,7 @@ function testArrow(t, table) {
   );
 }
 
-test("read file", (t) => {
+test("read file", async (t) => {
   for (const testFile of testFiles) {
     const dataPath = `${dataDir}/${testFile}`;
     const buffer = readFileSync(dataPath);
@@ -43,7 +41,7 @@ test("read file", (t) => {
   t.end();
 });
 
-test("write and read file", (t) => {
+test("write and read file", async (t) => {
   const dataPath = `${dataDir}/1-partition-brotli.parquet`;
   const buffer = readFileSync(dataPath);
   const arr = new Uint8Array(buffer);
