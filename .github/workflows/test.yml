@@ -27,6 +27,27 @@ jobs:
       # - run: cargo check                                 --no-default-features --features "console_error_panic_hook wee_alloc"
       # - run: cargo check --target wasm32-unknown-unknown --no-default-features --features "console_error_panic_hook wee_alloc"
 
+  node-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "16"
+
+      - name: Build bundle
+        run: bash ./scripts/build.sh
+
+      - name: Install dev dependencies
+        run: yarn
+
+      - name: Run Node tests
+        run: yarn test
+
   fmt:
     name: fmt
     runs-on: ubuntu-latest
