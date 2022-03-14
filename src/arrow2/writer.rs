@@ -1,41 +1,11 @@
-#[cfg(feature = "arrow2")]
-use {
-    arrow2::error::ArrowError,
-    arrow2::io::ipc::read::{read_file_metadata, FileReader as IPCFileReader},
-    arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions},
-    arrow2::io::parquet::read::FileReader as ParquetFileReader,
-    // NOTE: It's FileReader on latest main but RecordReader in 0.9.2
-    arrow2::io::parquet::write::{
-        Compression, Encoding, FileWriter as ParquetFileWriter, RowGroupIterator, Version,
-        WriteOptions as ParquetWriteOptions,
-    },
-    std::io::Cursor,
+use arrow2::error::ArrowError;
+use arrow2::io::ipc::read::{read_file_metadata, FileReader as IPCFileReader};
+use arrow2::io::parquet::write::{
+    Compression, Encoding, FileWriter as ParquetFileWriter, RowGroupIterator, Version,
+    WriteOptions as ParquetWriteOptions,
 };
+use std::io::Cursor;
 
-#[cfg(feature = "arrow2")]
-pub fn read_parquet(parquet_file: &[u8]) -> Result<Vec<u8>, ArrowError> {
-    // Create Parquet reader
-    let input_file = Cursor::new(parquet_file);
-    let file_reader = ParquetFileReader::try_new(input_file, None, None, None, None)?;
-    let schema = file_reader.schema().clone();
-
-    // Create IPC writer
-    let mut output_file = Vec::new();
-    let options = IPCWriteOptions { compression: None };
-    let mut writer = IPCStreamWriter::new(&mut output_file, options);
-    writer.start(&schema, None)?;
-
-    // Iterate over reader chunks, writing each into the IPC writer
-    for maybe_chunk in file_reader {
-        let chunk = maybe_chunk?;
-        writer.write(&chunk, None)?;
-    }
-
-    writer.finish()?;
-    return Ok(output_file);
-}
-
-#[cfg(feature = "arrow2")]
 pub fn write_parquet(arrow_file: &[u8]) -> Result<Vec<u8>, ArrowError> {
     // Create IPC reader
     let mut input_file = Cursor::new(arrow_file);
