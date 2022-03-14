@@ -5,7 +5,6 @@ use {
     parquet::arrow::arrow_writer::ArrowWriter,
     parquet::arrow::{ArrowReader, ParquetFileArrowReader},
     parquet::errors::ParquetError,
-    parquet::file::properties::WriterProperties,
     parquet::file::reader::{FileReader, SerializedFileReader},
     parquet::file::serialized_reader::SliceableCursor,
     parquet::file::writer::InMemoryWriteableCursor,

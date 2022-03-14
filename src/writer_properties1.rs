@@ -1,7 +1,6 @@
 extern crate web_sys;
 // #[cfg(feature = "arrow1")]
 
-use parquet::file::properties;
 use wasm_bindgen::prelude::*;
 
 // A macro to provide `println!(..)`-style syntax for `console.log` logging.
@@ -139,8 +138,8 @@ pub enum WriterVersion {
 impl WriterVersion {
     pub fn to_upstream(self) -> parquet::file::properties::WriterVersion {
         match self {
-            WriterVersion::PARQUET_1_0 => properties::WriterVersion::PARQUET_1_0,
-            WriterVersion::PARQUET_2_0 => properties::WriterVersion::PARQUET_2_0,
+            WriterVersion::PARQUET_1_0 => parquet::file::properties::WriterVersion::PARQUET_1_0,
+            WriterVersion::PARQUET_2_0 => parquet::file::properties::WriterVersion::PARQUET_2_0,
         }
     }
 }
@@ -163,7 +162,7 @@ impl WriterPropertiesBuilder {
     #[wasm_bindgen(constructor)]
     pub fn new() -> WriterPropertiesBuilder {
         WriterPropertiesBuilder {
-            0: properties::WriterProperties::builder(),
+            0: parquet::file::properties::WriterProperties::builder(),
         }
     }
 
@@ -254,6 +253,7 @@ impl WriterPropertiesBuilder {
     }
 
     /// Sets compression codec for any column.
+    #[wasm_bindgen(js_name = setCompression)]
     pub fn set_compression(self, value: Compression) -> Self {
         Self {
             0: self.0.set_compression(value.to_upstream()),
@@ -264,6 +264,7 @@ impl WriterPropertiesBuilder {
     ///
     /// Use this method to set dictionary encoding, instead of explicitly specifying
     /// encoding in `set_encoding` method.
+    #[wasm_bindgen(js_name = setDictionaryEnabled)]
     pub fn set_dictionary_enabled(self, value: bool) -> Self {
         Self {
             0: self.0.set_dictionary_enabled(value),
@@ -271,6 +272,7 @@ impl WriterPropertiesBuilder {
     }
 
     /// Sets flag to enable/disable statistics for any column.
+    #[wasm_bindgen(js_name = setStatisticsEnabled)]
     pub fn set_statistics_enabled(self, value: bool) -> Self {
         Self {
             0: self.0.set_statistics_enabled(value),
@@ -279,6 +281,7 @@ impl WriterPropertiesBuilder {
 
     /// Sets max statistics size for any column.
     /// Applicable only if statistics are enabled.
+    #[wasm_bindgen(js_name = setMaxStatisticsSize)]
     pub fn set_max_statistics_size(self, value: usize) -> Self {
         Self {
             0: self.0.set_max_statistics_size(value),
@@ -298,6 +301,7 @@ impl WriterPropertiesBuilder {
     ///
     /// Panics if user tries to set dictionary encoding here, regardless of dictionary
     /// encoding flag being set.
+    #[wasm_bindgen(js_name = setColumnEncoding)]
     pub fn set_column_encoding(self, col: String, value: Encoding) -> Self {
         let column_path = parquet::schema::types::ColumnPath::from(col);
         Self {
@@ -307,6 +311,7 @@ impl WriterPropertiesBuilder {
 
     /// Sets compression codec for a column.
     /// Takes precedence over globally defined settings.
+    #[wasm_bindgen(js_name = setColumnCompression)]
     pub fn set_column_compression(self, col: String, value: Compression) -> Self {
         let column_path = parquet::schema::types::ColumnPath::from(col);
         Self {
@@ -318,6 +323,7 @@ impl WriterPropertiesBuilder {
 
     /// Sets flag to enable/disable dictionary encoding for a column.
     /// Takes precedence over globally defined settings.
+    #[wasm_bindgen(js_name = setColumnDictionaryEnabled)]
     pub fn set_column_dictionary_enabled(self, col: String, value: bool) -> Self {
         let column_path = parquet::schema::types::ColumnPath::from(col);
         Self {
@@ -327,6 +333,7 @@ impl WriterPropertiesBuilder {
 
     /// Sets flag to enable/disable statistics for a column.
     /// Takes precedence over globally defined settings.
+    #[wasm_bindgen(js_name = setColumnStatisticsEnabled)]
     pub fn set_column_statistics_enabled(self, col: String, value: bool) -> Self {
         let column_path = parquet::schema::types::ColumnPath::from(col);
         Self {
@@ -336,6 +343,7 @@ impl WriterPropertiesBuilder {
 
     /// Sets max size for statistics for a column.
     /// Takes precedence over globally defined settings.
+    #[wasm_bindgen(js_name = setColumnMaxStatisticsSize)]
     pub fn set_column_max_statistics_size(self, col: String, value: usize) -> Self {
         let column_path = parquet::schema::types::ColumnPath::from(col);
         Self {
@@ -347,7 +355,7 @@ impl WriterPropertiesBuilder {
 impl WriterPropertiesBuilder {
     pub fn new_from_rust() -> WriterPropertiesBuilder {
         WriterPropertiesBuilder {
-            0: properties::WriterProperties::builder(),
+            0: parquet::file::properties::WriterProperties::builder(),
         }
     }
 }
