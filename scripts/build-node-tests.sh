@@ -9,7 +9,7 @@ rm -rf pkg pkg_node pkg_web
 # Build node version into pkg_node
 echo "Building arrow-rs node"
 wasm-pack build \
-  --release \
+  --dev \
   --out-dir pkg \
   --out-name node \
   --target nodejs
@@ -19,7 +19,7 @@ wasm-pack build \
 # Build node version into pkg2_node
 echo "Building arrow2 node"
 wasm-pack build \
-  --release \
+  --dev \
   --out-dir pkg2_node \
   --out-name node2 \
   --target nodejs \
