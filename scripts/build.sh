@@ -1,5 +1,5 @@
 #! /usr/bin/env bash
-rm -rf pkg pkg_node pkg_web
+rm -rf pkg pkg_node pkg_web pkg2_node pkg2_web pkg2
 
 ######################################
 # ARROW 1 (arrow-rs) the default feature
