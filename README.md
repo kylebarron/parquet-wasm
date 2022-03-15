@@ -105,6 +105,19 @@ LZ4 compression appears not to work yet. When trying to parse a file with LZ4 co
 - Compile: `wasm-pack build`, or change targets, e.g. `wasm-pack build --target nodejs`
 - Publish `wasm-pack publish`.
 
+### MacOS
+
+Some steps may need a specific configuration if run on MacOS. Specifically, the default `clang` shipped with Macs (as of March 2022) doesn't have WebAssembly compilation supported out of the box. To build ZSTD, you may need to install a later version via Homebrew and update your paths to find the correct executables.
+
+```
+brew install llvm
+export PATH="/usr/local/opt/llvm/bin/:$PATH"
+export CC=/usr/local/opt/llvm/bin/clang
+export AR=/usr/local/opt/llvm/bin/llvm-ar
+```
+
+See [this description](https://github.com/kylebarron/parquet-wasm/pull/2#issue-1159174043) and its references for more info.
+
 ### Publishing
 
 `wasm-pack` supports [three different targets](https://rustwasm.github.io/docs/wasm-pack/commands/build.html#target):
