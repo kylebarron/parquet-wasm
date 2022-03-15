@@ -1,3 +1,6 @@
+use js_sys::Uint8Array;
+use wasm_bindgen::prelude::*;
+
 pub fn set_panic_hook() {
     // When the `console_error_panic_hook` feature is enabled, we can call the
     // `set_panic_hook` function at least once during initialization, and then
@@ -24,4 +27,15 @@ macro_rules! log {
     ( $( $t:tt )* ) => {
         println!("LOG - {}", format!( $( $t )* ));
     }
+}
+
+/// Copy Vec<u8> to a Uint8Array
+pub fn copy_vec_to_uint8_array(buffer: Vec<u8>) -> Result<Uint8Array, JsValue> {
+    let return_len = match (buffer.len() as usize).try_into() {
+        Ok(return_len) => return_len,
+        Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
+    };
+    let return_vec = Uint8Array::new_with_length(return_len);
+    return_vec.copy_from(&buffer);
+    return Ok(return_vec);
 }
