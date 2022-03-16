@@ -1,6 +1,5 @@
-use wasm_bindgen::prelude::*;
 use crate::common::writer_properties::{Compression, Encoding, WriterVersion};
-
+use wasm_bindgen::prelude::*;
 
 impl Encoding {
     pub fn to_arrow2(self) -> arrow2::io::parquet::write::Encoding {
@@ -9,8 +8,12 @@ impl Encoding {
             Encoding::PLAIN_DICTIONARY => arrow2::io::parquet::write::Encoding::PlainDictionary,
             Encoding::RLE => arrow2::io::parquet::write::Encoding::Rle,
             Encoding::BIT_PACKED => arrow2::io::parquet::write::Encoding::BitPacked,
-            Encoding::DELTA_BINARY_PACKED => arrow2::io::parquet::write::Encoding::DeltaBinaryPacked,
-            Encoding::DELTA_LENGTH_BYTE_ARRAY => arrow2::io::parquet::write::Encoding::DeltaLengthByteArray,
+            Encoding::DELTA_BINARY_PACKED => {
+                arrow2::io::parquet::write::Encoding::DeltaBinaryPacked
+            }
+            Encoding::DELTA_LENGTH_BYTE_ARRAY => {
+                arrow2::io::parquet::write::Encoding::DeltaLengthByteArray
+            }
             Encoding::DELTA_BYTE_ARRAY => arrow2::io::parquet::write::Encoding::DeltaByteArray,
             Encoding::RLE_DICTIONARY => arrow2::io::parquet::write::Encoding::RleDictionary,
             Encoding::BYTE_STREAM_SPLIT => arrow2::io::parquet::write::Encoding::ByteStreamSplit,
@@ -44,7 +47,7 @@ impl WriterVersion {
 #[wasm_bindgen]
 pub struct WriterProperties {
     write_options: arrow2::io::parquet::write::WriteOptions,
-    encoding: arrow2::io::parquet::write::Encoding
+    encoding: arrow2::io::parquet::write::Encoding,
 }
 
 impl WriterProperties {
@@ -57,11 +60,10 @@ impl WriterProperties {
     }
 }
 
-
 #[wasm_bindgen]
 pub struct WriterPropertiesBuilder {
     write_options: arrow2::io::parquet::write::WriteOptions,
-    encoding: arrow2::io::parquet::write::Encoding
+    encoding: arrow2::io::parquet::write::Encoding,
 }
 
 #[wasm_bindgen]
@@ -72,12 +74,12 @@ impl WriterPropertiesBuilder {
         let write_options = arrow2::io::parquet::write::WriteOptions {
             write_statistics: true,
             compression: arrow2::io::parquet::write::Compression::Snappy,
-            version: arrow2::io::parquet::write::Version::V2
+            version: arrow2::io::parquet::write::Version::V2,
         };
         let encoding = arrow2::io::parquet::write::Encoding::Plain;
         Self {
             write_options,
-            encoding
+            encoding,
         }
     }
 
@@ -86,7 +88,7 @@ impl WriterPropertiesBuilder {
     pub fn build(self) -> WriterProperties {
         WriterProperties {
             write_options: self.write_options,
-            encoding: self.encoding
+            encoding: self.encoding,
         }
     }
 
@@ -96,7 +98,7 @@ impl WriterPropertiesBuilder {
         let write_options = arrow2::io::parquet::write::WriteOptions {
             write_statistics: self.write_options.write_statistics,
             compression: self.write_options.compression,
-            version: value.to_arrow2()
+            version: value.to_arrow2(),
         };
         self.write_options = write_options;
         self
@@ -125,7 +127,7 @@ impl WriterPropertiesBuilder {
         let write_options = arrow2::io::parquet::write::WriteOptions {
             write_statistics: self.write_options.write_statistics,
             compression: value.to_arrow2(),
-            version: self.write_options.version
+            version: self.write_options.version,
         };
         self.write_options = write_options;
         self
@@ -137,7 +139,7 @@ impl WriterPropertiesBuilder {
         let write_options = arrow2::io::parquet::write::WriteOptions {
             write_statistics: value,
             compression: self.write_options.compression,
-            version: self.write_options.version
+            version: self.write_options.version,
         };
         self.write_options = write_options;
         self

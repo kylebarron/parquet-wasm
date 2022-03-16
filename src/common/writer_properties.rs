@@ -85,4 +85,3 @@ pub enum WriterVersion {
     V1,
     V2,
 }
-
