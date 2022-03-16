@@ -9,6 +9,7 @@
     "pkg/web2.d.ts"
   ],
   "tsconfig": "tsconfig.docs.json",
+  "out": "docs_build",
   "excludePrivate": true,
   "excludeProtected": true,
   "excludeExternals": true,

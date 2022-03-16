@@ -16,4 +16,4 @@ www/data/
 data/
 
 # Typedoc output
-docs/
+docs_build/
