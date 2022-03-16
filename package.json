@@ -1,12 +1,15 @@
 {
   "scripts": {
     "build": "bash ./scripts/build.sh",
+    "build-docs": "typedoc",
+    "publish-docs": "gh-pages -d docs_build",
     "test": "ts-node node_modules/tape/bin/tape ./tests/js/index.ts"
   },
   "devDependencies": {
     "@types/node": "^17.0.21",
     "@types/tape": "^4.13.2",
     "apache-arrow": "^7.0.0",
+    "gh-pages": "^3.2.3",
     "tape": "^5.5.2",
     "ts-node": "^10.7.0",
     "typedoc": "^0.22.13",
