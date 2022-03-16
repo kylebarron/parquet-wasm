@@ -4,6 +4,8 @@ use parquet::errors::ParquetError;
 use parquet::file::writer::InMemoryWriteableCursor;
 use std::io::Cursor;
 
+/// Internal function to write a buffer of data in Arrow IPC Stream format to a Parquet file using
+/// the arrow and parquet crates
 pub fn write_parquet(
     arrow_file: &[u8],
     writer_properties: crate::arrow1::writer_properties::WriterProperties,

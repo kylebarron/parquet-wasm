@@ -36,7 +36,10 @@ wasm-pack build \
   --out-name node2 \
   --target nodejs \
   --no-default-features \
-  --features arrow2
+  --features arrow2 \
+  --features reader \
+  --features writer \
+  --features parquet2_supported_compressions
 
 # Build web version into pkg2_web
 echo "Building arrow2 web"
@@ -46,7 +49,10 @@ wasm-pack build \
   --out-name web2 \
   --target web \
   --no-default-features \
-  --features arrow2
+  --features arrow2 \
+  --features reader \
+  --features writer \
+  --features parquet2_supported_compressions
 
 # Build standard bundler version into pkg2
 echo "Building arrow2 bundler"
@@ -56,7 +62,10 @@ wasm-pack build \
   --out-name parquet_wasm2 \
   --target bundler \
   --no-default-features \
-  --features arrow2
+  --features arrow2 \
+  --features reader \
+  --features writer \
+  --features parquet2_supported_compressions
 
 # Copy files into pkg/
 cp pkg_node/{node.d.ts,node.js,node_bg.wasm,node_bg.wasm.d.ts} pkg/

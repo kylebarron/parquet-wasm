@@ -1,11 +1,12 @@
 extern crate web_sys;
 
-#[cfg(feature = "arrow1")]
+#[cfg(feature = "arrow")]
 mod arrow1;
 
 #[cfg(feature = "arrow2")]
 mod arrow2;
 
+mod common;
 mod utils;
 
 use wasm_bindgen::prelude::*;
@@ -18,5 +19,5 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;*/
 
 #[wasm_bindgen(js_name = setPanicHook)]
 pub fn set_panic_hook() {
-    utils::set_panic_hook();
+    crate::utils::set_panic_hook();
 }
