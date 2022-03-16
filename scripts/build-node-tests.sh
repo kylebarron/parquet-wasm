@@ -24,7 +24,8 @@ wasm-pack build \
   --out-name node2 \
   --target nodejs \
   --no-default-features \
-  --features arrow2
+  --features arrow2 \
+  --features parquet2_supported_compressions
 
 # Copy files into pkg/
 cp pkg2_node/{node2.d.ts,node2.js,node2_bg.wasm,node2_bg.wasm.d.ts} pkg/
