@@ -1,5 +1,6 @@
 {
   "scripts": {
+    "build": "bash ./scripts/build.sh",
     "test": "ts-node node_modules/tape/bin/tape ./tests/js/index.ts"
   },
   "devDependencies": {

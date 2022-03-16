@@ -41,6 +41,8 @@ Presumably no one wants to use both `parquet` and `parquet2` at once, so the def
 | `parquet-wasm/node2`         | `parquet2` and `arrow2` | Node build, to be used with `require` in NodeJS         |
 | `parquet-wasm/web2`          | `parquet2` and `arrow2` | ESM, to be used directly from the Web as an ES Module   |
 
+Note that when using the `/web` and `/web2` bundles, the default export must be awaited. See [here](https://rustwasm.github.io/docs/wasm-bindgen/examples/without-a-bundler.html) for an example.
+
 ### `parquet` API
 
 This implementation uses the [`arrow`](https://crates.io/crates/arrow) and [`parquet`]() Rust crates.
@@ -57,11 +59,26 @@ Takes as input a `Uint8Array` containing bytes from a loaded Parquet file. Retur
 
 Takes as input a `Uint8Array` containing bytes in [Arrow IPC **Stream** format](https://arrow.apache.org/docs/format/Columnar.html#ipc-streaming-format). If you have an Arrow table, call `arrow.tableToIPC(table, 'stream')` and pass the result to `writeParquet`.
 
-TODO: writer properties
+The second argument must be an instance of `WriterProperties`, which can be created by calling `new WriterPropertiesBuilder().build()`.
 
-#### Write options
+#### `WriterPropertiesBuilder`
 
-Explain builder
+A class to build a configuration used for writing a parquet file.
+
+For example, to create a writing configuration with Snappy compression:
+
+```js
+import {
+  WriterPropertiesBuilder,
+  Compression,
+  writeParquet,
+} from "parquet-wasm";
+
+const writerProperties = new WriterPropertiesBuilder()
+  .setCompression(Compression.SNAPPY)
+  .build();
+writeParquet(new Uint8Array(), writerProperties);
+```
 
 ### `parquet2` API
 
@@ -73,23 +90,36 @@ Takes as input a `Uint8Array` containing bytes from a loaded Parquet file. Retur
 
 #### `writeParquet2`
 
-`writeParquet2(arrow_file: Uint8Array): Uint8Array`
+`writeParquet2(arrow_file: Uint8Array, writer_properties: WriterProperties): Uint8Array`
 
 Takes as input a `Uint8Array` containing bytes in [Arrow IPC **File** format](https://arrow.apache.org/docs/format/Columnar.html#ipc-file-format) [^1]. If you have an Arrow table, call `arrow.tableToIPC(table, 'file')` and pass the result to `writeParquet2`.
 
-[^1]: I'm not great at Rust and the IPC File format seemed easier to parse in Rust than the IPC Stream format :slightly_smiling_face:.
+[^1]: I'm not great at Rust and the IPC File format seemed easier to parse in Rust than the IPC Stream format :slightly_smiling_face:. Hopefully this function will standardize on the Stream format in the future.
 
-For the initial release, `writeParquet2` is hard-coded to use Snappy compression and Plain encoding. In the future these should be made configurable.
+For example, to create a writing configuration with Snappy compression:
 
-### Common
+```js
+import {
+  WriterPropertiesBuilder,
+  Compression,
+  writeParquet2,
+} from "parquet-wasm";
 
-Functions in common between the two APIs (present in every build).
+const writerProperties = new WriterPropertiesBuilder()
+  .setCompression(Compression.SNAPPY)
+  .build();
+writeParquet2(new Uint8Array(), writerProperties);
+```
+
+### Utilities
 
 #### `setPanicHook`
 
 `setPanicHook(): void`
 
 Sets [`console_error_panic_hook`](https://github.com/rustwasm/console_error_panic_hook) in Rust, which provides better debugging of panics by having more informative `console.error` messages. Initialize this first if you're getting errors such as `RuntimeError: Unreachable executed`.
+
+The WASM bundle must be compiled with the `console_error_panic_hook` for this function to exist.
 
 ## Example
 
@@ -130,70 +160,66 @@ The Parquet specification permits several compression codecs. This library curre
 - [x] Snappy
 - [x] Gzip
 - [x] Brotli
-- [x] ZSTD
-- [ ] LZ4
-
-LZ4 compression appears not to work yet. When trying to parse a file with LZ4 compression I get an error: `Uncaught (in promise) External format error: underlying IO error: WrongMagicNumber`.
+- [ ] ZSTD. Will be supported using the next versions of the upstream packages `parquet` and `parquet2`.
+- [ ] LZ4. Work is progressing but no support yet.
 
 ## Custom builds
 
 In some cases, you may know ahead of time that your Parquet files will only include a single compression codec, say Snappy, or even no compression at all. In these cases, you may want to create a custom build of `parquet-wasm` to keep bundle size at a minimum. If you install the Rust toolchain and `wasm-pack` (see [Development](#development)), you can create a custom build with only the compression codecs you require.
 
-To create the build, run
+### Example custom builds
+
+Reader-only bundle with Snappy compression using the `arrow` and `parquet` crates:
+
+```
+wasm-pack build --no-default-features --features arrow1 --features parquet/snap --features reader
+```
+
+Writer-only bundle with no compression support using the `arrow2` and `parquet2` crates, targeting Node:
+
+```
+wasm-pack build --target nodejs --no-default-features --features arrow2 --features writer
+```
+
+Debug bundle with reader and writer support, targeting Node, using `arrow` and `parquet` crates with all their supported compressions, with `console_error_panic_hook` enabled:
 
 ```bash
-wasm-pack build \
-  --release \
-  `# Choose your JS target: one of --target bundler, --target nodejs, or --target web` \
-  --target nodejs \
-  `# Turn off all defaults` \
-  --no-default-features \
-  `# Choose your Rust parquet implementation: One of --features arrow1 or --features arrow2` \
-  --features arrow1 \
-  `# Choose your compressions (TODO: need to expose these features)`
+wasm-pack build --dev --target nodejs \
+  --no-default-features --features arrow1 \
+  --features reader --features writer \
+  --features parquet_supported_compressions \
+  --features console_error_panic_hook
+# Or, given the fact that the default feature includes several of these features, a shorter version:
+wasm-pack build --dev --target nodejs --features console_error_panic_hook
 ```
+
+Refer to the [`wasm-pack` documentation](https://rustwasm.github.io/docs/wasm-pack/commands/build.html) for more info on flags such as `--release`, `--dev`, `target`, and to the [Cargo documentation](https://doc.rust-lang.org/cargo/reference/features.html) for more info on how to use features.
+
+### Available features
+
+- `arrow1`: Use the `arrow` and `parquet` crates
+- `arrow2`: Use the `arrow2` and `parquet2` crates
+- `reader`: Activate read support.
+- `writer`: Activate write support.
+- `parquet_supported_compressions`: Activate all supported compressions for the `parquet` crate
+- `parquet2_supported_compressions`: Activate all supported compressions for the `parquet2` crate
+- parquet compression features. Should only be activated when `arrow1` is activated.
+  - `parquet/brotli`: Activate Brotli compression in the `parquet` crate.
+  - `parquet/flate2`: Activate Gzip compression in the `parquet` crate.
+  - `parquet/snap`: Activate Snappy compression in the `parquet` crate.
+  - ~~`parquet/lz4`~~: ~~Activate LZ4 compression in the `parquet` crate.~~ WASM-compatible version not yet implemented in the `parquet` crate.
+  - ~~`parquet/zstd`~~: ~~Activate ZSTD compression in the `parquet` crate.~~ ZSTD should work in parquet's next release, pending https://github.com/apache/arrow-rs/pull/1414
+- parquet2 compression features. Should only be activated when `arrow2` is activated.
+  - `parquet2/brotli`: Activate Brotli compression in the `parquet2` crate.
+  - `parquet2/gzip`: Activate Gzip compression in the `parquet2` crate.
+  - `parquet2/snappy`: Activate Snappy compression in the `parquet2` crate.
+  - ~~`parquet2/lz4`~~: ~~Activate LZ4 compression in the `parquet2` crate~~. WASM-compatible version not yet implemented, pending https://github.com/jorgecarleitao/parquet2/pull/91
+  - ~~`parquet2/zstd`~~: ~~Activate ZSTD compression in the `parquet2` crate.~~ ZSTD should work in parquet2's next release.
+- `console_error_panic_hook`: Expose the `setPanicHook` function for better error messages for Rust panics.
 
 ## Future work
 
-- [ ] Tests :smile:
-- [ ] User-specified column-specific encodings when writing
-- [ ] User-specified compression codec when writing
-
-## Development
-
-- Install [wasm-pack](https://rustwasm.github.io/wasm-pack/)
-- Compile: `wasm-pack build`, or change targets, e.g. `wasm-pack build --target nodejs`
-- Publish `wasm-pack publish`.
-
-### MacOS
-
-Some steps may need a specific configuration if run on MacOS. Specifically, the default `clang` shipped with Macs (as of March 2022) doesn't have WebAssembly compilation supported out of the box. To build ZSTD, you may need to install a later version via Homebrew and update your paths to find the correct executables.
-
-```
-brew install llvm
-export PATH="/usr/local/opt/llvm/bin/:$PATH"
-export CC=/usr/local/opt/llvm/bin/clang
-export AR=/usr/local/opt/llvm/bin/llvm-ar
-```
-
-See [this description](https://github.com/kylebarron/parquet-wasm/pull/2#issue-1159174043) and its references for more info.
-
-### Publishing
-
-`wasm-pack` supports [three different targets](https://rustwasm.github.io/docs/wasm-pack/commands/build.html#target):
-
-- `bundler` (used with bundlers like Webpack)
-- `nodejs` (used with Node, supports `require`)
-- `web` (used as an ES module directly from the web)
-
-There are good reasons to distribute as any of these... so why not distribute as all three? `wasm-pack` doesn't support this directly but the build script in `scripts/build.sh` calls `wasm-pack` three times and merges the outputs. This means that bundler users can use the default, Node users can use `parquet-wasm/node` and ES Modules users can use `parquet-wasm/web` in their imports.
-
-To publish:
-
-```
-bash ./scripts/build.sh
-wasm-pack publish
-```
+- [ ] More tests :smile:
 
 ## Acknowledgements
 
