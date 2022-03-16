@@ -1,73 +1,8 @@
+use crate::common::writer_properties::{Compression, Encoding, WriterVersion};
 use wasm_bindgen::prelude::*;
 
-/// Encodings supported by Parquet.
-/// Not all encodings are valid for all types. These enums are also used to specify the
-/// encoding of definition and repetition levels.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[allow(non_camel_case_types)]
-#[wasm_bindgen]
-pub enum Encoding {
-    /// Default byte encoding.
-    /// - BOOLEAN - 1 bit per value, 0 is false; 1 is true.
-    /// - INT32 - 4 bytes per value, stored as little-endian.
-    /// - INT64 - 8 bytes per value, stored as little-endian.
-    /// - FLOAT - 4 bytes per value, stored as little-endian.
-    /// - DOUBLE - 8 bytes per value, stored as little-endian.
-    /// - BYTE_ARRAY - 4 byte length stored as little endian, followed by bytes.
-    /// - FIXED_LEN_BYTE_ARRAY - just the bytes are stored.
-    PLAIN,
-
-    /// **Deprecated** dictionary encoding.
-    ///
-    /// The values in the dictionary are encoded using PLAIN encoding.
-    /// Since it is deprecated, RLE_DICTIONARY encoding is used for a data page, and
-    /// PLAIN encoding is used for dictionary page.
-    PLAIN_DICTIONARY,
-
-    /// Group packed run length encoding.
-    ///
-    /// Usable for definition/repetition levels encoding and boolean values.
-    RLE,
-
-    /// Bit packed encoding.
-    ///
-    /// This can only be used if the data has a known max width.
-    /// Usable for definition/repetition levels encoding.
-    BIT_PACKED,
-
-    /// Delta encoding for integers, either INT32 or INT64.
-    ///
-    /// Works best on sorted data.
-    DELTA_BINARY_PACKED,
-
-    /// Encoding for byte arrays to separate the length values and the data.
-    ///
-    /// The lengths are encoded using DELTA_BINARY_PACKED encoding.
-    DELTA_LENGTH_BYTE_ARRAY,
-
-    /// Incremental encoding for byte arrays.
-    ///
-    /// Prefix lengths are encoded using DELTA_BINARY_PACKED encoding.
-    /// Suffixes are stored using DELTA_LENGTH_BYTE_ARRAY encoding.
-    DELTA_BYTE_ARRAY,
-
-    /// Dictionary encoding.
-    ///
-    /// The ids are encoded using the RLE encoding.
-    RLE_DICTIONARY,
-
-    /// Encoding for floating-point data.
-    ///
-    /// K byte-streams are created where K is the size in bytes of the data type.
-    /// The individual bytes of an FP value are scattered to the corresponding stream and
-    /// the streams are concatenated.
-    /// This itself does not reduce the size of the data but can lead to better compression
-    /// afterwards.
-    BYTE_STREAM_SPLIT,
-}
-
 impl Encoding {
-    pub fn to_upstream(self) -> parquet::basic::Encoding {
+    pub fn to_arrow1(self) -> parquet::basic::Encoding {
         match self {
             Encoding::PLAIN => parquet::basic::Encoding::PLAIN,
             Encoding::PLAIN_DICTIONARY => parquet::basic::Encoding::PLAIN_DICTIONARY,
@@ -82,27 +17,12 @@ impl Encoding {
     }
 }
 
-/// Supported compression algorithms.
-#[derive(Debug, Clone, Copy, PartialEq)]
-#[allow(non_camel_case_types)]
-#[wasm_bindgen]
-pub enum Compression {
-    UNCOMPRESSED,
-    SNAPPY,
-    GZIP,
-    LZO,
-    BROTLI,
-    LZ4,
-    ZSTD,
-}
-
 impl Compression {
-    pub fn to_upstream(self) -> parquet::basic::Compression {
+    pub fn to_arrow1(self) -> parquet::basic::Compression {
         match self {
             Compression::UNCOMPRESSED => parquet::basic::Compression::UNCOMPRESSED,
             Compression::SNAPPY => parquet::basic::Compression::SNAPPY,
             Compression::GZIP => parquet::basic::Compression::GZIP,
-            Compression::LZO => parquet::basic::Compression::LZO,
             Compression::BROTLI => parquet::basic::Compression::BROTLI,
             Compression::LZ4 => parquet::basic::Compression::LZ4,
             Compression::ZSTD => parquet::basic::Compression::ZSTD,
@@ -110,18 +30,11 @@ impl Compression {
     }
 }
 
-#[allow(non_camel_case_types)]
-#[wasm_bindgen]
-pub enum WriterVersion {
-    PARQUET_1_0,
-    PARQUET_2_0,
-}
-
 impl WriterVersion {
-    pub fn to_upstream(self) -> parquet::file::properties::WriterVersion {
+    pub fn to_arrow1(self) -> parquet::file::properties::WriterVersion {
         match self {
-            WriterVersion::PARQUET_1_0 => parquet::file::properties::WriterVersion::PARQUET_1_0,
-            WriterVersion::PARQUET_2_0 => parquet::file::properties::WriterVersion::PARQUET_2_0,
+            WriterVersion::V1 => parquet::file::properties::WriterVersion::PARQUET_1_0,
+            WriterVersion::V2 => parquet::file::properties::WriterVersion::PARQUET_2_0,
         }
     }
 }
@@ -161,7 +74,7 @@ impl WriterPropertiesBuilder {
     #[wasm_bindgen(js_name = setWriterVersion)]
     pub fn set_writer_version(self, value: WriterVersion) -> Self {
         Self {
-            0: self.0.set_writer_version(value.to_upstream()),
+            0: self.0.set_writer_version(value.to_arrow1()),
         }
     }
 
@@ -230,7 +143,7 @@ impl WriterPropertiesBuilder {
     #[wasm_bindgen(js_name = setEncoding)]
     pub fn set_encoding(self, value: Encoding) -> Self {
         Self {
-            0: self.0.set_encoding(value.to_upstream()),
+            0: self.0.set_encoding(value.to_arrow1()),
         }
     }
 
@@ -238,7 +151,7 @@ impl WriterPropertiesBuilder {
     #[wasm_bindgen(js_name = setCompression)]
     pub fn set_compression(self, value: Compression) -> Self {
         Self {
-            0: self.0.set_compression(value.to_upstream()),
+            0: self.0.set_compression(value.to_arrow1()),
         }
     }
 
@@ -287,7 +200,7 @@ impl WriterPropertiesBuilder {
     pub fn set_column_encoding(self, col: String, value: Encoding) -> Self {
         let column_path = parquet::schema::types::ColumnPath::from(col);
         Self {
-            0: self.0.set_column_encoding(column_path, value.to_upstream()),
+            0: self.0.set_column_encoding(column_path, value.to_arrow1()),
         }
     }
 
@@ -299,7 +212,7 @@ impl WriterPropertiesBuilder {
         Self {
             0: self
                 .0
-                .set_column_compression(column_path, value.to_upstream()),
+                .set_column_compression(column_path, value.to_arrow1()),
         }
     }
 
