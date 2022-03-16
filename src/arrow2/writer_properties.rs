@@ -44,6 +44,7 @@ impl WriterVersion {
     }
 }
 
+/// Immutable struct to hold writing configuration for writeParquet2
 #[wasm_bindgen]
 pub struct WriterProperties {
     write_options: arrow2::io::parquet::write::WriteOptions,
@@ -60,6 +61,7 @@ impl WriterProperties {
     }
 }
 
+/// Builder to create a writing configuration for writeParquet2
 #[wasm_bindgen]
 pub struct WriterPropertiesBuilder {
     write_options: arrow2::io::parquet::write::WriteOptions,

@@ -79,6 +79,7 @@ pub enum Encoding {
     BYTE_STREAM_SPLIT,
 }
 
+/// The Parquet version to use when writing
 #[allow(non_camel_case_types)]
 #[wasm_bindgen]
 pub enum WriterVersion {

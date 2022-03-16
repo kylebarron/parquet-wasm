@@ -3,6 +3,8 @@ use arrow2::io::ipc::read::{read_file_metadata, FileReader as IPCFileReader};
 use arrow2::io::parquet::write::{FileWriter as ParquetFileWriter, RowGroupIterator};
 use std::io::Cursor;
 
+/// Internal function to write a buffer of data in Arrow IPC File format to a Parquet file using
+/// the arrow2 and parquet2 crates
 pub fn write_parquet(
     arrow_file: &[u8],
     writer_properties: crate::arrow2::writer_properties::WriterProperties,
