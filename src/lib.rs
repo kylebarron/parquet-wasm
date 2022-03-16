@@ -19,5 +19,5 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;*/
 
 #[wasm_bindgen(js_name = setPanicHook)]
 pub fn set_panic_hook() {
-    utils::set_panic_hook();
+    crate::utils::set_panic_hook();
 }

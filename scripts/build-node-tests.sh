@@ -25,6 +25,8 @@ wasm-pack build \
   --target nodejs \
   --no-default-features \
   --features arrow2 \
+  --features reader \
+  --features writer \
   --features parquet2_supported_compressions
 
 # Copy files into pkg/

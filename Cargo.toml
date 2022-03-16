@@ -16,9 +16,13 @@ crate-type = ["cdylib", "rlib"]
 [features]
 default = [
   "arrow1",
-  "parquet_supported_compressions"
+  "parquet_supported_compressions",
+  "reader",
+  "writer"
 ]
 arrow1 = ["arrow", "parquet"]
+reader = []
+writer = []
 
 parquet_supported_compressions = [
   "parquet/snap",
@@ -53,6 +57,8 @@ full = [
   "parquet2/snappy",
   # ZSTD should work in parquet2's next release, already merged
   # "parquet2/zstd",
+  "reader",
+  "writer"
 ]
 
 [dependencies]

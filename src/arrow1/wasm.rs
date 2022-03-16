@@ -5,6 +5,7 @@ use wasm_bindgen::prelude::*;
 /// Read a Parquet file into a buffer of Arrow data in IPC Stream format, using the arrow and
 /// parquet Rust crates.
 #[wasm_bindgen(js_name = readParquet)]
+#[cfg(feature = "reader")]
 pub fn read_parquet(parquet_file: &[u8]) -> Result<Uint8Array, JsValue> {
     match crate::arrow1::reader::read_parquet(parquet_file) {
         Ok(buffer) => copy_vec_to_uint8_array(buffer),
@@ -16,6 +17,7 @@ pub fn read_parquet(parquet_file: &[u8]) -> Result<Uint8Array, JsValue> {
 /// parquet Rust crates. Requires a writer_properties argument that can be built from
 /// WriterPropertiesBuilder.
 #[wasm_bindgen(js_name = writeParquet)]
+#[cfg(feature = "writer")]
 pub fn write_parquet(
     arrow_file: &[u8],
     // TODO: make this param optional?
