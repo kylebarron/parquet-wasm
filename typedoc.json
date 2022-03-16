@@ -1,0 +1,17 @@
+{
+  "name": "parquet-wasm",
+  "entryPoints": [
+    "pkg/node.d.ts",
+    "pkg/node2.d.ts",
+    "pkg/parquet_wasm.d.ts",
+    "pkg/parquet_wasm2.d.ts",
+    "pkg/web.d.ts",
+    "pkg/web2.d.ts"
+  ],
+  "tsconfig": "tsconfig.docs.json",
+  "out": "docs_build",
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeExternals": true,
+  "includeVersion": true
+}
