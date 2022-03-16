@@ -1,12 +1,12 @@
 use arrow2::error::ArrowError;
 use arrow2::io::ipc::read::{read_file_metadata, FileReader as IPCFileReader};
-use arrow2::io::parquet::write::{
-    Compression, Encoding, FileWriter as ParquetFileWriter, RowGroupIterator, Version,
-    WriteOptions as ParquetWriteOptions,
-};
+use arrow2::io::parquet::write::{FileWriter as ParquetFileWriter, RowGroupIterator};
 use std::io::Cursor;
 
-pub fn write_parquet(arrow_file: &[u8]) -> Result<Vec<u8>, ArrowError> {
+pub fn write_parquet(
+    arrow_file: &[u8],
+    writer_properties: crate::arrow2::writer_properties::WriterProperties,
+) -> Result<Vec<u8>, ArrowError> {
     // Create IPC reader
     let mut input_file = Cursor::new(arrow_file);
     let stream_metadata = read_file_metadata(&mut input_file)?;
@@ -14,11 +14,8 @@ pub fn write_parquet(arrow_file: &[u8]) -> Result<Vec<u8>, ArrowError> {
 
     // Create Parquet writer
     let mut output_file: Vec<u8> = vec![];
-    let options = ParquetWriteOptions {
-        write_statistics: true,
-        compression: Compression::Snappy,
-        version: Version::V2,
-    };
+    let options = writer_properties.get_write_options();
+    let encoding = writer_properties.get_encoding();
 
     let schema = stream_metadata.schema.clone();
     let mut parquet_writer = ParquetFileWriter::try_new(&mut output_file, schema, options)?;
@@ -30,9 +27,9 @@ pub fn write_parquet(arrow_file: &[u8]) -> Result<Vec<u8>, ArrowError> {
         let iter = vec![Ok(chunk)];
 
         // Need to create an encoding for each column
-        let mut encodings: Vec<Encoding> = vec![];
+        let mut encodings = vec![];
         for _ in &stream_metadata.schema.fields {
-            encodings.push(Encoding::Plain);
+            encodings.push(encoding);
         }
 
         let row_groups = RowGroupIterator::try_new(

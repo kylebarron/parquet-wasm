@@ -6,6 +6,7 @@ mod arrow1;
 #[cfg(feature = "arrow2")]
 mod arrow2;
 
+mod common;
 mod utils;
 
 use wasm_bindgen::prelude::*;
