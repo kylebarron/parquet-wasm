@@ -14,3 +14,6 @@ wasm-pack.log
 www/data
 www/data/
 data/
+
+# Typedoc output
+docs/
