@@ -1,5 +1,5 @@
 import * as test from "tape";
-import * as wasm from "../../pkg/node";
+import * as wasm from "../../pkg/node2";
 import { readFileSync } from "fs";
 import { tableFromIPC, tableToIPC, Table } from "apache-arrow";
 import { testArrowTablesEqual, readExpectedArrowData } from "./utils";
@@ -27,7 +27,7 @@ test("read file", async (t) => {
   for (const testFile of testFiles) {
     const dataPath = `${dataDir}/${testFile}`;
     const arr = new Uint8Array(readFileSync(dataPath));
-    const table = tableFromIPC(wasm.readParquet(arr));
+    const table = tableFromIPC(wasm.readParquet2(arr));
     testArrowTablesEqual(t, expectedTable, table);
   }
 
@@ -38,15 +38,15 @@ test("write and read file", async (t) => {
   const dataPath = `${dataDir}/1-partition-brotli.parquet`;
   const buffer = readFileSync(dataPath);
   const arr = new Uint8Array(buffer);
-  const initialTable = tableFromIPC(wasm.readParquet(arr));
+  const initialTable = tableFromIPC(wasm.readParquet2(arr));
 
   const writerProperties = new wasm.WriterPropertiesBuilder().build();
 
-  const parquetBuffer = wasm.writeParquet(
-    tableToIPC(initialTable, "stream"),
+  const parquetBuffer = wasm.writeParquet2(
+    tableToIPC(initialTable, "file"),
     writerProperties
   );
-  const table = tableFromIPC(wasm.readParquet(parquetBuffer));
+  const table = tableFromIPC(wasm.readParquet2(parquetBuffer));
 
   testArrowTablesEqual(t, initialTable, table);
   t.end();
