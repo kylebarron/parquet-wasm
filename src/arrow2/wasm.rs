@@ -3,6 +3,7 @@ use js_sys::Uint8Array;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(js_name = readParquet2)]
+#[cfg(feature = "reader")]
 pub fn read_parquet2(parquet_file: &[u8]) -> Result<Uint8Array, JsValue> {
     match crate::arrow2::reader::read_parquet(parquet_file) {
         Ok(buffer) => copy_vec_to_uint8_array(buffer),
@@ -11,6 +12,7 @@ pub fn read_parquet2(parquet_file: &[u8]) -> Result<Uint8Array, JsValue> {
 }
 
 #[wasm_bindgen(js_name = writeParquet2)]
+#[cfg(feature = "writer")]
 pub fn write_parquet2(arrow_file: &[u8]) -> Result<Uint8Array, JsValue> {
     match crate::arrow2::writer::write_parquet(arrow_file) {
         Ok(buffer) => copy_vec_to_uint8_array(buffer),
