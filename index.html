@@ -1,0 +1,216 @@
+<!DOCTYPE html><html class="default"><head><meta charSet="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>parquet-wasm - v0.1.1</title><meta name="description" content="Documentation for parquet-wasm - v0.1.1"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="assets/style.css"/><link rel="stylesheet" href="assets/highlight.css"/><script async src="assets/search.js" id="search-script"></script></head><body><script>document.body.classList.add(localStorage.getItem("tsd-theme") || "os")</script><header><div class="tsd-page-toolbar"><div class="container"><div class="table-wrap"><div class="table-cell" id="tsd-search" data-base="."><div class="field"><label for="tsd-search-field" class="tsd-widget search no-caption">Search</label><input type="text" id="tsd-search-field"/></div><ul class="results"><li class="state loading">Preparing search index...</li><li class="state failure">The search index is not available</li></ul><a href="index.html" class="title">parquet-wasm - v0.1.1</a></div><div class="table-cell" id="tsd-widgets"><div id="tsd-filter"><a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a><div class="tsd-filter-group"><div class="tsd-select" id="tsd-filter-visibility"><span class="tsd-select-label">All</span><ul class="tsd-select-list"><li data-value="public">Public</li><li data-value="protected">Public/Protected</li><li data-value="private" class="selected">All</li></ul></div> <input type="checkbox" id="tsd-filter-inherited" checked/><label class="tsd-widget" for="tsd-filter-inherited">Inherited</label></div></div><a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a></div></div></div></div><div class="tsd-page-title"><div class="container"><h1> parquet-wasm - v0.1.1</h1></div></div></header><div class="container container-main"><div class="row"><div class="col-8 col-content"><div class="tsd-panel tsd-typography">
+<a href="#parquet-wasm" id="parquet-wasm" style="color: inherit; text-decoration: none;">
+  <h1><code>parquet-wasm</code></h1>
+</a>
+<p>WebAssembly bindings to read and write the <a href="https://parquet.apache.org/">Apache Parquet</a> format to and from <a href="https://arrow.apache.org/">Apache Arrow</a>.</p>
+<p>This is designed to be used alongside a JavaScript Arrow implementation, such as the canonical <a href="https://arrow.apache.org/docs/js/">JS Arrow library</a>.</p>
+<p>Including all compression codecs, the brotli-encoded WASM bundle is 881KB.</p>
+
+<a href="#install" id="install" style="color: inherit; text-decoration: none;">
+  <h2>Install</h2>
+</a>
+<p><code>parquet-wasm</code> is published to NPM. Install with</p>
+<pre><code><span class="hl-0">yarn</span><span class="hl-1"> </span><span class="hl-0">add</span><span class="hl-1"> </span><span class="hl-0">parquet</span><span class="hl-1">-</span><span class="hl-0">wasm</span><br/><span class="hl-1"># </span><span class="hl-0">or</span><br/><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-0">install</span><span class="hl-1"> </span><span class="hl-0">parquet</span><span class="hl-1">-</span><span class="hl-0">wasm</span>
+</code></pre>
+
+<a href="#api" id="api" style="color: inherit; text-decoration: none;">
+  <h2>API</h2>
+</a>
+
+<a href="#two-apis" id="two-apis" style="color: inherit; text-decoration: none;">
+  <h3>Two APIs?</h3>
+</a>
+<p>These bindings expose <em>two</em> APIs to users because there are <em>two separate implementations</em> of Parquet and Arrow in Rust.</p>
+<ul>
+<li><a href="https://crates.io/crates/parquet"><code>parquet</code></a> and <a href="https://crates.io/crates/arrow"><code>arrow</code></a>: These are the &quot;official&quot; Rust implementations of Arrow and Parquet. These projects started earlier and may be more feature complete.</li>
+<li><a href="https://crates.io/crates/parquet2"><code>parquet2</code></a> and <a href="https://crates.io/crates/arrow2"><code>arrow2</code></a>: These are safer (in terms of memory access) and claim to be faster, though I haven&#39;t written my own benchmarks yet.</li>
+</ul>
+<p>Since these parallel projects exist, why not give the user the choice of which to use? In general the reading API is identical in both APIs, however the write options differ between the two projects.</p>
+
+<a href="#choice-of-bundles" id="choice-of-bundles" style="color: inherit; text-decoration: none;">
+  <h3>Choice of bundles</h3>
+</a>
+<p>Presumably no one wants to use both <code>parquet</code> and <code>parquet2</code> at once, so the default bundles separate <code>parquet</code> and <code>parquet2</code> into separate entry points to keep bundle size as small as possible. The following describe the six bundles available:</p>
+<table>
+<thead>
+<tr>
+<th>Entry point</th>
+<th>Rust crates used</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>parquet-wasm</code></td>
+<td><code>parquet</code> and <code>arrow</code></td>
+<td>&quot;Bundler&quot; build, to be used in bundlers such as Webpack</td>
+</tr>
+<tr>
+<td><code>parquet-wasm/node</code></td>
+<td><code>parquet</code> and <code>arrow</code></td>
+<td>Node build, to be used with <code>require</code> in NodeJS</td>
+</tr>
+<tr>
+<td><code>parquet-wasm/web</code></td>
+<td><code>parquet</code> and <code>arrow</code></td>
+<td>ESM, to be used directly from the Web as an ES Module</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><code>parquet-wasm/parquet_wasm2</code></td>
+<td><code>parquet2</code> and <code>arrow2</code></td>
+<td>&quot;Bundler&quot; build, to be used in bundlers such as Webpack</td>
+</tr>
+<tr>
+<td><code>parquet-wasm/node2</code></td>
+<td><code>parquet2</code> and <code>arrow2</code></td>
+<td>Node build, to be used with <code>require</code> in NodeJS</td>
+</tr>
+<tr>
+<td><code>parquet-wasm/web2</code></td>
+<td><code>parquet2</code> and <code>arrow2</code></td>
+<td>ESM, to be used directly from the Web as an ES Module</td>
+</tr>
+</tbody></table>
+<p>Note that when using the <code>/web</code> and <code>/web2</code> bundles, the default export must be awaited. See <a href="https://rustwasm.github.io/docs/wasm-bindgen/examples/without-a-bundler.html">here</a> for an example.</p>
+
+<a href="#parquet-api" id="parquet-api" style="color: inherit; text-decoration: none;">
+  <h3><code>parquet</code> API</h3>
+</a>
+<p>This implementation uses the <a href="https://crates.io/crates/arrow"><code>arrow</code></a> and <a href=""><code>parquet</code></a> Rust crates.</p>
+
+<a href="#readparquet" id="readparquet" style="color: inherit; text-decoration: none;">
+  <h4><code>readParquet</code></h4>
+</a>
+<p><code>readParquet(parquet_file: Uint8Array): Uint8Array</code></p>
+<p>Takes as input a <code>Uint8Array</code> containing bytes from a loaded Parquet file. Returns a <code>Uint8Array</code> with data in <a href="https://arrow.apache.org/docs/format/Columnar.html#ipc-streaming-format">Arrow IPC <strong>Stream</strong> format</a>. To parse this into an Arrow table, pass the result of <code>readParquet</code> to <code>arrow.tableFromIPC</code> in the JS bindings.</p>
+
+<a href="#writeparquet" id="writeparquet" style="color: inherit; text-decoration: none;">
+  <h4><code>writeParquet</code></h4>
+</a>
+<p><code>writeParquet(arrow_file: Uint8Array, writer_properties: WriterProperties): Uint8Array</code></p>
+<p>Takes as input a <code>Uint8Array</code> containing bytes in <a href="https://arrow.apache.org/docs/format/Columnar.html#ipc-streaming-format">Arrow IPC <strong>Stream</strong> format</a>. If you have an Arrow table, call <code>arrow.tableToIPC(table, &#39;stream&#39;)</code> and pass the result to <code>writeParquet</code>.</p>
+<p>The second argument must be an instance of <code>WriterProperties</code>, which can be created by calling <code>new WriterPropertiesBuilder().build()</code>.</p>
+
+<a href="#writerpropertiesbuilder" id="writerpropertiesbuilder" style="color: inherit; text-decoration: none;">
+  <h4><code>WriterPropertiesBuilder</code></h4>
+</a>
+<p>A class to build a configuration used for writing a parquet file.</p>
+<p>For example, to create a writing configuration with Snappy compression:</p>
+<pre><code class="language-js"><span class="hl-2">import</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-0">WriterPropertiesBuilder</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-0">Compression</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-0">writeParquet</span><span class="hl-1">,</span><br/><span class="hl-1">} </span><span class="hl-2">from</span><span class="hl-1"> </span><span class="hl-3">&quot;parquet-wasm&quot;</span><span class="hl-1">;</span><br/><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-5">writerProperties</span><span class="hl-1"> = </span><span class="hl-4">new</span><span class="hl-1"> </span><span class="hl-6">WriterPropertiesBuilder</span><span class="hl-1">()</span><br/><span class="hl-1">  .</span><span class="hl-6">setCompression</span><span class="hl-1">(</span><span class="hl-0">Compression</span><span class="hl-1">.</span><span class="hl-5">SNAPPY</span><span class="hl-1">)</span><br/><span class="hl-1">  .</span><span class="hl-6">build</span><span class="hl-1">();</span><br/><span class="hl-6">writeParquet</span><span class="hl-1">(</span><span class="hl-4">new</span><span class="hl-1"> </span><span class="hl-7">Uint8Array</span><span class="hl-1">(), </span><span class="hl-0">writerProperties</span><span class="hl-1">);</span>
+</code></pre>
+
+<a href="#parquet2-api" id="parquet2-api" style="color: inherit; text-decoration: none;">
+  <h3><code>parquet2</code> API</h3>
+</a>
+
+<a href="#readparquet2" id="readparquet2" style="color: inherit; text-decoration: none;">
+  <h4><code>readParquet2</code></h4>
+</a>
+<p><code>readParquet2(parquet_file: Uint8Array): Uint8Array</code></p>
+<p>Takes as input a <code>Uint8Array</code> containing bytes from a loaded Parquet file. Returns a <code>Uint8Array</code> with data in <a href="https://arrow.apache.org/docs/format/Columnar.html#ipc-streaming-format">Arrow IPC <strong>Stream</strong> format</a>. To parse this into an Arrow table, pass the result of <code>readParquet2</code> to <code>arrow.tableFromIPC</code> in the JS bindings.</p>
+
+<a href="#writeparquet2" id="writeparquet2" style="color: inherit; text-decoration: none;">
+  <h4><code>writeParquet2</code></h4>
+</a>
+<p><code>writeParquet2(arrow_file: Uint8Array, writer_properties: WriterProperties): Uint8Array</code></p>
+<p>Takes as input a <code>Uint8Array</code> containing bytes in <a href="https://arrow.apache.org/docs/format/Columnar.html#ipc-file-format">Arrow IPC <strong>File</strong> format</a> [^1]. If you have an Arrow table, call <code>arrow.tableToIPC(table, &#39;file&#39;)</code> and pass the result to <code>writeParquet2</code>.</p>
+<p>[^1]: I&#39;m not great at Rust and the IPC File format seemed easier to parse in Rust than the IPC Stream format :slightly_smiling_face:. Hopefully this function will standardize on the Stream format in the future.</p>
+<p>For example, to create a writing configuration with Snappy compression:</p>
+<pre><code class="language-js"><span class="hl-2">import</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-0">WriterPropertiesBuilder</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-0">Compression</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-0">writeParquet2</span><span class="hl-1">,</span><br/><span class="hl-1">} </span><span class="hl-2">from</span><span class="hl-1"> </span><span class="hl-3">&quot;parquet-wasm&quot;</span><span class="hl-1">;</span><br/><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-5">writerProperties</span><span class="hl-1"> = </span><span class="hl-4">new</span><span class="hl-1"> </span><span class="hl-6">WriterPropertiesBuilder</span><span class="hl-1">()</span><br/><span class="hl-1">  .</span><span class="hl-6">setCompression</span><span class="hl-1">(</span><span class="hl-0">Compression</span><span class="hl-1">.</span><span class="hl-5">SNAPPY</span><span class="hl-1">)</span><br/><span class="hl-1">  .</span><span class="hl-6">build</span><span class="hl-1">();</span><br/><span class="hl-6">writeParquet2</span><span class="hl-1">(</span><span class="hl-4">new</span><span class="hl-1"> </span><span class="hl-7">Uint8Array</span><span class="hl-1">(), </span><span class="hl-0">writerProperties</span><span class="hl-1">);</span>
+</code></pre>
+
+<a href="#utilities" id="utilities" style="color: inherit; text-decoration: none;">
+  <h3>Utilities</h3>
+</a>
+
+<a href="#setpanichook" id="setpanichook" style="color: inherit; text-decoration: none;">
+  <h4><code>setPanicHook</code></h4>
+</a>
+<p><code>setPanicHook(): void</code></p>
+<p>Sets <a href="https://github.com/rustwasm/console_error_panic_hook"><code>console_error_panic_hook</code></a> in Rust, which provides better debugging of panics by having more informative <code>console.error</code> messages. Initialize this first if you&#39;re getting errors such as <code>RuntimeError: Unreachable executed</code>.</p>
+<p>The WASM bundle must be compiled with the <code>console_error_panic_hook</code> for this function to exist.</p>
+
+<a href="#example" id="example" style="color: inherit; text-decoration: none;">
+  <h2>Example</h2>
+</a>
+<pre><code class="language-js"><span class="hl-2">import</span><span class="hl-1"> { </span><span class="hl-0">tableFromArrays</span><span class="hl-1">, </span><span class="hl-0">tableFromIPC</span><span class="hl-1">, </span><span class="hl-0">tableToIPC</span><span class="hl-1"> } </span><span class="hl-2">from</span><span class="hl-1"> </span><span class="hl-3">&quot;apache-arrow&quot;</span><span class="hl-1">;</span><br/><span class="hl-2">import</span><span class="hl-1"> { </span><span class="hl-0">readParquet</span><span class="hl-1">, </span><span class="hl-0">writeParquet</span><span class="hl-1"> } </span><span class="hl-2">from</span><span class="hl-1"> </span><span class="hl-3">&quot;parquet-wasm&quot;</span><span class="hl-1">;</span><br/><br/><span class="hl-8">// Create Arrow Table in JS</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-5">LENGTH</span><span class="hl-1"> = </span><span class="hl-9">2000</span><span class="hl-1">;</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-5">rainAmounts</span><span class="hl-1"> = </span><span class="hl-7">Float32Array</span><span class="hl-1">.</span><span class="hl-6">from</span><span class="hl-1">({ </span><span class="hl-0">length:</span><span class="hl-1"> </span><span class="hl-5">LENGTH</span><span class="hl-1"> }, () </span><span class="hl-4">=&gt;</span><br/><span class="hl-1">  </span><span class="hl-7">Number</span><span class="hl-1">((</span><span class="hl-7">Math</span><span class="hl-1">.</span><span class="hl-6">random</span><span class="hl-1">() * </span><span class="hl-9">20</span><span class="hl-1">).</span><span class="hl-6">toFixed</span><span class="hl-1">(</span><span class="hl-9">1</span><span class="hl-1">))</span><br/><span class="hl-1">);</span><br/><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-5">rainDates</span><span class="hl-1"> = </span><span class="hl-7">Array</span><span class="hl-1">.</span><span class="hl-6">from</span><span class="hl-1">(</span><br/><span class="hl-1">  { </span><span class="hl-0">length:</span><span class="hl-1"> </span><span class="hl-5">LENGTH</span><span class="hl-1"> },</span><br/><span class="hl-1">  (</span><span class="hl-0">_</span><span class="hl-1">, </span><span class="hl-0">i</span><span class="hl-1">) </span><span class="hl-4">=&gt;</span><span class="hl-1"> </span><span class="hl-4">new</span><span class="hl-1"> </span><span class="hl-7">Date</span><span class="hl-1">(</span><span class="hl-7">Date</span><span class="hl-1">.</span><span class="hl-6">now</span><span class="hl-1">() - </span><span class="hl-9">1000</span><span class="hl-1"> * </span><span class="hl-9">60</span><span class="hl-1"> * </span><span class="hl-9">60</span><span class="hl-1"> * </span><span class="hl-9">24</span><span class="hl-1"> * </span><span class="hl-0">i</span><span class="hl-1">)</span><br/><span class="hl-1">);</span><br/><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-5">rainfall</span><span class="hl-1"> = </span><span class="hl-6">tableFromArrays</span><span class="hl-1">({</span><br/><span class="hl-1">  </span><span class="hl-0">precipitation:</span><span class="hl-1"> </span><span class="hl-0">rainAmounts</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-0">date:</span><span class="hl-1"> </span><span class="hl-0">rainDates</span><span class="hl-1">,</span><br/><span class="hl-1">});</span><br/><br/><span class="hl-8">// Write Arrow Table to Parquet</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-5">parquetBuffer</span><span class="hl-1"> = </span><span class="hl-6">writeParquet</span><span class="hl-1">(</span><span class="hl-6">tableToIPC</span><span class="hl-1">(</span><span class="hl-0">rainfall</span><span class="hl-1">, </span><span class="hl-3">&quot;stream&quot;</span><span class="hl-1">));</span><br/><br/><span class="hl-8">// Read Parquet buffer back to Arrow Table</span><br/><span class="hl-4">const</span><span class="hl-1"> </span><span class="hl-5">table</span><span class="hl-1"> = </span><span class="hl-6">tableFromIPC</span><span class="hl-1">(</span><span class="hl-6">readParquet</span><span class="hl-1">(</span><span class="hl-0">parquetBuffer</span><span class="hl-1">));</span><br/><span class="hl-0">console</span><span class="hl-1">.</span><span class="hl-6">log</span><span class="hl-1">(</span><span class="hl-0">table</span><span class="hl-1">.</span><span class="hl-0">schema</span><span class="hl-1">.</span><span class="hl-6">toString</span><span class="hl-1">());</span><br/><span class="hl-8">// Schema&lt;{ 0: precipitation: Float32, 1: date: Date64&lt;MILLISECOND&gt; }&gt;</span>
+</code></pre>
+
+<a href="#compression-support" id="compression-support" style="color: inherit; text-decoration: none;">
+  <h2>Compression support</h2>
+</a>
+<p>The Parquet specification permits several compression codecs. This library currently supports:</p>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> Uncompressed</li>
+<li><input checked="" disabled="" type="checkbox"> Snappy</li>
+<li><input checked="" disabled="" type="checkbox"> Gzip</li>
+<li><input checked="" disabled="" type="checkbox"> Brotli</li>
+<li><input disabled="" type="checkbox"> ZSTD. Will be supported using the next versions of the upstream packages <code>parquet</code> and <code>parquet2</code>.</li>
+<li><input disabled="" type="checkbox"> LZ4. Work is progressing but no support yet.</li>
+</ul>
+
+<a href="#custom-builds" id="custom-builds" style="color: inherit; text-decoration: none;">
+  <h2>Custom builds</h2>
+</a>
+<p>In some cases, you may know ahead of time that your Parquet files will only include a single compression codec, say Snappy, or even no compression at all. In these cases, you may want to create a custom build of <code>parquet-wasm</code> to keep bundle size at a minimum. If you install the Rust toolchain and <code>wasm-pack</code> (see <a href="#development">Development</a>), you can create a custom build with only the compression codecs you require.</p>
+
+<a href="#example-custom-builds" id="example-custom-builds" style="color: inherit; text-decoration: none;">
+  <h3>Example custom builds</h3>
+</a>
+<p>Reader-only bundle with Snappy compression using the <code>arrow</code> and <code>parquet</code> crates:</p>
+<pre><code><span class="hl-0">wasm</span><span class="hl-1">-</span><span class="hl-0">pack</span><span class="hl-1"> </span><span class="hl-0">build</span><span class="hl-1"> --</span><span class="hl-0">no</span><span class="hl-1">-</span><span class="hl-2">default</span><span class="hl-1">-</span><span class="hl-0">features</span><span class="hl-1"> --</span><span class="hl-0">features</span><span class="hl-1"> </span><span class="hl-0">arrow1</span><span class="hl-1"> --</span><span class="hl-0">features</span><span class="hl-1"> </span><span class="hl-0">parquet</span><span class="hl-1">/</span><span class="hl-0">snap</span><span class="hl-1"> --</span><span class="hl-0">features</span><span class="hl-1"> </span><span class="hl-0">reader</span>
+</code></pre>
+<p>Writer-only bundle with no compression support using the <code>arrow2</code> and <code>parquet2</code> crates, targeting Node:</p>
+<pre><code><span class="hl-0">wasm</span><span class="hl-1">-</span><span class="hl-0">pack</span><span class="hl-1"> </span><span class="hl-0">build</span><span class="hl-1"> --</span><span class="hl-0">target</span><span class="hl-1"> </span><span class="hl-0">nodejs</span><span class="hl-1"> --</span><span class="hl-0">no</span><span class="hl-1">-</span><span class="hl-2">default</span><span class="hl-1">-</span><span class="hl-0">features</span><span class="hl-1"> --</span><span class="hl-0">features</span><span class="hl-1"> </span><span class="hl-0">arrow2</span><span class="hl-1"> --</span><span class="hl-0">features</span><span class="hl-1"> </span><span class="hl-0">writer</span>
+</code></pre>
+<p>Debug bundle with reader and writer support, targeting Node, using <code>arrow</code> and <code>parquet</code> crates with all their supported compressions, with <code>console_error_panic_hook</code> enabled:</p>
+<pre><code class="language-bash"><span class="hl-1">wasm-pack build --dev --target nodejs \</span><br/><span class="hl-1">  --no-default-features --features arrow1 \</span><br/><span class="hl-1">  --features reader --features writer \</span><br/><span class="hl-1">  --features parquet_supported_compressions \</span><br/><span class="hl-1">  --features console_error_panic_hook</span><br/><span class="hl-8"># Or, given the fact that the default feature includes several of these features, a shorter version:</span><br/><span class="hl-1">wasm-pack build --dev --target nodejs --features console_error_panic_hook</span>
+</code></pre>
+<p>Refer to the <a href="https://rustwasm.github.io/docs/wasm-pack/commands/build.html"><code>wasm-pack</code> documentation</a> for more info on flags such as <code>--release</code>, <code>--dev</code>, <code>target</code>, and to the <a href="https://doc.rust-lang.org/cargo/reference/features.html">Cargo documentation</a> for more info on how to use features.</p>
+
+<a href="#available-features" id="available-features" style="color: inherit; text-decoration: none;">
+  <h3>Available features</h3>
+</a>
+<ul>
+<li><code>arrow1</code>: Use the <code>arrow</code> and <code>parquet</code> crates</li>
+<li><code>arrow2</code>: Use the <code>arrow2</code> and <code>parquet2</code> crates</li>
+<li><code>reader</code>: Activate read support.</li>
+<li><code>writer</code>: Activate write support.</li>
+<li><code>parquet_supported_compressions</code>: Activate all supported compressions for the <code>parquet</code> crate</li>
+<li><code>parquet2_supported_compressions</code>: Activate all supported compressions for the <code>parquet2</code> crate</li>
+<li>parquet compression features. Should only be activated when <code>arrow1</code> is activated.<ul>
+<li><code>parquet/brotli</code>: Activate Brotli compression in the <code>parquet</code> crate.</li>
+<li><code>parquet/flate2</code>: Activate Gzip compression in the <code>parquet</code> crate.</li>
+<li><code>parquet/snap</code>: Activate Snappy compression in the <code>parquet</code> crate.</li>
+<li><del><code>parquet/lz4</code></del>: <del>Activate LZ4 compression in the <code>parquet</code> crate.</del> WASM-compatible version not yet implemented in the <code>parquet</code> crate.</li>
+<li><del><code>parquet/zstd</code></del>: <del>Activate ZSTD compression in the <code>parquet</code> crate.</del> ZSTD should work in parquet&#39;s next release, pending <a href="https://github.com/apache/arrow-rs/pull/1414">https://github.com/apache/arrow-rs/pull/1414</a></li>
+</ul>
+</li>
+<li>parquet2 compression features. Should only be activated when <code>arrow2</code> is activated.<ul>
+<li><code>parquet2/brotli</code>: Activate Brotli compression in the <code>parquet2</code> crate.</li>
+<li><code>parquet2/gzip</code>: Activate Gzip compression in the <code>parquet2</code> crate.</li>
+<li><code>parquet2/snappy</code>: Activate Snappy compression in the <code>parquet2</code> crate.</li>
+<li><del><code>parquet2/lz4</code></del>: <del>Activate LZ4 compression in the <code>parquet2</code> crate</del>. WASM-compatible version not yet implemented, pending <a href="https://github.com/jorgecarleitao/parquet2/pull/91">https://github.com/jorgecarleitao/parquet2/pull/91</a></li>
+<li><del><code>parquet2/zstd</code></del>: <del>Activate ZSTD compression in the <code>parquet2</code> crate.</del> ZSTD should work in parquet2&#39;s next release.</li>
+</ul>
+</li>
+<li><code>console_error_panic_hook</code>: Expose the <code>setPanicHook</code> function for better error messages for Rust panics.</li>
+</ul>
+
+<a href="#future-work" id="future-work" style="color: inherit; text-decoration: none;">
+  <h2>Future work</h2>
+</a>
+<ul>
+<li><input disabled="" type="checkbox"> More tests :smile:</li>
+</ul>
+
+<a href="#acknowledgements" id="acknowledgements" style="color: inherit; text-decoration: none;">
+  <h2>Acknowledgements</h2>
+</a>
+<p>A starting point of my work came from @my-liminal-space&#39;s <a href="https://github.com/my-liminal-space/read-parquet-browser"><code>read-parquet-browser</code></a> (which is also dual licensed MIT and Apache 2).</p>
+<p>@domoritz&#39;s <a href="https://github.com/domoritz/arrow-wasm"><code>arrow-wasm</code></a> was a very helpful reference for bootstrapping Rust-WASM bindings.</p>
+</div></div><div class="col-4 col-menu menu-sticky-wrap menu-highlight"><nav class="tsd-navigation primary"><ul><li class="current"><a href="modules.html">Modules</a></li><li class=" tsd-kind-module"><a href="modules/node.html">node</a></li><li class=" tsd-kind-module"><a href="modules/node2.html">node2</a></li><li class=" tsd-kind-module"><a href="modules/parquet_wasm.html">parquet_<wbr/>wasm</a></li><li class=" tsd-kind-module"><a href="modules/parquet_wasm2.html">parquet_<wbr/>wasm2</a></li><li class=" tsd-kind-module"><a href="modules/web.html">web</a></li><li class=" tsd-kind-module"><a href="modules/web2.html">web2</a></li></ul></nav></div></div></div><footer class="with-border-bottom"><div class="container"><h2>Legend</h2><div class="tsd-legend-group"><ul class="tsd-legend"><li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li><li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li></ul></div><h2>Settings</h2><p>Theme <select id="theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></p></div></footer><div class="container tsd-generator"><p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div><div class="overlay"></div><script src="assets/main.js"></script></body></html>
