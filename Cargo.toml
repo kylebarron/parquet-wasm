@@ -14,7 +14,7 @@ categories = ["wasm"]
 crate-type = ["cdylib", "rlib"]
 
 [features]
-default = ["console_error_panic_hook", "arrow1"]
+default = ["arrow1"]
 arrow1 = ["arrow", "parquet"]
 
 [dependencies]
@@ -54,5 +54,7 @@ wasm-bindgen-test = "0.3.13"
 
 [profile.release]
 # Tell `rustc` to optimize for small code size.
-opt-level = "z"
+# As of 3/15/22, opt-level = s was smallest
+# https://github.com/kylebarron/parquet-wasm/pull/48
+opt-level = "s"
 lto = true
