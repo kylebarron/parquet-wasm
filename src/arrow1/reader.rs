@@ -5,6 +5,8 @@ use parquet::file::reader::{FileReader, SerializedFileReader};
 use parquet::file::serialized_reader::SliceableCursor;
 use std::sync::Arc;
 
+/// Internal function to read a buffer with Parquet data into a buffer with Arrow IPC Stream data
+/// using the arrow and parquet crates
 pub fn read_parquet(parquet_file: &[u8]) -> Result<Vec<u8>, ParquetError> {
     // Create Parquet reader
     let sliceable_cursor = SliceableCursor::new(Arc::new(parquet_file.to_vec()));

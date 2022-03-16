@@ -4,6 +4,8 @@ use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IP
 use arrow2::io::parquet::read::FileReader as ParquetFileReader;
 use std::io::Cursor;
 
+/// Internal function to read a buffer with Parquet data into a buffer with Arrow IPC Stream data
+/// using the arrow2 and parquet2 crates
 pub fn read_parquet(parquet_file: &[u8]) -> Result<Vec<u8>, ArrowError> {
     // Create Parquet reader
     let input_file = Cursor::new(parquet_file);
