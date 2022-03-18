@@ -3,8 +3,8 @@
   "entryPoints": [
     "pkg/node.d.ts",
     "pkg/node2.d.ts",
-    "pkg/parquet_wasm.d.ts",
-    "pkg/parquet_wasm2.d.ts",
+    "pkg/bundler.d.ts",
+    "pkg/bundler2.d.ts",
     "pkg/web.d.ts",
     "pkg/web2.d.ts"
   ],

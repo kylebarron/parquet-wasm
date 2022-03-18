@@ -31,15 +31,15 @@ Since these parallel projects exist, why not give the user the choice of which t
 
 Presumably no one wants to use both `parquet` and `parquet2` at once, so the default bundles separate `parquet` and `parquet2` into separate entry points to keep bundle size as small as possible. The following describe the six bundles available:
 
-| Entry point                  | Rust crates used        | Description                                             |
-| ---------------------------- | ----------------------- | ------------------------------------------------------- |
-| `parquet-wasm`               | `parquet` and `arrow`   | "Bundler" build, to be used in bundlers such as Webpack |
-| `parquet-wasm/node`          | `parquet` and `arrow`   | Node build, to be used with `require` in NodeJS         |
-| `parquet-wasm/web`           | `parquet` and `arrow`   | ESM, to be used directly from the Web as an ES Module   |
-|                              |                         |                                                         |
-| `parquet-wasm/parquet_wasm2` | `parquet2` and `arrow2` | "Bundler" build, to be used in bundlers such as Webpack |
-| `parquet-wasm/node2`         | `parquet2` and `arrow2` | Node build, to be used with `require` in NodeJS         |
-| `parquet-wasm/web2`          | `parquet2` and `arrow2` | ESM, to be used directly from the Web as an ES Module   |
+| Entry point             | Rust crates used        | Description                                             |
+| ----------------------- | ----------------------- | ------------------------------------------------------- |
+| `parquet-wasm`          | `parquet` and `arrow`   | "Bundler" build, to be used in bundlers such as Webpack |
+| `parquet-wasm/node`     | `parquet` and `arrow`   | Node build, to be used with `require` in NodeJS         |
+| `parquet-wasm/web`      | `parquet` and `arrow`   | ESM, to be used directly from the Web as an ES Module   |
+|                         |                         |                                                         |
+| `parquet-wasm/bundler2` | `parquet2` and `arrow2` | "Bundler" build, to be used in bundlers such as Webpack |
+| `parquet-wasm/node2`    | `parquet2` and `arrow2` | Node build, to be used with `require` in NodeJS         |
+| `parquet-wasm/web2`     | `parquet2` and `arrow2` | ESM, to be used directly from the Web as an ES Module   |
 
 Note that when using the `/web` and `/web2` bundles, the default export must be awaited. See [here](https://rustwasm.github.io/docs/wasm-bindgen/examples/without-a-bundler.html) for an example.
 
@@ -47,13 +47,13 @@ Note that when using the `/web` and `/web2` bundles, the default export must be 
 
 This implementation uses the [`arrow`](https://crates.io/crates/arrow) and [`parquet`](https://crates.io/crates/parquet) Rust crates.
 
-Refer to the [API documentation](https://kylebarron.dev/parquet-wasm/modules/parquet_wasm.html) for more details and examples.
+Refer to the [API documentation](https://kylebarron.dev/parquet-wasm/modules/bundler.html) for more details and examples.
 
 ### `parquet2` API
 
 This implementation uses the [`arrow2`](https://crates.io/crates/arrow2) and [`parquet2`](https://crates.io/crates/parquet2) Rust crates.
 
-Refer to the [API documentation](https://kylebarron.dev/parquet-wasm/modules/parquet_wasm2.html) for more details and examples.
+Refer to the [API documentation](https://kylebarron.dev/parquet-wasm/modules/bundler2.html) for more details and examples.
 
 ### Debug functions
 

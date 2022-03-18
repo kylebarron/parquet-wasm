@@ -24,6 +24,7 @@ echo "Building arrow-rs bundler"
 wasm-pack build \
   --release \
   --out-dir pkg \
+  --out-name bundler \
   --target bundler
 
 ######################################
@@ -59,7 +60,7 @@ echo "Building arrow2 bundler"
 wasm-pack build \
   --release \
   --out-dir pkg2 \
-  --out-name parquet_wasm2 \
+  --out-name bundler2 \
   --target bundler \
   --no-default-features \
   --features arrow2 \
@@ -73,7 +74,7 @@ cp pkg_web/{web.d.ts,web.js,web_bg.wasm,web_bg.wasm.d.ts} pkg/
 
 cp pkg2_node/{node2.d.ts,node2.js,node2_bg.wasm,node2_bg.wasm.d.ts} pkg/
 cp pkg2_web/{web2.d.ts,web2.js,web2_bg.wasm,web2_bg.wasm.d.ts} pkg/
-cp pkg2/{parquet_wasm2.d.ts,parquet_wasm2.js,parquet_wasm2_bg.wasm,parquet_wasm2_bg.wasm.d.ts} pkg/
+cp pkg2/{bundler2.d.ts,bundler2.js,bundler2_bg.wasm,bundler2_bg.wasm.d.ts} pkg/
 
 # Update files array using JQ
 jq '.files += [
@@ -82,7 +83,7 @@ jq '.files += [
 
   "node2.d.ts", "node2.js", "node2_bg.wasm", "node2_bg.wasm.d.ts",
   "web2.d.ts", "web2.js", "web2_bg.wasm", "web2_bg.wasm.d.ts",
-  "parquet_wasm2.d.ts", "parquet_wasm2.js", "parquet_wasm2_bg.wasm", "parquet_wasm2_bg.wasm.d.ts"
+  "bundler2.d.ts", "bundler2.js", "bundler2_bg.wasm", "bundler2_bg.wasm.d.ts"
   ]' pkg/package.json > pkg/package.json.tmp
 # Overwrite existing file
 mv pkg/package.json.tmp pkg/package.json
