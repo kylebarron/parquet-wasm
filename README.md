@@ -45,73 +45,19 @@ Note that when using the `/web` and `/web2` bundles, the default export must be 
 
 ### `parquet` API
 
-This implementation uses the [`arrow`](https://crates.io/crates/arrow) and [`parquet`]() Rust crates.
+This implementation uses the [`arrow`](https://crates.io/crates/arrow) and [`parquet`](https://crates.io/crates/parquet) Rust crates.
 
-#### `readParquet`
-
-`readParquet(parquet_file: Uint8Array): Uint8Array`
-
-Takes as input a `Uint8Array` containing bytes from a loaded Parquet file. Returns a `Uint8Array` with data in [Arrow IPC **Stream** format](https://arrow.apache.org/docs/format/Columnar.html#ipc-streaming-format). To parse this into an Arrow table, pass the result of `readParquet` to `arrow.tableFromIPC` in the JS bindings.
-
-#### `writeParquet`
-
-`writeParquet(arrow_file: Uint8Array, writer_properties: WriterProperties): Uint8Array`
-
-Takes as input a `Uint8Array` containing bytes in [Arrow IPC **Stream** format](https://arrow.apache.org/docs/format/Columnar.html#ipc-streaming-format). If you have an Arrow table, call `arrow.tableToIPC(table, 'stream')` and pass the result to `writeParquet`.
-
-The second argument must be an instance of `WriterProperties`, which can be created by calling `new WriterPropertiesBuilder().build()`.
-
-#### `WriterPropertiesBuilder`
-
-A class to build a configuration used for writing a parquet file.
-
-For example, to create a writing configuration with Snappy compression:
-
-```js
-import {
-  WriterPropertiesBuilder,
-  Compression,
-  writeParquet,
-} from "parquet-wasm";
-
-const writerProperties = new WriterPropertiesBuilder()
-  .setCompression(Compression.SNAPPY)
-  .build();
-writeParquet(new Uint8Array(), writerProperties);
-```
+Refer to the [API documentation](https://kylebarron.dev/parquet-wasm/modules/parquet_wasm.html) for more details and examples.
 
 ### `parquet2` API
 
-#### `readParquet2`
+This implementation uses the [`arrow2`](https://crates.io/crates/arrow2) and [`parquet2`](https://crates.io/crates/parquet2) Rust crates.
 
-`readParquet2(parquet_file: Uint8Array): Uint8Array`
+Refer to the [API documentation](https://kylebarron.dev/parquet-wasm/modules/parquet_wasm2.html) for more details and examples.
 
-Takes as input a `Uint8Array` containing bytes from a loaded Parquet file. Returns a `Uint8Array` with data in [Arrow IPC **Stream** format](https://arrow.apache.org/docs/format/Columnar.html#ipc-streaming-format). To parse this into an Arrow table, pass the result of `readParquet2` to `arrow.tableFromIPC` in the JS bindings.
+### Debug functions
 
-#### `writeParquet2`
-
-`writeParquet2(arrow_file: Uint8Array, writer_properties: WriterProperties): Uint8Array`
-
-Takes as input a `Uint8Array` containing bytes in [Arrow IPC **File** format](https://arrow.apache.org/docs/format/Columnar.html#ipc-file-format) [^1]. If you have an Arrow table, call `arrow.tableToIPC(table, 'file')` and pass the result to `writeParquet2`.
-
-[^1]: I'm not great at Rust and the IPC File format seemed easier to parse in Rust than the IPC Stream format :slightly_smiling_face:. Hopefully this function will standardize on the Stream format in the future.
-
-For example, to create a writing configuration with Snappy compression:
-
-```js
-import {
-  WriterPropertiesBuilder,
-  Compression,
-  writeParquet2,
-} from "parquet-wasm";
-
-const writerProperties = new WriterPropertiesBuilder()
-  .setCompression(Compression.SNAPPY)
-  .build();
-writeParquet2(new Uint8Array(), writerProperties);
-```
-
-### Utilities
+These functions are not present in normal builds to cut down on bundle size. To create a custom build, see [Custom Builds](#custom-builds) below.
 
 #### `setPanicHook`
 
