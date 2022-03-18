@@ -41,7 +41,8 @@ impl WriterVersion {
 
 /// Immutable struct to hold writing configuration for `writeParquet`.
 ///
-/// Use {@linkcode WriterPropertiesBuilder.build} to create this.
+/// Use {@linkcode WriterPropertiesBuilder} to create a configuration, then call {@linkcode
+/// WriterPropertiesBuilder.build} to create an instance of `WriterProperties`.
 #[wasm_bindgen]
 pub struct WriterProperties(parquet::file::properties::WriterProperties);
 

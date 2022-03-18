@@ -1,6 +1,8 @@
 use js_sys::Uint8Array;
 use wasm_bindgen::prelude::*;
 
+/// Call this function at least once during initialization to get better error
+// messages if the underlying Rust code ever panics (creates uncaught errors).
 #[cfg(feature = "console_error_panic_hook")]
 #[wasm_bindgen(js_name = setPanicHook)]
 pub fn set_panic_hook() {
