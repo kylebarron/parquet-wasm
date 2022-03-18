@@ -14,15 +14,11 @@ categories = ["wasm"]
 crate-type = ["cdylib", "rlib"]
 
 [features]
-default = [
-  "arrow1",
-  "parquet_supported_compressions",
-  "reader",
-  "writer"
-]
+default = ["arrow1", "parquet_supported_compressions", "reader", "writer"]
 arrow1 = ["arrow", "parquet"]
 reader = []
 writer = []
+debug = ["console_error_panic_hook", "clap"]
 
 parquet_supported_compressions = [
   "parquet/snap",
@@ -58,7 +54,7 @@ full = [
   # ZSTD should work in parquet2's next release, already merged
   # "parquet2/zstd",
   "reader",
-  "writer"
+  "writer",
 ]
 
 [dependencies]
@@ -96,8 +92,26 @@ parquet = { version = "10.0", default-features = false, optional = true, feature
   "base64",
 ] }
 
+clap = { version = "3.1.6", optional = true, features = ["derive"] }
+
 [dev-dependencies]
 wasm-bindgen-test = "0.3.13"
+
+[[bin]]
+name = "read_parquet"
+required-features = ["debug", "arrow1"]
+
+[[bin]]
+name = "write_parquet"
+required-features = ["debug", "arrow1"]
+
+[[bin]]
+name = "read_parquet2"
+required-features = ["debug", "arrow2"]
+
+[[bin]]
+name = "write_parquet2"
+required-features = ["debug", "arrow2"]
 
 [profile.release]
 # Tell `rustc` to optimize for small code size.
