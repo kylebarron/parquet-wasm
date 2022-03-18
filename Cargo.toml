@@ -23,6 +23,7 @@ default = [
 arrow1 = ["arrow", "parquet"]
 reader = []
 writer = []
+debug = ["console_error_panic_hook", "clap"]
 
 parquet_supported_compressions = [
   "parquet/snap",
@@ -95,6 +96,8 @@ parquet = { version = "10.0", default-features = false, optional = true, feature
   "arrow",
   "base64",
 ] }
+
+clap = { version = "3.1.6", optional = true, features = ["derive"] }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.13"

@@ -1,13 +1,13 @@
 extern crate web_sys;
 
 #[cfg(feature = "arrow")]
-mod arrow1;
+pub mod arrow1;
 
 #[cfg(feature = "arrow2")]
-mod arrow2;
+pub mod arrow2;
 
-mod common;
-mod utils;
+pub mod common;
+pub mod utils;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
