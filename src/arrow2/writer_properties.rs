@@ -44,7 +44,10 @@ impl WriterVersion {
     }
 }
 
-/// Immutable struct to hold writing configuration for writeParquet2
+/// Immutable struct to hold writing configuration for `writeParquet2`.
+///
+/// Use {@linkcode WriterPropertiesBuilder} to create a configuration, then call {@linkcode
+/// WriterPropertiesBuilder.build} to create an instance of `WriterProperties`.
 #[wasm_bindgen]
 pub struct WriterProperties {
     write_options: arrow2::io::parquet::write::WriteOptions,
@@ -61,7 +64,9 @@ impl WriterProperties {
     }
 }
 
-/// Builder to create a writing configuration for writeParquet2
+/// Builder to create a writing configuration for `writeParquet2`
+///
+/// Call {@linkcode build} on the finished builder to create an immputable {@linkcode WriterProperties} to pass to `writeParquet2`
 #[wasm_bindgen]
 pub struct WriterPropertiesBuilder {
     write_options: arrow2::io::parquet::write::WriteOptions,
