@@ -4,7 +4,7 @@ WebAssembly bindings to read and write the [Apache Parquet](https://parquet.apac
 
 This is designed to be used alongside a JavaScript Arrow implementation, such as the canonical [JS Arrow library](https://arrow.apache.org/docs/js/).
 
-Including all compression codecs, the brotli-encoded WASM bundle is 881KB.
+Including all compression codecs, the brotli-encoded WASM bundle is 907KB.
 
 ## Install
 
@@ -154,7 +154,7 @@ Refer to the [`wasm-pack` documentation](https://rustwasm.github.io/docs/wasm-pa
   - `parquet/flate2`: Activate Gzip compression in the `parquet` crate.
   - `parquet/snap`: Activate Snappy compression in the `parquet` crate.
   - ~~`parquet/lz4`~~: ~~Activate LZ4 compression in the `parquet` crate.~~ WASM-compatible version not yet implemented in the `parquet` crate.
-  - ~~`parquet/zstd`~~: ~~Activate ZSTD compression in the `parquet` crate.~~ ZSTD should work in parquet's next release, pending https://github.com/apache/arrow-rs/pull/1414
+  - `parquet/zstd`: Activate ZSTD compression in the `parquet` crate.
 - parquet2 compression features. Should only be activated when `arrow2` is activated.
   - `parquet2/brotli`: Activate Brotli compression in the `parquet2` crate.
   - `parquet2/gzip`: Activate Gzip compression in the `parquet2` crate.
