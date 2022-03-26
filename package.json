@@ -4,6 +4,7 @@
     "build:test": "bash ./scripts/build-node-tests.sh",
     "docs:build": "typedoc",
     "docs:publish": "gh-pages -d docs_build",
+    "docs:serve": "cd docs_build && python -m http.server 8081",
     "docs:watch": "typedoc --watch",
     "test": "ts-node node_modules/tape/bin/tape ./tests/js/index.ts"
   },
