@@ -1,6 +1,7 @@
 {
   "scripts": {
     "build": "bash ./scripts/build.sh",
+    "build:test": "bash ./scripts/build-node-tests.sh",
     "docs:build": "typedoc",
     "docs:publish": "gh-pages -d docs_build",
     "docs:watch": "typedoc --watch",

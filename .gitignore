@@ -2,11 +2,6 @@ node_modules
 /target
 **/*.rs.bk
 pkg/
-pkg_node/
-pkg_web/
-pkg2/
-pkg2_node/
-pkg2_web/
 wasm-pack.log
 .idea/
 www/data
