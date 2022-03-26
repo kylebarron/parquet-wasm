@@ -1,7 +1,6 @@
 node_modules
 /target
 **/*.rs.bk
-Cargo.lock
 pkg/
 pkg_node/
 pkg_web/

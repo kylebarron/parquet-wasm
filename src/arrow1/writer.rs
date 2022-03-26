@@ -12,7 +12,7 @@ pub fn write_parquet(
 ) -> Result<Vec<u8>, ParquetError> {
     // Create IPC reader
     let input_file = Cursor::new(arrow_file);
-    let arrow_ipc_reader = StreamReader::try_new(input_file)?;
+    let arrow_ipc_reader = StreamReader::try_new(input_file, None)?;
     let arrow_schema = arrow_ipc_reader.schema();
 
     // Create Parquet writer
