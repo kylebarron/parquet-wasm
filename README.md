@@ -34,26 +34,26 @@ Presumably no one wants to use both `parquet` and `parquet2` at once, so the def
 | Entry point             | Rust crates used        | Description                                             |
 | ----------------------- | ----------------------- | ------------------------------------------------------- |
 | `parquet-wasm`          | `parquet` and `arrow`   | "Bundler" build, to be used in bundlers such as Webpack |
-| `parquet-wasm/node`     | `parquet` and `arrow`   | Node build, to be used with `require` in NodeJS         |
-| `parquet-wasm/web`      | `parquet` and `arrow`   | ESM, to be used directly from the Web as an ES Module   |
+| `parquet-wasm/node/arrow1`     | `parquet` and `arrow`   | Node build, to be used with `require` in NodeJS         |
+| `parquet-wasm/esm/arrow1`      | `parquet` and `arrow`   | ESM, to be used directly from the Web as an ES Module   |
 |                         |                         |                                                         |
-| `parquet-wasm/bundler2` | `parquet2` and `arrow2` | "Bundler" build, to be used in bundlers such as Webpack |
-| `parquet-wasm/node2`    | `parquet2` and `arrow2` | Node build, to be used with `require` in NodeJS         |
-| `parquet-wasm/web2`     | `parquet2` and `arrow2` | ESM, to be used directly from the Web as an ES Module   |
+| `parquet-wasm/bundler/arrow2` | `parquet2` and `arrow2` | "Bundler" build, to be used in bundlers such as Webpack |
+| `parquet-wasm/node/arrow2`    | `parquet2` and `arrow2` | Node build, to be used with `require` in NodeJS         |
+| `parquet-wasm/esm/arrow2`     | `parquet2` and `arrow2` | ESM, to be used directly from the Web as an ES Module   |
 
-Note that when using the `/web` and `/web2` bundles, the default export must be awaited. See [here](https://rustwasm.github.io/docs/wasm-bindgen/examples/without-a-bundler.html) for an example.
+Note that when using the `esm` bundles, the default export must be awaited. See [here](https://rustwasm.github.io/docs/wasm-bindgen/examples/without-a-bundler.html) for an example.
 
 ### `parquet` API
 
 This implementation uses the [`arrow`](https://crates.io/crates/arrow) and [`parquet`](https://crates.io/crates/parquet) Rust crates.
 
-Refer to the [API documentation](https://kylebarron.dev/parquet-wasm/modules/bundler.html) for more details and examples.
+Refer to the [API documentation](https://kylebarron.dev/parquet-wasm/modules/bundler_arrow1.html) for more details and examples.
 
 ### `parquet2` API
 
 This implementation uses the [`arrow2`](https://crates.io/crates/arrow2) and [`parquet2`](https://crates.io/crates/parquet2) Rust crates.
 
-Refer to the [API documentation](https://kylebarron.dev/parquet-wasm/modules/bundler2.html) for more details and examples.
+Refer to the [API documentation](https://kylebarron.dev/parquet-wasm/modules/bundler_arrow2.html) for more details and examples.
 
 ### Debug functions
 
@@ -106,7 +106,7 @@ The Parquet specification permits several compression codecs. This library curre
 - [x] Snappy
 - [x] Gzip
 - [x] Brotli
-- [ ] ZSTD. Will be supported using the next versions of the upstream packages `parquet` and `parquet2`.
+- [x] ZSTD. Supported in `arrow1`, will be supported in `arrow2` when the next version of the upstream `parquet2` package is released.
 - [ ] LZ4. Work is progressing but no support yet.
 
 ## Custom builds

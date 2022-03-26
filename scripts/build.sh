@@ -1,40 +1,42 @@
 #! /usr/bin/env bash
-rm -rf pkg pkg_node pkg_web pkg2_node pkg2_web pkg2
+rm -rf tmp_build pkg
+mkdir -p tmp_build
+
 
 ######################################
 # ARROW 1 (arrow-rs) the default feature
-# Build node version into pkg_node
+# Build node version into tmp_build/node
 echo "Building arrow-rs node"
 wasm-pack build \
   --release \
-  --out-dir pkg_node \
-  --out-name node \
+  --out-dir tmp_build/node \
+  --out-name arrow1 \
   --target nodejs
 
-# Build web version into pkg_web
-echo "Building arrow-rs web"
+# Build web version into tmp_build/esm
+echo "Building arrow-rs esm"
 wasm-pack build \
   --release \
-  --out-dir pkg_web \
-  --out-name web \
+  --out-dir tmp_build/esm \
+  --out-name arrow1 \
   --target web
 
-# Build standard bundler version into pkg
+# Build bundler version into tmp_build/bundler
 echo "Building arrow-rs bundler"
 wasm-pack build \
   --release \
-  --out-dir pkg \
-  --out-name bundler \
+  --out-dir tmp_build/bundler \
+  --out-name arrow1 \
   --target bundler
 
 ######################################
 # ARROW 2 turn on the feature manually
-# Build node version into pkg2_node
+# Build node version into tmp_build/node2
 echo "Building arrow2 node"
 wasm-pack build \
   --release \
-  --out-dir pkg2_node \
-  --out-name node2 \
+  --out-dir tmp_build/node2 \
+  --out-name arrow2 \
   --target nodejs \
   --no-default-features \
   --features arrow2 \
@@ -42,12 +44,12 @@ wasm-pack build \
   --features writer \
   --features parquet2_supported_compressions
 
-# Build web version into pkg2_web
-echo "Building arrow2 web"
+# Build web version into tmp_build/esm2
+echo "Building arrow2 esm"
 wasm-pack build \
   --release \
-  --out-dir pkg2_web \
-  --out-name web2 \
+  --out-dir tmp_build/esm2 \
+  --out-name arrow2 \
   --target web \
   --no-default-features \
   --features arrow2 \
@@ -55,12 +57,12 @@ wasm-pack build \
   --features writer \
   --features parquet2_supported_compressions
 
-# Build standard bundler version into pkg2
+# Build bundler version into tmp_build/bundler2
 echo "Building arrow2 bundler"
 wasm-pack build \
   --release \
-  --out-dir pkg2 \
-  --out-name bundler2 \
+  --out-dir tmp_build/bundler2 \
+  --out-name arrow2 \
   --target bundler \
   --no-default-features \
   --features arrow2 \
@@ -69,21 +71,21 @@ wasm-pack build \
   --features parquet2_supported_compressions
 
 # Copy files into pkg/
-cp pkg_node/{node.d.ts,node.js,node_bg.wasm,node_bg.wasm.d.ts} pkg/
-cp pkg_web/{web.d.ts,web.js,web_bg.wasm,web_bg.wasm.d.ts} pkg/
+mkdir -p pkg/{node,esm,bundler}
 
-cp pkg2_node/{node2.d.ts,node2.js,node2_bg.wasm,node2_bg.wasm.d.ts} pkg/
-cp pkg2_web/{web2.d.ts,web2.js,web2_bg.wasm,web2_bg.wasm.d.ts} pkg/
-cp pkg2/{bundler2.d.ts,bundler2.js,bundler2_bg.wasm,bundler2_bg.wasm.d.ts} pkg/
+cp tmp_build/{bundler,bundler2}/arrow* pkg/bundler/
+cp tmp_build/{esm,esm2}/arrow* pkg/esm
+cp tmp_build/{node,node2}/arrow* pkg/node
 
-# Update files array using JQ
-jq '.files += [
-  "node.d.ts", "node.js", "node_bg.wasm", "node_bg.wasm.d.ts",
-  "web.d.ts", "web.js", "web_bg.wasm", "web_bg.wasm.d.ts",
+cp tmp_build/bundler/{package.json,LICENSE_APACHE,LICENSE_MIT,README.md} pkg/
 
-  "node2.d.ts", "node2.js", "node2_bg.wasm", "node2_bg.wasm.d.ts",
-  "web2.d.ts", "web2.js", "web2_bg.wasm", "web2_bg.wasm.d.ts",
-  "bundler2.d.ts", "bundler2.js", "bundler2_bg.wasm", "bundler2_bg.wasm.d.ts"
-  ]' pkg/package.json > pkg/package.json.tmp
-# Overwrite existing file
+# Create minimal package.json in esm/ folder with type: module
+echo '{"type": "module"}' > pkg/esm/package.json
+
+# Update files array in package.json using JQ
+# Set module field to bundler/arrow1.js
+# Set types field to bundler/arrow1.d.ts
+jq '.files = ["*"] | .module="bundler/arrow1.js" | .types="bundler/arrow1.d.ts"' pkg/package.json > pkg/package.json.tmp
+
+# Overwrite existing package.json file
 mv pkg/package.json.tmp pkg/package.json

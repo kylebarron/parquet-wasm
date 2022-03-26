@@ -1,7 +1,7 @@
 import * as test from "tape";
-import * as wasm from "../../pkg/node2";
+import * as wasm from "../../pkg/node/arrow2";
 import { readFileSync } from "fs";
-import { tableFromIPC, tableToIPC, Table } from "apache-arrow";
+import { tableFromIPC, tableToIPC } from "apache-arrow";
 import { testArrowTablesEqual, readExpectedArrowData } from "./utils";
 
 // Path from repo root

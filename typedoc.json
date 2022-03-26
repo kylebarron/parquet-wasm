@@ -3,12 +3,12 @@
   "cleanOutputDir": true,
   "darkHighlightTheme": "github-dark",
   "entryPoints": [
-    "pkg/node.d.ts",
-    "pkg/node2.d.ts",
-    "pkg/bundler.d.ts",
-    "pkg/bundler2.d.ts",
-    "pkg/web.d.ts",
-    "pkg/web2.d.ts"
+    "pkg/node/arrow1.d.ts",
+    "pkg/node/arrow2.d.ts",
+    "pkg/bundler/arrow1.d.ts",
+    "pkg/bundler/arrow2.d.ts",
+    "pkg/esm/arrow1.d.ts",
+    "pkg/esm/arrow2.d.ts"
   ],
   "lightHighlightTheme": "github-light",
   "tsconfig": "tsconfig.docs.json",
