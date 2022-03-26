@@ -12,13 +12,13 @@ const testFiles = [
   // "1-partition-lz4.parquet",
   "1-partition-none.parquet",
   "1-partition-snappy.parquet",
-  // "1-partition-zstd.parquet",
+  "1-partition-zstd.parquet",
   "2-partition-brotli.parquet",
   "2-partition-gzip.parquet",
   // "2-partition-lz4.parquet",
   "2-partition-none.parquet",
   "2-partition-snappy.parquet",
-  // "2-partition-zstd.parquet",
+  "2-partition-zstd.parquet",
 ];
 
 test("read file", async (t) => {

@@ -21,9 +21,10 @@ writer = []
 debug = ["console_error_panic_hook", "clap"]
 
 parquet_supported_compressions = [
-  "parquet/snap",
-  "parquet/flate2",
   "parquet/brotli",
+  "parquet/flate2",
+  "parquet/snap",
+  "parquet/zstd",
 ]
 
 parquet2_supported_compressions = [
@@ -44,8 +45,7 @@ full = [
   # lz4_flex not implemented yet
   # "parquet/lz4",
   "parquet/snap",
-  # ZSTD should work in parquet's next release, pending https://github.com/apache/arrow-rs/pull/1414
-  # "parquet/zstd",
+  "parquet/zstd",
   "parquet2/brotli",
   "parquet2/gzip",
   # lz4_flex not implemented yet, pending https://github.com/jorgecarleitao/parquet2/pull/91
@@ -86,8 +86,8 @@ parquet2 = { version = "0.10", default_features = false, optional = true, featur
   "stream",
 ] }
 
-arrow = { version = "10.0", default-features = false, optional = true }
-parquet = { version = "10.0", default-features = false, optional = true, features = [
+arrow = { version = "11.0", default-features = false, optional = true }
+parquet = { version = "11.0", default-features = false, optional = true, features = [
   "arrow",
   "base64",
 ] }
