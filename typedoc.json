@@ -16,5 +16,6 @@
   "excludePrivate": true,
   "excludeProtected": true,
   "excludeExternals": true,
-  "includeVersion": true
+  "includeVersion": true,
+  "theme": "pages-plugin"
 }

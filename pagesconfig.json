@@ -1,0 +1,17 @@
+{
+  "groups": [
+    {
+      "title": "Documentation",
+      "pages": [
+        {
+          "title": "Example",
+          "source": "./docs/example.md"
+        },
+        {
+          "title": "Custom Builds",
+          "source": "./docs/custom_builds.md"
+        }
+      ]
+    }
+  ]
+}

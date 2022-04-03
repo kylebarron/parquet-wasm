@@ -67,37 +67,6 @@ Sets [`console_error_panic_hook`](https://github.com/rustwasm/console_error_pani
 
 The WASM bundle must be compiled with the `console_error_panic_hook` for this function to exist.
 
-## Example
-
-```js
-import { tableFromArrays, tableFromIPC, tableToIPC } from "apache-arrow";
-import { readParquet, writeParquet } from "parquet-wasm";
-
-// Create Arrow Table in JS
-const LENGTH = 2000;
-const rainAmounts = Float32Array.from({ length: LENGTH }, () =>
-  Number((Math.random() * 20).toFixed(1))
-);
-
-const rainDates = Array.from(
-  { length: LENGTH },
-  (_, i) => new Date(Date.now() - 1000 * 60 * 60 * 24 * i)
-);
-
-const rainfall = tableFromArrays({
-  precipitation: rainAmounts,
-  date: rainDates,
-});
-
-// Write Arrow Table to Parquet
-const parquetBuffer = writeParquet(tableToIPC(rainfall, "stream"));
-
-// Read Parquet buffer back to Arrow Table
-const table = tableFromIPC(readParquet(parquetBuffer));
-console.log(table.schema.toString());
-// Schema<{ 0: precipitation: Float32, 1: date: Date64<MILLISECOND> }>
-```
-
 ## Compression support
 
 The Parquet specification permits several compression codecs. This library currently supports:
@@ -108,60 +77,6 @@ The Parquet specification permits several compression codecs. This library curre
 - [x] Brotli
 - [x] ZSTD. Supported in `arrow1`, will be supported in `arrow2` when the next version of the upstream `parquet2` package is released.
 - [ ] LZ4. Work is progressing but no support yet.
-
-## Custom builds
-
-In some cases, you may know ahead of time that your Parquet files will only include a single compression codec, say Snappy, or even no compression at all. In these cases, you may want to create a custom build of `parquet-wasm` to keep bundle size at a minimum. If you install the Rust toolchain and `wasm-pack` (see [Development](#development)), you can create a custom build with only the compression codecs you require.
-
-### Example custom builds
-
-Reader-only bundle with Snappy compression using the `arrow` and `parquet` crates:
-
-```
-wasm-pack build --no-default-features --features arrow1 --features parquet/snap --features reader
-```
-
-Writer-only bundle with no compression support using the `arrow2` and `parquet2` crates, targeting Node:
-
-```
-wasm-pack build --target nodejs --no-default-features --features arrow2 --features writer
-```
-
-Debug bundle with reader and writer support, targeting Node, using `arrow` and `parquet` crates with all their supported compressions, with `console_error_panic_hook` enabled:
-
-```bash
-wasm-pack build --dev --target nodejs \
-  --no-default-features --features arrow1 \
-  --features reader --features writer \
-  --features parquet_supported_compressions \
-  --features console_error_panic_hook
-# Or, given the fact that the default feature includes several of these features, a shorter version:
-wasm-pack build --dev --target nodejs --features console_error_panic_hook
-```
-
-Refer to the [`wasm-pack` documentation](https://rustwasm.github.io/docs/wasm-pack/commands/build.html) for more info on flags such as `--release`, `--dev`, `target`, and to the [Cargo documentation](https://doc.rust-lang.org/cargo/reference/features.html) for more info on how to use features.
-
-### Available features
-
-- `arrow1`: Use the `arrow` and `parquet` crates
-- `arrow2`: Use the `arrow2` and `parquet2` crates
-- `reader`: Activate read support.
-- `writer`: Activate write support.
-- `parquet_supported_compressions`: Activate all supported compressions for the `parquet` crate
-- `parquet2_supported_compressions`: Activate all supported compressions for the `parquet2` crate
-- parquet compression features. Should only be activated when `arrow1` is activated.
-  - `parquet/brotli`: Activate Brotli compression in the `parquet` crate.
-  - `parquet/flate2`: Activate Gzip compression in the `parquet` crate.
-  - `parquet/snap`: Activate Snappy compression in the `parquet` crate.
-  - ~~`parquet/lz4`~~: ~~Activate LZ4 compression in the `parquet` crate.~~ WASM-compatible version not yet implemented in the `parquet` crate.
-  - `parquet/zstd`: Activate ZSTD compression in the `parquet` crate.
-- parquet2 compression features. Should only be activated when `arrow2` is activated.
-  - `parquet2/brotli`: Activate Brotli compression in the `parquet2` crate.
-  - `parquet2/gzip`: Activate Gzip compression in the `parquet2` crate.
-  - `parquet2/snappy`: Activate Snappy compression in the `parquet2` crate.
-  - ~~`parquet2/lz4`~~: ~~Activate LZ4 compression in the `parquet2` crate~~. WASM-compatible version not yet implemented, pending https://github.com/jorgecarleitao/parquet2/pull/91
-  - ~~`parquet2/zstd`~~: ~~Activate ZSTD compression in the `parquet2` crate.~~ ZSTD should work in parquet2's next release.
-- `console_error_panic_hook`: Expose the `setPanicHook` function for better error messages for Rust panics.
 
 ## Future work
 
