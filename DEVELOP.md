@@ -30,6 +30,6 @@ There are good reasons to distribute as any of these... so why not distribute as
 To publish:
 
 ```
-bash ./scripts/build.sh
+yarn build
 wasm-pack publish
 ```
