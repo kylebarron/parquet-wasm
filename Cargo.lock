@@ -40,9 +40,9 @@ checksum = "bf7d0a018de4f6aa429b9d33d69edf69072b1c5b1cb8d3e4a5f7ef898fc3eb76"
 
 [[package]]
 name = "arrow"
-version = "11.0.0"
+version = "11.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db922bcac0aa9f3b6e191d73b0b5df925c2c10ab4893f7416359f289e5d23489"
+checksum = "3e4a0aa844fa9e1933504b4cd10e776167f370b746d0a622f32696d8d3b252e7"
 dependencies = [
  "bitflags",
  "chrono",
@@ -791,7 +791,7 @@ dependencies = [
 
 [[package]]
 name = "parquet-wasm"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "arrow",
  "arrow2",
