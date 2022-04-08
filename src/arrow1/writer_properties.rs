@@ -190,9 +190,10 @@ impl WriterPropertiesBuilder {
     #[wasm_bindgen(js_name = setColumnCompression)]
     pub fn set_column_compression(self, col: String, value: Compression) -> Self {
         let column_path = parquet::schema::types::ColumnPath::from(col);
-        Self(self
-                .0
-                .set_column_compression(column_path, value.to_arrow1()))
+        Self(
+            self.0
+                .set_column_compression(column_path, value.to_arrow1()),
+        )
     }
 
     /// Sets flag to enable/disable dictionary encoding for a column.
