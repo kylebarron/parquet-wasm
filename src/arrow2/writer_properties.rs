@@ -56,11 +56,11 @@ pub struct WriterProperties {
 
 impl WriterProperties {
     pub fn get_write_options(&self) -> arrow2::io::parquet::write::WriteOptions {
-        return self.write_options;
+        self.write_options
     }
 
     pub fn get_encoding(&self) -> arrow2::io::parquet::write::Encoding {
-        return self.encoding;
+        self.encoding
     }
 }
 
@@ -150,5 +150,11 @@ impl WriterPropertiesBuilder {
         };
         self.write_options = write_options;
         self
+    }
+}
+
+impl Default for WriterPropertiesBuilder {
+    fn default() -> Self {
+        WriterPropertiesBuilder::new()
     }
 }

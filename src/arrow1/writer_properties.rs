@@ -63,15 +63,13 @@ impl WriterPropertiesBuilder {
     /// Returns default state of the builder.
     #[wasm_bindgen(constructor)]
     pub fn new() -> WriterPropertiesBuilder {
-        WriterPropertiesBuilder {
-            0: parquet::file::properties::WriterProperties::builder(),
-        }
+        WriterPropertiesBuilder(parquet::file::properties::WriterProperties::builder())
     }
 
     /// Finalizes the configuration and returns immutable writer properties struct.
     #[wasm_bindgen]
     pub fn build(self) -> WriterProperties {
-        WriterProperties { 0: self.0.build() }
+        WriterProperties(self.0.build())
     }
 
     // ----------------------------------------------------------------------
@@ -80,49 +78,37 @@ impl WriterPropertiesBuilder {
     /// Sets writer version.
     #[wasm_bindgen(js_name = setWriterVersion)]
     pub fn set_writer_version(self, value: WriterVersion) -> Self {
-        Self {
-            0: self.0.set_writer_version(value.to_arrow1()),
-        }
+        Self(self.0.set_writer_version(value.to_arrow1()))
     }
 
     /// Sets data page size limit.
     #[wasm_bindgen(js_name = setDataPagesizeLimit)]
     pub fn set_data_pagesize_limit(self, value: usize) -> Self {
-        Self {
-            0: self.0.set_data_pagesize_limit(value),
-        }
+        Self(self.0.set_data_pagesize_limit(value))
     }
 
     /// Sets dictionary page size limit.
     #[wasm_bindgen(js_name = setDictionaryPagesizeLimit)]
     pub fn set_dictionary_pagesize_limit(self, value: usize) -> Self {
-        Self {
-            0: self.0.set_dictionary_pagesize_limit(value),
-        }
+        Self(self.0.set_dictionary_pagesize_limit(value))
     }
 
     /// Sets write batch size.
     #[wasm_bindgen(js_name = setWriteBatchSize)]
     pub fn set_write_batch_size(self, value: usize) -> Self {
-        Self {
-            0: self.0.set_write_batch_size(value),
-        }
+        Self(self.0.set_write_batch_size(value))
     }
 
     /// Sets maximum number of rows in a row group.
     #[wasm_bindgen(js_name = setMaxRowGroupSize)]
     pub fn set_max_row_group_size(self, value: usize) -> Self {
-        Self {
-            0: self.0.set_max_row_group_size(value),
-        }
+        Self(self.0.set_max_row_group_size(value))
     }
 
     /// Sets "created by" property.
     #[wasm_bindgen(js_name = setCreatedBy)]
     pub fn set_created_by(self, value: String) -> Self {
-        Self {
-            0: self.0.set_created_by(value),
-        }
+        Self(self.0.set_created_by(value))
     }
 
     // /// Sets "key_value_metadata" property.
@@ -149,17 +135,13 @@ impl WriterPropertiesBuilder {
     /// encoding flag being set.
     #[wasm_bindgen(js_name = setEncoding)]
     pub fn set_encoding(self, value: Encoding) -> Self {
-        Self {
-            0: self.0.set_encoding(value.to_arrow1()),
-        }
+        Self(self.0.set_encoding(value.to_arrow1()))
     }
 
     /// Sets compression codec for any column.
     #[wasm_bindgen(js_name = setCompression)]
     pub fn set_compression(self, value: Compression) -> Self {
-        Self {
-            0: self.0.set_compression(value.to_arrow1()),
-        }
+        Self(self.0.set_compression(value.to_arrow1()))
     }
 
     /// Sets flag to enable/disable dictionary encoding for any column.
@@ -168,26 +150,20 @@ impl WriterPropertiesBuilder {
     /// encoding in `set_encoding` method.
     #[wasm_bindgen(js_name = setDictionaryEnabled)]
     pub fn set_dictionary_enabled(self, value: bool) -> Self {
-        Self {
-            0: self.0.set_dictionary_enabled(value),
-        }
+        Self(self.0.set_dictionary_enabled(value))
     }
 
     /// Sets flag to enable/disable statistics for any column.
     #[wasm_bindgen(js_name = setStatisticsEnabled)]
     pub fn set_statistics_enabled(self, value: bool) -> Self {
-        Self {
-            0: self.0.set_statistics_enabled(value),
-        }
+        Self(self.0.set_statistics_enabled(value))
     }
 
     /// Sets max statistics size for any column.
     /// Applicable only if statistics are enabled.
     #[wasm_bindgen(js_name = setMaxStatisticsSize)]
     pub fn set_max_statistics_size(self, value: usize) -> Self {
-        Self {
-            0: self.0.set_max_statistics_size(value),
-        }
+        Self(self.0.set_max_statistics_size(value))
     }
 
     // ----------------------------------------------------------------------
@@ -206,9 +182,7 @@ impl WriterPropertiesBuilder {
     #[wasm_bindgen(js_name = setColumnEncoding)]
     pub fn set_column_encoding(self, col: String, value: Encoding) -> Self {
         let column_path = parquet::schema::types::ColumnPath::from(col);
-        Self {
-            0: self.0.set_column_encoding(column_path, value.to_arrow1()),
-        }
+        Self(self.0.set_column_encoding(column_path, value.to_arrow1()))
     }
 
     /// Sets compression codec for a column.
@@ -216,11 +190,10 @@ impl WriterPropertiesBuilder {
     #[wasm_bindgen(js_name = setColumnCompression)]
     pub fn set_column_compression(self, col: String, value: Compression) -> Self {
         let column_path = parquet::schema::types::ColumnPath::from(col);
-        Self {
-            0: self
-                .0
+        Self(
+            self.0
                 .set_column_compression(column_path, value.to_arrow1()),
-        }
+        )
     }
 
     /// Sets flag to enable/disable dictionary encoding for a column.
@@ -228,9 +201,7 @@ impl WriterPropertiesBuilder {
     #[wasm_bindgen(js_name = setColumnDictionaryEnabled)]
     pub fn set_column_dictionary_enabled(self, col: String, value: bool) -> Self {
         let column_path = parquet::schema::types::ColumnPath::from(col);
-        Self {
-            0: self.0.set_column_dictionary_enabled(column_path, value),
-        }
+        Self(self.0.set_column_dictionary_enabled(column_path, value))
     }
 
     /// Sets flag to enable/disable statistics for a column.
@@ -238,9 +209,7 @@ impl WriterPropertiesBuilder {
     #[wasm_bindgen(js_name = setColumnStatisticsEnabled)]
     pub fn set_column_statistics_enabled(self, col: String, value: bool) -> Self {
         let column_path = parquet::schema::types::ColumnPath::from(col);
-        Self {
-            0: self.0.set_column_statistics_enabled(column_path, value),
-        }
+        Self(self.0.set_column_statistics_enabled(column_path, value))
     }
 
     /// Sets max size for statistics for a column.
@@ -248,16 +217,12 @@ impl WriterPropertiesBuilder {
     #[wasm_bindgen(js_name = setColumnMaxStatisticsSize)]
     pub fn set_column_max_statistics_size(self, col: String, value: usize) -> Self {
         let column_path = parquet::schema::types::ColumnPath::from(col);
-        Self {
-            0: self.0.set_column_max_statistics_size(column_path, value),
-        }
+        Self(self.0.set_column_max_statistics_size(column_path, value))
     }
 }
 
-impl WriterPropertiesBuilder {
-    pub fn new_from_rust() -> WriterPropertiesBuilder {
-        WriterPropertiesBuilder {
-            0: parquet::file::properties::WriterProperties::builder(),
-        }
+impl Default for WriterPropertiesBuilder {
+    fn default() -> Self {
+        WriterPropertiesBuilder::new()
     }
 }
