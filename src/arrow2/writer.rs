@@ -41,9 +41,7 @@ pub fn write_parquet(
             encodings,
         );
 
-        // TODO: from clippy:
-        // for loop over `row_groups`, which is a `Result`. This is more readably written as an `if let` statement
-        for group in row_groups {
+        if let Ok(group) = row_groups {
             for maybe_column in group {
                 let column = maybe_column?;
                 let (group, len) = column;
@@ -52,5 +50,5 @@ pub fn write_parquet(
         }
     }
     let _size = parquet_writer.end(None)?;
-    return Ok(output_file);
+    Ok(output_file)
 }

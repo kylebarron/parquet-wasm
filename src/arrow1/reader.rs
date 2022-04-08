@@ -33,5 +33,5 @@ pub fn read_parquet(parquet_file: &[u8]) -> Result<Vec<u8>, ParquetError> {
     writer.finish()?;
 
     let writer_buffer = writer.into_inner()?;
-    return Ok(writer_buffer.to_vec());
+    Ok(writer_buffer.to_vec())
 }

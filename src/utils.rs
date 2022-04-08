@@ -40,5 +40,5 @@ pub fn copy_vec_to_uint8_array(buffer: Vec<u8>) -> Result<Uint8Array, JsValue> {
     };
     let return_vec = Uint8Array::new_with_length(return_len);
     return_vec.copy_from(&buffer);
-    return Ok(return_vec);
+    Ok(return_vec)
 }

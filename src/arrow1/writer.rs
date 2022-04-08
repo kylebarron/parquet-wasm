@@ -28,5 +28,5 @@ pub fn write_parquet(
 
     writer.close()?;
 
-    return Ok(cursor.data());
+    Ok(cursor.data())
 }

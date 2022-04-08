@@ -25,5 +25,5 @@ pub fn read_parquet(parquet_file: &[u8]) -> Result<Vec<u8>, ArrowError> {
     }
 
     writer.finish()?;
-    return Ok(output_file);
+    Ok(output_file)
 }
