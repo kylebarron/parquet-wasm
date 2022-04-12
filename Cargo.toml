@@ -31,6 +31,7 @@ parquet2_supported_compressions = [
   "parquet2/brotli",
   "parquet2/gzip",
   "parquet2/snappy",
+  "parquet2/lz4_flex",
 ]
 
 # Full list of available features
@@ -48,8 +49,7 @@ full = [
   "parquet/zstd",
   "parquet2/brotli",
   "parquet2/gzip",
-  # lz4_flex not implemented yet, pending https://github.com/jorgecarleitao/parquet2/pull/91
-  # "parquet2/lz4",
+  "parquet2/lz4_flex",
   "parquet2/snappy",
   # ZSTD should work in parquet2's next release, already merged
   # "parquet2/zstd",
@@ -76,13 +76,14 @@ js-sys = "0.3.53"
 getrandom = { version = "0.2.6", features = ["js"] }
 web-sys = { version = "0.3", features = ["console"] }
 
-arrow2 = { version = "0.10", optional = true, features = [
+arrow2 = { git = "https://github.com/kylebarron/arrow2", rev = "41858ed0924cca67873851a647b9b28602039784", optional = true, features = [
   "io_ipc",
   "io_parquet",
+  "io_parquet_compression"
 ] }
 # parquet2 is only used indirectly through arrow2, but we define it here so that we can turn on
 # parquet2 features as needed, e.g. with --features parquet2/gzip
-parquet2 = { version = "0.10", default_features = false, optional = true, features = [
+parquet2 = { git = "https://github.com/jorgecarleitao/parquet2", rev = "20c4d96eff5c472cc91784e43111ac92f7187059", default_features = false, optional = true, features = [
   "stream",
 ] }
 
