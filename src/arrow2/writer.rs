@@ -43,9 +43,8 @@ pub fn write_parquet(
 
         if let Ok(group) = row_groups {
             for maybe_column in group {
-                let column = maybe_column?;
-                let (group, len) = column;
-                parquet_writer.write(group, len)?;
+                let group = maybe_column?;
+                parquet_writer.write(group)?;
             }
         }
     }

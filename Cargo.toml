@@ -76,7 +76,7 @@ js-sys = "0.3.53"
 getrandom = { version = "0.2.6", features = ["js"] }
 web-sys = { version = "0.3", features = ["console"] }
 
-arrow2 = { git = "https://github.com/kylebarron/arrow2", rev = "41858ed0924cca67873851a647b9b28602039784", optional = true, features = [
+arrow2 = { git = "https://github.com/kylebarron/arrow2", branch = "kyle/test-parquet2", optional = true, features = [
   "io_ipc",
   "io_parquet",
   "io_parquet_compression"

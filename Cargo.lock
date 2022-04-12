@@ -73,7 +73,7 @@ dependencies = [
 [[package]]
 name = "arrow2"
 version = "0.10.1"
-source = "git+https://github.com/kylebarron/arrow2?rev=41858ed0924cca67873851a647b9b28602039784#41858ed0924cca67873851a647b9b28602039784"
+source = "git+https://github.com/kylebarron/arrow2?branch=kyle/test-parquet2#56cc516446fe7ce43bf8fab3d70ecf1806d6d098"
 dependencies = [
  "arrow-format",
  "base64",
