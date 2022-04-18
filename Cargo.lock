@@ -85,7 +85,7 @@ dependencies = [
  "futures",
  "hash_hasher",
  "num-traits",
- "parquet2",
+ "parquet2 0.10.3",
  "simdutf8",
  "streaming-iterator",
 ]
@@ -790,6 +790,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "parquet-format-async-temp"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "488c8b5f43521d019fade4bcc0ce88cce5da5fd26eb1d38b933807041f5930bf"
+dependencies = [
+ "async-trait",
+ "futures",
+ "integer-encoding 3.0.3",
+]
+
+[[package]]
 name = "parquet-wasm"
 version = "0.3.0"
 dependencies = [
@@ -800,7 +811,7 @@ dependencies = [
  "getrandom",
  "js-sys",
  "parquet",
- "parquet2",
+ "parquet2 0.11.0",
  "wasm-bindgen",
  "wasm-bindgen-test",
  "web-sys",
@@ -814,10 +825,23 @@ checksum = "6b085f9e78e4842865151b693f6d94bdf7b280af66daa6e3587adeb3106a07e9"
 dependencies = [
  "async-stream",
  "bitpacking",
+ "futures",
+ "parquet-format-async-temp 0.2.0",
+ "streaming-decompression",
+]
+
+[[package]]
+name = "parquet2"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "770387177ba511db3839e8f243d82f483ecdfdc3619a67a41d29fdd23f355127"
+dependencies = [
+ "async-stream",
+ "bitpacking",
  "brotli",
  "flate2",
  "futures",
- "parquet-format-async-temp",
+ "parquet-format-async-temp 0.3.0",
  "snap",
  "streaming-decompression",
 ]
