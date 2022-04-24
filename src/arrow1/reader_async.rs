@@ -17,24 +17,30 @@ use arrow::record_batch::RecordBatch;
 // use arrow::util::pretty::pretty_format_batches;
 use futures::TryStreamExt;
 use tokio::fs::File;
+// tokio::
 use async_compat::{Compat, CompatExt};
 
 use parquet::arrow::ParquetRecordBatchStreamBuilder;
 
+use crate::log;
+
 #[wasm_bindgen]
 pub async fn read_parquet_metadata_async_arrow1(parquet_file_url: String) -> Result<(), JsValue> {
-    let length = get_content_length(parquet_file_url).await.unwrap();
+    let length = get_content_length(parquet_file_url.clone()).await.unwrap();
+    log!("total size in bytes: {}", length);
 
     let range_get = Box::new(move |start: u64, length: usize| {
         let url = parquet_file_url.clone();
 
-        Box::pin( async move {
+        Box::pin( Compat::new (async move {
             let url = url.clone();
-            // spawn_local(future)
-            let data = make_range_request(url, start, length).await.unwrap();
+            log!("getting {} bytes starting at {}", length, start);
+
+            let data = make_range_request(url.to_string(), start, length).await.unwrap();
+            log!("got {} of {} bytes starting at {}", data.len(), length, start);
 
             Ok(RangeOutput { start, data })
-        }) as LocalBoxFuture<'static, std::io::Result<RangeOutput>>
+        })) as LocalBoxFuture<'static, std::io::Result<RangeOutput>>
     });
 
     // at least 4kb per s3 request. Adjust to your liking.
@@ -42,6 +48,11 @@ pub async fn read_parquet_metadata_async_arrow1(parquet_file_url: String) -> Res
 
     let test = Compat::new(reader);
     let builder = ParquetRecordBatchStreamBuilder::new(test).await.unwrap();
+
+    let stream = builder.build().unwrap();
+
+    // Incorrect traits, probably related to futures/tokio incompatibility
+    let results = stream.try_collect::<Vec<_>>().await.unwrap();
 
     // let testdata = arrow::util::test_util::parquet_test_data();
     // let path = format!("{}/alltypes_plain.parquet", testdata);
@@ -58,6 +69,7 @@ pub async fn read_parquet_metadata_async_arrow1(parquet_file_url: String) -> Res
     Ok(())
 }
 
+// bytes=26174-30270
 async fn resp_into_bytes(resp: Response) -> Vec<u8> {
     let array_buffer_promise = JsFuture::from(resp.array_buffer().unwrap());
     let array_buffer: JsValue = array_buffer_promise
@@ -78,6 +90,7 @@ async fn make_range_request(url: String, start: u64, length: usize) -> Result<Ve
         "Range",
         format!("bytes={}-{}", start, start + length as u64).as_str(),
     )?;
+    log!("making request for bytes={}-{}", length, start + length as u64);
 
     let window = web_sys::window().unwrap();
     let resp_value = JsFuture::from(window.fetch_with_request(&request)).await?;
@@ -85,6 +98,20 @@ async fn make_range_request(url: String, start: u64, length: usize) -> Result<Ve
 
     Ok(resp_into_bytes(resp).await)
 }
+
+// making request for bytes=4096-30270
+
+// hello world
+// async_testing.js:20 end of js
+// parquet_wasm_bg.js:848 total size in bytes: 26174
+// parquet_wasm_bg.js:848 getting 4096 bytes starting at 26166
+// parquet_wasm_bg.js:848 making request for bytes=4096-30262
+// parquet_wasm_bg.js:848 got 8 of 4096 bytes starting at 26166
+// parquet_wasm_bg.js:848 getting 4096 bytes starting at 22213
+// parquet_wasm_bg.js:848 making request for bytes=4096-26309
+// parquet_wasm_bg.js:848 got 3961 of 4096 bytes starting at 22213
+// parquet_wasm_bg.js:848 getting 4096 bytes starting at 26174
+// parquet_wasm_bg.js:848 making request for bytes=4096-30270
 
 pub async fn get_content_length(url: String) -> Result<usize, JsValue> {
     let mut opts = RequestInit::new();
@@ -107,50 +134,50 @@ pub async fn get_content_length(url: String) -> Result<usize, JsValue> {
     // Ok(())
 }
 
-#[wasm_bindgen]
-pub async fn read_parquet_metadata_async(parquet_file_url: String) -> Result<(), JsValue> {
-    let length = get_content_length(parquet_file_url).await.unwrap();
+// #[wasm_bindgen]
+// pub async fn read_parquet_metadata_async(parquet_file_url: String) -> Result<(), JsValue> {
+//     let length = get_content_length(parquet_file_url).await.unwrap();
 
-    // let (sender1, receiver1) = oneshot::channel();
-    // let (sender2, receiver2) = oneshot::channel();
-    // let task1 = executor::spawn(async move {
-    //     dbg!("task 1 awaiting");
-    //     let _ = receiver1.await;
-    //     dbg!("task 1 -> task 2");
-    //     let _ = sender2.send(());
-    //     let element = web_sys::window()
-    //         .unwrap()
-    //         .document()
-    //         .unwrap()
-    //         .get_element_by_id("display")
-    //         .unwrap();
+//     // let (sender1, receiver1) = oneshot::channel();
+//     // let (sender2, receiver2) = oneshot::channel();
+//     // let task1 = executor::spawn(async move {
+//     //     dbg!("task 1 awaiting");
+//     //     let _ = receiver1.await;
+//     //     dbg!("task 1 -> task 2");
+//     //     let _ = sender2.send(());
+//     //     let element = web_sys::window()
+//     //         .unwrap()
+//     //         .document()
+//     //         .unwrap()
+//     //         .get_element_by_id("display")
+//     //         .unwrap();
 
-    //     let mut ctr = 0u8;
-    //     while ctr < 255 {
-    //         element.set_inner_html(&format!("{}", ctr));
-    //         ctr = ctr.wrapping_add(1);
-    //         executor::yield_animation_frame().await;
-    //     }
-    // });
+//     //     let mut ctr = 0u8;
+//     //     while ctr < 255 {
+//     //         element.set_inner_html(&format!("{}", ctr));
+//     //         ctr = ctr.wrapping_add(1);
+//     //         executor::yield_animation_frame().await;
+//     //     }
+//     // });
 
-    let range_get = Box::new(move |start: u64, length: usize| {
-        let url = parquet_file_url.clone();
+//     let range_get = Box::new(move |start: u64, length: usize| {
+//         let url = parquet_file_url.clone();
 
-        Box::pin(async move {
-            let url = url.clone();
-            let data = make_range_request(url, start, length).await.unwrap();
+//         Box::pin(async move {
+//             let url = url.clone();
+//             let data = make_range_request(url, start, length).await.unwrap();
 
-            Ok(RangeOutput { start, data })
-        }) as BoxFuture<'static, std::io::Result<RangeOutput>>
-    });
+//             Ok(RangeOutput { start, data })
+//         }) as BoxFuture<'static, std::io::Result<RangeOutput>>
+//     });
 
-    // at least 4kb per s3 request. Adjust to your liking.
-    let mut reader = RangedAsyncReader::new(length, 4 * 1024, range_get);
+//     // at least 4kb per s3 request. Adjust to your liking.
+//     let mut reader = RangedAsyncReader::new(length, 4 * 1024, range_get);
 
-    let metadata = read_metadata_async(&mut reader).await.unwrap();
+//     let metadata = read_metadata_async(&mut reader).await.unwrap();
 
-    Ok(())
-}
+//     Ok(())
+// }
 
 // #[tokio::main]
 // async fn main() -> Result<()> {
