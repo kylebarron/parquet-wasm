@@ -2,10 +2,12 @@ use std::io::{Result, SeekFrom};
 use std::pin::Pin;
 
 use futures::{
-    future::BoxFuture,
+    future::LocalBoxFuture,
     io::{AsyncRead, AsyncSeek},
     Future,
 };
+
+use wasm_bindgen_futures::{spawn_local, JsFuture};
 
 /// A range of bytes with a known starting position.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -16,10 +18,10 @@ pub struct RangeOutput {
     pub data: Vec<u8>,
 }
 
-/// A function that returns a [`BoxFuture`] of [`RangeOutput`].
+/// A function that returns a [`LocalBoxFuture`] of [`RangeOutput`].
 /// For example, an async request to return a range of bytes from a blob from the internet.
 pub type RangedFuture =
-    Box<dyn Fn(u64, usize) -> BoxFuture<'static, std::io::Result<RangeOutput>> + Send + Sync>;
+    Box<dyn Fn(u64, usize) -> LocalBoxFuture<'static, std::io::Result<RangeOutput>>>;
 
 /// A struct that converts [`RangedFuture`] to a `AsyncRead + AsyncSeek` with an internal buffer.
 pub struct RangedAsyncReader {
@@ -32,7 +34,7 @@ pub struct RangedAsyncReader {
 
 enum State {
     HasChunk(RangeOutput),
-    Seeking(BoxFuture<'static, std::io::Result<RangeOutput>>),
+    Seeking(LocalBoxFuture<'static, std::io::Result<RangeOutput>>),
 }
 
 impl RangedAsyncReader {

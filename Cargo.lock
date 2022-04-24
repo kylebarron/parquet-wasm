@@ -91,6 +91,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-compat"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b48b4ff0c2026db683dea961cd8ea874737f56cffca86fa84415eaddc51c00d"
+dependencies = [
+ "futures-core",
+ "futures-io",
+ "once_cell",
+ "pin-project-lite",
+ "tokio",
+]
+
+[[package]]
 name = "async-stream"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -212,6 +225,12 @@ name = "byteorder"
 version = "1.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "14c189c53d098945499cdfa7ecc63567cf3886b3332b312a5b4585d8d3a6a610"
+
+[[package]]
+name = "bytes"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c4872d67bab6358e59559027aa3b9157c53d9358c51423c17554809a8858e0f8"
 
 [[package]]
 name = "cc"
@@ -737,6 +756,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "once_cell"
+version = "1.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "87f3e037eac156d1775da914196f0f37741a274155e34a0b7e427c35d2a2ecb9"
+
+[[package]]
 name = "ordered-float"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -763,12 +788,14 @@ dependencies = [
  "byteorder",
  "chrono",
  "flate2",
+ "futures",
  "num",
  "num-bigint",
  "parquet-format",
  "rand",
  "snap",
  "thrift",
+ "tokio",
  "zstd",
 ]
 
@@ -800,17 +827,22 @@ version = "0.3.0"
 dependencies = [
  "arrow",
  "arrow2",
+ "async-compat",
  "clap",
  "console_error_panic_hook",
+ "futures",
  "getrandom",
  "js-sys",
  "parquet",
  "parquet2",
+ "range-reader",
  "serde",
  "serde_derive",
+ "tokio",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "wasm-bindgen-test",
+ "wasm-rs-async-executor",
  "web-sys",
 ]
 
@@ -828,6 +860,26 @@ dependencies = [
  "parquet-format-async-temp",
  "snap",
  "streaming-decompression",
+]
+
+[[package]]
+name = "pin-project"
+version = "1.0.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "58ad3879ad3baf4e44784bc6a718a8698867bb991f8ce24d1bcbe2cfb4c3a75e"
+dependencies = [
+ "pin-project-internal",
+]
+
+[[package]]
+name = "pin-project-internal"
+version = "1.0.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "744b6f092ba29c3650faf274db506afd39944f48420f6c86b17cfe0ee1cb36bb"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
@@ -927,6 +979,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d34f1408f55294453790c48b2f1ebbb1c5b4b7563eb1f418bcfcfdbb06ebb4e7"
 dependencies = [
  "getrandom",
+]
+
+[[package]]
+name = "range-reader"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "278b3ed141584884073d2f7c93dfa3c3c9597c194df15ccb8fb22743c11fb522"
+dependencies = [
+ "futures",
 ]
 
 [[package]]
@@ -1110,6 +1171,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "tokio"
+version = "1.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2af73ac49756f3f7c01172e34a23e5d0216f6c32333757c2c61feb2bbff5a5ee"
+dependencies = [
+ "bytes",
+ "memchr",
+ "pin-project-lite",
+ "tokio-macros",
+]
+
+[[package]]
+name = "tokio-macros"
+version = "1.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b557f72f448c511a979e2564e55d74e6c4432fc96ff4f6241bc6bded342643b7"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "unicode-xid"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1217,6 +1301,19 @@ checksum = "a77c5a6f82cc6093a321ca5fb3dc9327fe51675d477b3799b4a9375bac3b7b4c"
 dependencies = [
  "proc-macro2",
  "quote",
+]
+
+[[package]]
+name = "wasm-rs-async-executor"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fed8e8c10166d28c68859dd5d159d408fa50fdf668ae39461f2ea41148655d52"
+dependencies = [
+ "futures",
+ "js-sys",
+ "pin-project",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]
