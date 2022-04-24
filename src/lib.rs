@@ -1,5 +1,7 @@
 extern crate web_sys;
 
+pub mod async_testing;
+
 #[cfg(feature = "arrow")]
 pub mod arrow1;
 
