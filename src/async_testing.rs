@@ -32,6 +32,69 @@ pub struct Signature {
     pub email: String,
 }
 
+// A macro to provide `println!(..)`-style syntax for `console.log` logging.
+macro_rules! log {
+    ( $( $t:tt )* ) => {
+        web_sys::console::log_1(&format!( $( $t )* ).into());
+    }
+}
+
+#[wasm_bindgen]
+pub async fn getContentLength(url: String) -> Result<(), JsValue> {
+    let mut opts = RequestInit::new();
+    opts.method("HEAD");
+    opts.mode(RequestMode::Cors);
+
+    let request = Request::new_with_str_and_init(&url, &opts)?;
+
+    request
+        .headers()
+        .set("Accept", "application/vnd.github.v3+json")?;
+
+    let window = web_sys::window().unwrap();
+    let resp_value = JsFuture::from(window.fetch_with_request(&request)).await?;
+    let resp: Response = resp_value.dyn_into().unwrap();
+    let length = resp.headers().get("content-length")?;
+    let a = length.unwrap();
+    let lengthInt = a.parse::<u32>().unwrap();
+
+    log!("{lengthInt:?}");
+    // log!("{length:?}");
+    log!("{resp:?}");
+
+    Ok(())
+}
+
+#[wasm_bindgen]
+pub async fn makeRangeRequest(url: String) -> Result<(), JsValue> {
+    let mut opts = RequestInit::new();
+    opts.method("GET");
+    opts.mode(RequestMode::Cors);
+
+    let request = Request::new_with_str_and_init(&url, &opts)?;
+
+    request
+        .headers()
+        .set("Range", "bytes=0-1023")?;
+
+    let window = web_sys::window().unwrap();
+    let resp_value = JsFuture::from(window.fetch_with_request(&request)).await?;
+    let resp: Response = resp_value.dyn_into().unwrap();
+    let buffer = JsFuture::from(resp.array_buffer().ok().unwrap()).await?;
+
+    log!("{resp:?}");
+    log!("{buffer:?}");
+    // let length = resp.headers().get("content-length")?;
+    // let a = length.unwrap();
+    // let lengthInt = a.parse::<u32>().unwrap();
+
+    // log!("{lengthInt:?}");
+    // // log!("{length:?}");
+
+    Ok(())
+}
+
+
 #[wasm_bindgen]
 pub async fn run(repo: String) -> Result<JsValue, JsValue> {
     let mut opts = RequestInit::new();
