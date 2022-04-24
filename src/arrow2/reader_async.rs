@@ -10,7 +10,7 @@ use arrow2::array::{Array, Int64Array};
 use arrow2::datatypes::DataType;
 // use arrow2::error::Result;
 use arrow2::io::parquet::read;
-use futures::{future::BoxFuture, StreamExt};
+use futures::{future::BoxFuture, StreamExt, future::LocalBoxFuture};
 use parquet2::read::read_metadata_async;
 // use range_reader::{RangeOutput, RangedAsyncReader};
 use crate::arrow2::ranged_reader::{RangeOutput, RangedAsyncReader};
@@ -130,7 +130,7 @@ pub async fn read_parquet_metadata_async(parquet_file_url: String) -> Result<(),
             let data = make_range_request(url, start, length).await.unwrap();
 
             Ok(RangeOutput { start, data })
-        }) as BoxFuture<'static, std::io::Result<RangeOutput>>
+        }) as LocalBoxFuture<'static, std::io::Result<RangeOutput>>
     });
 
     // at least 4kb per s3 request. Adjust to your liking.
