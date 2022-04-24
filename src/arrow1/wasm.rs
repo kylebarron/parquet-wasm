@@ -1,3 +1,4 @@
+use crate::arrow1::metadata::ParquetMetadata;
 use crate::utils::copy_vec_to_uint8_array;
 use js_sys::Uint8Array;
 use wasm_bindgen::prelude::*;
@@ -25,6 +26,15 @@ use wasm_bindgen::prelude::*;
 pub fn read_parquet(parquet_file: &[u8]) -> Result<Uint8Array, JsValue> {
     match crate::arrow1::reader::read_parquet(parquet_file) {
         Ok(buffer) => copy_vec_to_uint8_array(buffer),
+        Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
+    }
+}
+
+#[wasm_bindgen(js_name = readParquetMetadata)]
+#[cfg(feature = "reader")]
+pub fn read_parquet_metadata(parquet_file: &[u8]) -> Result<ParquetMetadata, JsValue> {
+    match crate::arrow1::reader::read_parquet_metadata(parquet_file) {
+        Ok(meta) => Ok(meta),
         Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
     }
 }

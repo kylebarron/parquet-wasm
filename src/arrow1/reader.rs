@@ -1,3 +1,4 @@
+use crate::arrow1::metadata::ParquetMetadata;
 use arrow::ipc::writer::StreamWriter;
 use parquet::arrow::{ArrowReader, ParquetFileArrowReader};
 use parquet::errors::ParquetError;
@@ -34,4 +35,12 @@ pub fn read_parquet(parquet_file: &[u8]) -> Result<Vec<u8>, ParquetError> {
 
     let writer_buffer = writer.into_inner()?;
     Ok(writer_buffer.to_vec())
+}
+
+pub fn read_parquet_metadata(parquet_file: &[u8]) -> Result<ParquetMetadata, ParquetError> {
+    // Create Parquet reader
+    let sliceable_cursor = SliceableCursor::new(Arc::new(parquet_file.to_vec()));
+    let parquet_reader = SerializedFileReader::new(sliceable_cursor)?;
+    let parquet_metadata = parquet_reader.metadata();
+    Ok(ParquetMetadata::new(parquet_metadata.clone()))
 }
