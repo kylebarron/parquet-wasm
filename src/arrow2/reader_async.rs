@@ -88,39 +88,11 @@ pub async fn get_content_length(url: String) -> Result<usize, JsValue> {
     let a = length.unwrap();
     let lengthInt = a.parse::<usize>().unwrap();
     Ok(lengthInt)
-
-    // log!("{lengthInt:?}");
-    // // log!("{length:?}");
-    // log!("{resp:?}");
-
-    // Ok(())
 }
 
 #[wasm_bindgen]
 pub async fn read_parquet_metadata_async(parquet_file_url: String) -> Result<(), JsValue> {
     let length = get_content_length(parquet_file_url).await.unwrap();
-
-    // let (sender1, receiver1) = oneshot::channel();
-    // let (sender2, receiver2) = oneshot::channel();
-    // let task1 = executor::spawn(async move {
-    //     dbg!("task 1 awaiting");
-    //     let _ = receiver1.await;
-    //     dbg!("task 1 -> task 2");
-    //     let _ = sender2.send(());
-    //     let element = web_sys::window()
-    //         .unwrap()
-    //         .document()
-    //         .unwrap()
-    //         .get_element_by_id("display")
-    //         .unwrap();
-
-    //     let mut ctr = 0u8;
-    //     while ctr < 255 {
-    //         element.set_inner_html(&format!("{}", ctr));
-    //         ctr = ctr.wrapping_add(1);
-    //         executor::yield_animation_frame().await;
-    //     }
-    // });
 
     let range_get = Box::new(move |start: u64, length: usize| {
         let url = parquet_file_url.clone();
