@@ -46,6 +46,27 @@ checksum = "3e4a0aa844fa9e1933504b4cd10e776167f370b746d0a622f32696d8d3b252e7"
 dependencies = [
  "bitflags",
  "chrono",
+ "half",
+ "hex",
+ "indexmap",
+ "lazy_static",
+ "lexical-core",
+ "multiversion",
+ "num",
+ "regex",
+ "serde",
+ "serde_derive",
+ "serde_json",
+]
+
+[[package]]
+name = "arrow"
+version = "12.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e94e2d315bc11f3d43f38344141453282591788381061fabc06c95e37d0dbc7d"
+dependencies = [
+ "bitflags",
+ "chrono",
  "flatbuffers",
  "half",
  "hex",
@@ -754,11 +775,11 @@ checksum = "8e22443d1643a904602595ba1cd8f7d896afe56d26712531c5ff73a15b2fbf64"
 
 [[package]]
 name = "parquet"
-version = "11.1.0"
+version = "12.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e2ba225e8c800adda2da6b0d63a65abf71867868682947ccb8fc6a9c68ba541"
+checksum = "13c5df78854c7d56aed3aba69fb1b342dda41c384963f4ddfa962b690572b42a"
 dependencies = [
- "arrow",
+ "arrow 12.0.0",
  "base64",
  "brotli",
  "byteorder",
@@ -799,7 +820,7 @@ dependencies = [
 name = "parquet-wasm"
 version = "0.3.0"
 dependencies = [
- "arrow",
+ "arrow 11.1.0",
  "arrow2",
  "clap",
  "console_error_panic_hook",
