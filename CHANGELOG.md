@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.3.1] - 2022-04-26
+
+## What's Changed
+
+- Bump arrow from 11.0.0 to 11.1.0 by @dependabot in https://github.com/kylebarron/parquet-wasm/pull/77
+- Update lockfile by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/76
+- Add clippy by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/78
+- Remove old debug script by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/79
+- Bump clap from 3.1.8 to 3.1.9 by @dependabot in https://github.com/kylebarron/parquet-wasm/pull/87
+- Check that input exists/is a uint8array by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/102
+- Update test files to those written by pyarrow v7 by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/103
+- Update to arrow and parquet 12.0 by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/105
+- Bump clap from 3.1.9 to 3.1.12 by @dependabot in https://github.com/kylebarron/parquet-wasm/pull/98
+- Create arrow1/arrow2 read benchmarks by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/82
+- Publish docs on tag by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/106
+- Update readme by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/107
+- Add published examples section to readme by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/108
+- Unify build script by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/109
+- esm2 entrypoint with no import.meta.url by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/110
+
+**Full Changelog**: https://github.com/kylebarron/parquet-wasm/compare/v0.3.0...v0.4.0
+
 ## [0.3.0] - 2022-04-04
 
 ## What's Changed
