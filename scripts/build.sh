@@ -87,6 +87,12 @@ cp tmp_build/bundler/{package.json,LICENSE_APACHE,LICENSE_MIT,README.md} pkg/
 # Create minimal package.json in esm/ folder with type: module
 echo '{"type": "module"}' > pkg/esm/package.json
 
+cp -r pkg/esm pkg/esm2
+sed '/import.meta.url/ s|input|// input|' pkg/esm2/arrow1.js > pkg/esm2/arrow1_new.js
+sed '/import.meta.url/ s|input|// input|' pkg/esm2/arrow2.js > pkg/esm2/arrow2_new.js
+mv pkg/esm2/arrow1_new.js pkg/esm2/arrow1.js
+mv pkg/esm2/arrow2_new.js pkg/esm2/arrow2.js
+
 # Update files array in package.json using JQ
 # Set module field to bundler/arrow1.js
 # Set types field to bundler/arrow1.d.ts
