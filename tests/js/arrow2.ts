@@ -51,3 +51,15 @@ test("write and read file", async (t) => {
   testArrowTablesEqual(t, initialTable, table);
   t.end();
 });
+
+test("error produced trying to read file with arrayBuffer", (t) => {
+  const arrayBuffer = new ArrayBuffer(10);
+  try {
+    // @ts-expect-error input should be Uint8Array
+    wasm.readParquet2(arrayBuffer);
+  } catch (err) {
+    t.equals(err, "Empty input provided or not a Uint8Array.");
+  }
+
+  t.end();
+});
