@@ -82,7 +82,7 @@ arrow2 = { version = "0.10", optional = true, features = [
 ] }
 # parquet2 is only used indirectly through arrow2, but we define it here so that we can turn on
 # parquet2 features as needed, e.g. with --features parquet2/gzip
-parquet2 = { version = "0.10", default_features = false, optional = true, features = [
+parquet2 = { version = "0.12", default_features = false, optional = true, features = [
   "stream",
 ] }
 
