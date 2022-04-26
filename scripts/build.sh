@@ -2,13 +2,18 @@
 rm -rf tmp_build pkg
 mkdir -p tmp_build
 
+if [ "$ENV" == "DEV" ]; then
+   BUILD="--dev"
+else
+   BUILD="--release"
+fi
 
 ######################################
 # ARROW 1 (arrow-rs) the default feature
 # Build node version into tmp_build/node
 echo "Building arrow-rs node"
 wasm-pack build \
-  --release \
+  $BUILD \
   --out-dir tmp_build/node \
   --out-name arrow1 \
   --target nodejs
@@ -16,7 +21,7 @@ wasm-pack build \
 # Build web version into tmp_build/esm
 echo "Building arrow-rs esm"
 wasm-pack build \
-  --release \
+  $BUILD \
   --out-dir tmp_build/esm \
   --out-name arrow1 \
   --target web
@@ -24,7 +29,7 @@ wasm-pack build \
 # Build bundler version into tmp_build/bundler
 echo "Building arrow-rs bundler"
 wasm-pack build \
-  --release \
+  $BUILD \
   --out-dir tmp_build/bundler \
   --out-name arrow1 \
   --target bundler
@@ -34,7 +39,7 @@ wasm-pack build \
 # Build node version into tmp_build/node2
 echo "Building arrow2 node"
 wasm-pack build \
-  --release \
+  $BUILD \
   --out-dir tmp_build/node2 \
   --out-name arrow2 \
   --target nodejs \
@@ -47,7 +52,7 @@ wasm-pack build \
 # Build web version into tmp_build/esm2
 echo "Building arrow2 esm"
 wasm-pack build \
-  --release \
+  $BUILD \
   --out-dir tmp_build/esm2 \
   --out-name arrow2 \
   --target web \
@@ -60,7 +65,7 @@ wasm-pack build \
 # Build bundler version into tmp_build/bundler2
 echo "Building arrow2 bundler"
 wasm-pack build \
-  --release \
+  $BUILD \
   --out-dir tmp_build/bundler2 \
   --out-name arrow2 \
   --target bundler \
@@ -89,3 +94,5 @@ jq '.files = ["*"] | .module="bundler/arrow1.js" | .types="bundler/arrow1.d.ts"'
 
 # Overwrite existing package.json file
 mv pkg/package.json.tmp pkg/package.json
+
+rm -rf tmp_build
