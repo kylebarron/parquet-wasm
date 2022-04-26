@@ -27,9 +27,14 @@ jobs:
         with:
           node-version: "16"
 
+      - name: Install JS dependencies
+        run: yarn
+
+      - name: Build bundles
+        run: yarn build
+
       - name: Build docs
-        run: |
-          yarn build && yarn docs:build
+        run: yarn docs:build
 
       - name: Publish docs
         run: |
