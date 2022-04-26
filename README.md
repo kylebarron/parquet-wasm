@@ -109,6 +109,11 @@ console.log(table.schema.toString());
 // Schema<{ 0: precipitation: Float32, 1: date: Date64<MILLISECOND> }>
 ```
 
+### Published examples
+
+- [GeoParquet on the Web (Observable)](https://observablehq.com/@kylebarron/geoparquet-on-the-web)
+- [Hello, Parquet-WASM (Observable)](https://observablehq.com/@bmschmidt/hello-parquet-wasm)
+
 ## Compression support
 
 The Parquet specification permits several compression codecs. This library currently supports:
