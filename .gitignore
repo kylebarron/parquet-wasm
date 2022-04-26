@@ -12,3 +12,5 @@ data/
 # Typedoc output
 docs_build/
 .venv/
+.env
+.envrc
