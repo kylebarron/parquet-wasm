@@ -31,12 +31,12 @@ Since these parallel projects exist, why not give the user the choice of which t
 
 Presumably no one wants to use both `parquet` and `parquet2` at once, so the default bundles separate `parquet` and `parquet2` into separate entry points to keep bundle size as small as possible. The following describe the six bundles available:
 
-| Entry point             | Rust crates used        | Description                                             |
-| ----------------------- | ----------------------- | ------------------------------------------------------- |
-| `parquet-wasm`          | `parquet` and `arrow`   | "Bundler" build, to be used in bundlers such as Webpack |
-| `parquet-wasm/node/arrow1`     | `parquet` and `arrow`   | Node build, to be used with `require` in NodeJS         |
-| `parquet-wasm/esm/arrow1`      | `parquet` and `arrow`   | ESM, to be used directly from the Web as an ES Module   |
-|                         |                         |                                                         |
+| Entry point                   | Rust crates used        | Description                                             |
+| ----------------------------- | ----------------------- | ------------------------------------------------------- |
+| `parquet-wasm`                | `parquet` and `arrow`   | "Bundler" build, to be used in bundlers such as Webpack |
+| `parquet-wasm/node/arrow1`    | `parquet` and `arrow`   | Node build, to be used with `require` in NodeJS         |
+| `parquet-wasm/esm/arrow1`     | `parquet` and `arrow`   | ESM, to be used directly from the Web as an ES Module   |
+|                               |                         |                                                         |
 | `parquet-wasm/bundler/arrow2` | `parquet2` and `arrow2` | "Bundler" build, to be used in bundlers such as Webpack |
 | `parquet-wasm/node/arrow2`    | `parquet2` and `arrow2` | Node build, to be used with `require` in NodeJS         |
 | `parquet-wasm/esm/arrow2`     | `parquet2` and `arrow2` | ESM, to be used directly from the Web as an ES Module   |
@@ -71,7 +71,12 @@ The WASM bundle must be compiled with the `console_error_panic_hook` for this fu
 
 ```js
 import { tableFromArrays, tableFromIPC, tableToIPC } from "apache-arrow";
-import { readParquet, writeParquet } from "parquet-wasm";
+import {
+  readParquet,
+  writeParquet,
+  Compression,
+  WriterPropertiesBuilder,
+} from "parquet-wasm";
 
 // Create Arrow Table in JS
 const LENGTH = 2000;
@@ -90,7 +95,13 @@ const rainfall = tableFromArrays({
 });
 
 // Write Arrow Table to Parquet
-const parquetBuffer = writeParquet(tableToIPC(rainfall, "stream"));
+const writerProperties = new WriterPropertiesBuilder()
+  .setCompression(Compression.ZSTD)
+  .build();
+const parquetBuffer = writeParquet(
+  tableToIPC(rainfall, "stream"),
+  writerProperties
+);
 
 // Read Parquet buffer back to Arrow Table
 const table = tableFromIPC(readParquet(parquetBuffer));
@@ -107,11 +118,11 @@ The Parquet specification permits several compression codecs. This library curre
 - [x] Gzip
 - [x] Brotli
 - [x] ZSTD. Supported in `arrow1`, will be supported in `arrow2` when the next version of the upstream `parquet2` package is released.
-- [ ] LZ4. Work is progressing but no support yet.
+- [ ] LZ4. Work is progressing but no support yet. Will be supported in `arrow2` when the next version of the upstream `parquet2` package is released.
 
 ## Custom builds
 
-In some cases, you may know ahead of time that your Parquet files will only include a single compression codec, say Snappy, or even no compression at all. In these cases, you may want to create a custom build of `parquet-wasm` to keep bundle size at a minimum. If you install the Rust toolchain and `wasm-pack` (see [Development](#development)), you can create a custom build with only the compression codecs you require.
+In some cases, you may know ahead of time that your Parquet files will only include a single compression codec, say Snappy, or even no compression at all. In these cases, you may want to create a custom build of `parquet-wasm` to keep bundle size at a minimum. If you install the Rust toolchain and `wasm-pack` (see [Development](DEVELOP.md)), you can create a custom build with only the compression codecs you require.
 
 ### Example custom builds
 
