@@ -7,6 +7,8 @@ wasm-pack.log
 www/data
 www/data/
 data/
+!tests/data/
 
 # Typedoc output
 docs_build/
+.venv/
