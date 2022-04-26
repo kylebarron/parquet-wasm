@@ -58,7 +58,7 @@ jobs:
           node-version: "16"
 
       - name: Build bundle
-        run: bash ./scripts/build-node-tests.sh
+        run: yarn build:test
 
       - name: Install dev dependencies
         run: yarn

@@ -1,7 +1,7 @@
 {
   "scripts": {
     "build": "bash ./scripts/build.sh",
-    "build:test": "bash ./scripts/build-node-tests.sh",
+    "build:test": "ENV='DEV' yarn build",
     "docs:build": "typedoc",
     "docs:publish": "gh-pages -d docs_build",
     "docs:serve": "cd docs_build && python -m http.server 8081",
