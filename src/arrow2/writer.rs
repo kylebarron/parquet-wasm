@@ -41,11 +41,10 @@ pub fn write_parquet(
             encodings,
         );
 
-        if let Ok(group) = row_groups {
-            for maybe_column in group {
-                let column = maybe_column?;
-                let (group, len) = column;
-                parquet_writer.write(group, len)?;
+        if let Ok(row_group_iterator) = row_groups {
+            for maybe_group in row_group_iterator {
+                let group = maybe_group?;
+                parquet_writer.write(group)?;
             }
         }
     }

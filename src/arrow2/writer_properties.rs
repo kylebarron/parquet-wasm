@@ -21,16 +21,20 @@ impl Encoding {
     }
 }
 
+// arrow2::io::parquet::write::Compressor
 impl Compression {
-    pub fn to_arrow2(self) -> arrow2::io::parquet::write::Compression {
+    pub fn to_arrow2(self) -> arrow2::io::parquet::write::CompressionOptions {
         match self {
-            Compression::UNCOMPRESSED => arrow2::io::parquet::write::Compression::Uncompressed,
-            Compression::SNAPPY => arrow2::io::parquet::write::Compression::Snappy,
-            Compression::GZIP => arrow2::io::parquet::write::Compression::Gzip,
-            Compression::BROTLI => arrow2::io::parquet::write::Compression::Brotli,
+            Compression::UNCOMPRESSED => {
+                arrow2::io::parquet::write::CompressionOptions::Uncompressed
+            }
+            Compression::SNAPPY => arrow2::io::parquet::write::CompressionOptions::Snappy,
+            Compression::GZIP => arrow2::io::parquet::write::CompressionOptions::Gzip,
+            Compression::BROTLI => arrow2::io::parquet::write::CompressionOptions::Brotli,
             // TODO: should this be Lz4Raw?
-            Compression::LZ4 => arrow2::io::parquet::write::Compression::Lz4,
-            Compression::ZSTD => arrow2::io::parquet::write::Compression::Zstd,
+            Compression::LZ4 => arrow2::io::parquet::write::CompressionOptions::Lz4,
+            // Pass None to use the default ZSTD compression level
+            Compression::ZSTD => arrow2::io::parquet::write::CompressionOptions::Zstd(None),
         }
     }
 }
@@ -80,7 +84,7 @@ impl WriterPropertiesBuilder {
     pub fn new() -> Self {
         let write_options = arrow2::io::parquet::write::WriteOptions {
             write_statistics: true,
-            compression: arrow2::io::parquet::write::Compression::Snappy,
+            compression: arrow2::io::parquet::write::CompressionOptions::Snappy,
             version: arrow2::io::parquet::write::Version::V2,
         };
         let encoding = arrow2::io::parquet::write::Encoding::Plain;
