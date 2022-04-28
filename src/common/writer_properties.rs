@@ -1,6 +1,10 @@
 use wasm_bindgen::prelude::*;
 
 /// Supported compression algorithms.
+///
+/// Codecs added in format version X.Y can be read by readers based on X.Y and later.
+/// Codec support may vary between readers based on the format version and
+/// libraries available at runtime.
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[allow(non_camel_case_types)]
 #[wasm_bindgen]
@@ -9,8 +13,11 @@ pub enum Compression {
     SNAPPY,
     GZIP,
     BROTLI,
+    /// @deprecated as of Parquet 2.9.0.
+    /// Switch to LZ4_RAW
     LZ4,
     ZSTD,
+    LZ4_RAW,
 }
 
 /// Encodings supported by Parquet.

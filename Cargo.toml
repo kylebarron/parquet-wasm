@@ -30,7 +30,9 @@ parquet_supported_compressions = [
 parquet2_supported_compressions = [
   "parquet2/brotli",
   "parquet2/gzip",
+  "parquet2/lz4_flex",
   "parquet2/snappy",
+  "parquet2/zstd",
 ]
 
 # Full list of available features
@@ -42,17 +44,15 @@ full = [
   "parquet2",
   "parquet/brotli",
   "parquet/flate2",
-  # lz4_flex not implemented yet
+  # wasm-compatible lz4 not yet implemented
   # "parquet/lz4",
   "parquet/snap",
   "parquet/zstd",
   "parquet2/brotli",
   "parquet2/gzip",
-  # lz4_flex not implemented yet, pending https://github.com/jorgecarleitao/parquet2/pull/91
-  # "parquet2/lz4",
+  "parquet2/lz4_flex",
   "parquet2/snappy",
-  # ZSTD should work in parquet2's next release, already merged
-  # "parquet2/zstd",
+  "parquet2/zstd",
   "reader",
   "writer",
 ]
