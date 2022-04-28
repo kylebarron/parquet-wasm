@@ -21,7 +21,6 @@ impl Encoding {
     }
 }
 
-// arrow2::io::parquet::write::Compressor
 impl Compression {
     pub fn to_arrow2(self) -> arrow2::io::parquet::write::CompressionOptions {
         match self {
