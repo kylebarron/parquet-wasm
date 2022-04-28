@@ -1,3 +1,4 @@
+*.parquet
 node_modules
 /target
 **/*.rs.bk
@@ -7,6 +8,10 @@ wasm-pack.log
 www/data
 www/data/
 data/
+!tests/data/
 
 # Typedoc output
 docs_build/
+.venv/
+.env
+.envrc

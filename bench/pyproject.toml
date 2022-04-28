@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "parquet-wasm-bench"
+version = "0.1.0"
+description = "Create data for parquet-wasm benchmarks"
+authors = ["Kyle Barron <kylebarron2@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+numpy = "^1.22.3"
+pyarrow = "^7.0.0"
+pandas = "^1.4.2"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

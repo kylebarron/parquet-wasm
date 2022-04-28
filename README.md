@@ -31,12 +31,12 @@ Since these parallel projects exist, why not give the user the choice of which t
 
 Presumably no one wants to use both `parquet` and `parquet2` at once, so the default bundles separate `parquet` and `parquet2` into separate entry points to keep bundle size as small as possible. The following describe the six bundles available:
 
-| Entry point             | Rust crates used        | Description                                             |
-| ----------------------- | ----------------------- | ------------------------------------------------------- |
-| `parquet-wasm`          | `parquet` and `arrow`   | "Bundler" build, to be used in bundlers such as Webpack |
-| `parquet-wasm/node/arrow1`     | `parquet` and `arrow`   | Node build, to be used with `require` in NodeJS         |
-| `parquet-wasm/esm/arrow1`      | `parquet` and `arrow`   | ESM, to be used directly from the Web as an ES Module   |
-|                         |                         |                                                         |
+| Entry point                   | Rust crates used        | Description                                             |
+| ----------------------------- | ----------------------- | ------------------------------------------------------- |
+| `parquet-wasm`                | `parquet` and `arrow`   | "Bundler" build, to be used in bundlers such as Webpack |
+| `parquet-wasm/node/arrow1`    | `parquet` and `arrow`   | Node build, to be used with `require` in NodeJS         |
+| `parquet-wasm/esm/arrow1`     | `parquet` and `arrow`   | ESM, to be used directly from the Web as an ES Module   |
+|                               |                         |                                                         |
 | `parquet-wasm/bundler/arrow2` | `parquet2` and `arrow2` | "Bundler" build, to be used in bundlers such as Webpack |
 | `parquet-wasm/node/arrow2`    | `parquet2` and `arrow2` | Node build, to be used with `require` in NodeJS         |
 | `parquet-wasm/esm/arrow2`     | `parquet2` and `arrow2` | ESM, to be used directly from the Web as an ES Module   |
@@ -71,7 +71,12 @@ The WASM bundle must be compiled with the `console_error_panic_hook` for this fu
 
 ```js
 import { tableFromArrays, tableFromIPC, tableToIPC } from "apache-arrow";
-import { readParquet, writeParquet } from "parquet-wasm";
+import {
+  readParquet,
+  writeParquet,
+  Compression,
+  WriterPropertiesBuilder,
+} from "parquet-wasm";
 
 // Create Arrow Table in JS
 const LENGTH = 2000;
@@ -90,13 +95,24 @@ const rainfall = tableFromArrays({
 });
 
 // Write Arrow Table to Parquet
-const parquetBuffer = writeParquet(tableToIPC(rainfall, "stream"));
+const writerProperties = new WriterPropertiesBuilder()
+  .setCompression(Compression.ZSTD)
+  .build();
+const parquetBuffer = writeParquet(
+  tableToIPC(rainfall, "stream"),
+  writerProperties
+);
 
 // Read Parquet buffer back to Arrow Table
 const table = tableFromIPC(readParquet(parquetBuffer));
 console.log(table.schema.toString());
 // Schema<{ 0: precipitation: Float32, 1: date: Date64<MILLISECOND> }>
 ```
+
+### Published examples
+
+- [GeoParquet on the Web (Observable)](https://observablehq.com/@kylebarron/geoparquet-on-the-web)
+- [Hello, Parquet-WASM (Observable)](https://observablehq.com/@bmschmidt/hello-parquet-wasm)
 
 ## Compression support
 
@@ -106,12 +122,19 @@ The Parquet specification permits several compression codecs. This library curre
 - [x] Snappy
 - [x] Gzip
 - [x] Brotli
-- [x] ZSTD. Supported in `arrow1`, will be supported in `arrow2` when the next version of the upstream `parquet2` package is released.
-- [ ] LZ4. Work is progressing but no support yet.
+- [x] ZSTD
+- [ ] LZ4 (deprecated)
+- [x] LZ4_RAW. Supported in `arrow2` only.
+
+LZ4 support in Parquet is a bit messy. As described [here](https://github.com/apache/parquet-format/blob/54e53e5d7794d383529dd30746378f19a12afd58/Compression.md), there are _two_ LZ4 compression options in Parquet (as of version 2.9.0). The original version `LZ4` is now deprecated; it used an undocumented framing scheme which made interoperability difficult. The specification now reads:
+
+> It is strongly suggested that implementors of Parquet writers deprecate this compression codec in their user-facing APIs, and advise users to switch to the newer, interoperable `LZ4_RAW` codec.
+
+It's currently unknown how widespread the ecosystem support is for `LZ4_RAW`. As of `pyarrow` v7, it now writes `LZ4_RAW` by default and presumably has read support for it as well.
 
 ## Custom builds
 
-In some cases, you may know ahead of time that your Parquet files will only include a single compression codec, say Snappy, or even no compression at all. In these cases, you may want to create a custom build of `parquet-wasm` to keep bundle size at a minimum. If you install the Rust toolchain and `wasm-pack` (see [Development](#development)), you can create a custom build with only the compression codecs you require.
+In some cases, you may know ahead of time that your Parquet files will only include a single compression codec, say Snappy, or even no compression at all. In these cases, you may want to create a custom build of `parquet-wasm` to keep bundle size at a minimum. If you install the Rust toolchain and `wasm-pack` (see [Development](DEVELOP.md)), you can create a custom build with only the compression codecs you require.
 
 ### Example custom builds
 
@@ -159,13 +182,17 @@ Refer to the [`wasm-pack` documentation](https://rustwasm.github.io/docs/wasm-pa
   - `parquet2/brotli`: Activate Brotli compression in the `parquet2` crate.
   - `parquet2/gzip`: Activate Gzip compression in the `parquet2` crate.
   - `parquet2/snappy`: Activate Snappy compression in the `parquet2` crate.
-  - ~~`parquet2/lz4`~~: ~~Activate LZ4 compression in the `parquet2` crate~~. WASM-compatible version not yet implemented, pending https://github.com/jorgecarleitao/parquet2/pull/91
-  - ~~`parquet2/zstd`~~: ~~Activate ZSTD compression in the `parquet2` crate.~~ ZSTD should work in parquet2's next release.
+  - `parquet2/lz4_flex`: Activate LZ4_RAW compression in the `parquet2` crate.
+  - `parquet2/zstd`: Activate ZSTD compression in the `parquet2` crate.
 - `console_error_panic_hook`: Expose the `setPanicHook` function for better error messages for Rust panics.
 
 ## Future work
 
-- [ ] More tests :smile:
+- [ ] Async support to make requests for Parquet chunks directly from Rust. **If you're familiar with Rust async, I would love some help in [#96](https://github.com/kylebarron/parquet-wasm/pull/96)** :slightly_smiling_face:. This would additionally support:
+  - [ ] Pushdown predicate filtering, to download only chunks that match a specific condition
+  - [ ] Column filtering, to download only certain columns
+  - [ ] Async iterable support, to return chunks as they arrive
+- [ ] More tests
 
 ## Acknowledgements
 

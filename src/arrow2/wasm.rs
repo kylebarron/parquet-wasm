@@ -23,6 +23,12 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen(js_name = readParquet2)]
 #[cfg(feature = "reader")]
 pub fn read_parquet2(parquet_file: &[u8]) -> Result<Uint8Array, JsValue> {
+    if parquet_file.is_empty() {
+        return Err(JsValue::from_str(
+            "Empty input provided or not a Uint8Array.",
+        ));
+    }
+
     match crate::arrow2::reader::read_parquet(parquet_file) {
         Ok(buffer) => copy_vec_to_uint8_array(buffer),
         Err(error) => Err(JsValue::from_str(format!("{}", error).as_str())),

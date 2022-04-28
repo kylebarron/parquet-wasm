@@ -1,6 +1,6 @@
 [package]
 name = "parquet-wasm"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Kyle Barron <kylebarron2@gmail.com>"]
 edition = "2021"
 description = "WebAssembly Parquet reader and writer."
@@ -30,7 +30,9 @@ parquet_supported_compressions = [
 parquet2_supported_compressions = [
   "parquet2/brotli",
   "parquet2/gzip",
+  "parquet2/lz4_flex",
   "parquet2/snappy",
+  "parquet2/zstd",
 ]
 
 # Full list of available features
@@ -42,17 +44,15 @@ full = [
   "parquet2",
   "parquet/brotli",
   "parquet/flate2",
-  # lz4_flex not implemented yet
+  # wasm-compatible lz4 not yet implemented
   # "parquet/lz4",
   "parquet/snap",
   "parquet/zstd",
   "parquet2/brotli",
   "parquet2/gzip",
-  # lz4_flex not implemented yet, pending https://github.com/jorgecarleitao/parquet2/pull/91
-  # "parquet2/lz4",
+  "parquet2/lz4_flex",
   "parquet2/snappy",
-  # ZSTD should work in parquet2's next release, already merged
-  # "parquet2/zstd",
+  "parquet2/zstd",
   "reader",
   "writer",
 ]
@@ -75,25 +75,25 @@ console_error_panic_hook = { version = "0.1.6", optional = true }
 js-sys = "0.3.57"
 getrandom = { version = "0.2.6", features = ["js"] }
 
-arrow2 = { version = "0.10", optional = true, features = [
+arrow2 = { version = "0.11", optional = true, features = [
   "io_ipc",
   "io_parquet",
 ] }
 # parquet2 is only used indirectly through arrow2, but we define it here so that we can turn on
 # parquet2 features as needed, e.g. with --features parquet2/gzip
-parquet2 = { version = "0.10", default_features = false, optional = true, features = [
+parquet2 = { version = "0.12", default_features = false, optional = true, features = [
   "stream",
 ] }
 
-arrow = { version = "11.1", default-features = false, optional = true }
-parquet = { version = "11.0", default-features = false, optional = true, features = [
+arrow = { version = "12.0.0", default-features = false, optional = true }
+parquet = { version = "12.0.0", default-features = false, optional = true, features = [
   "arrow",
   "base64",
   "async",
 ] }
 async-compat = "0.2.1"
 
-clap = { version = "3.1.9", optional = true, features = ["derive"] }
+clap = { version = "3.1.12", optional = true, features = ["derive"] }
 
 wasm-bindgen-futures = "0.4.30"
 serde = { version = "1.0.80", features = ["derive"] }

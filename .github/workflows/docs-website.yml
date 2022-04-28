@@ -1,0 +1,41 @@
+name: Publish docs website
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Install
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - uses: Swatinem/rust-cache@v1
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "16"
+
+      - name: Install JS dependencies
+        run: yarn
+
+      - name: Build bundles
+        run: yarn build
+
+      - name: Build docs
+        run: yarn docs:build
+
+      - name: Publish docs
+        run: |
+          yarn docs:publish

@@ -26,6 +26,8 @@ impl Compression {
             Compression::BROTLI => parquet::basic::Compression::BROTLI,
             Compression::LZ4 => parquet::basic::Compression::LZ4,
             Compression::ZSTD => parquet::basic::Compression::ZSTD,
+            // TODO: fix this. Though LZ4 isn't supported in arrow1 for wasm anyways
+            Compression::LZ4_RAW => parquet::basic::Compression::LZ4,
         }
     }
 }
