@@ -1,3 +1,4 @@
+*.parquet
 node_modules
 /target
 **/*.rs.bk

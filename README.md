@@ -122,8 +122,15 @@ The Parquet specification permits several compression codecs. This library curre
 - [x] Snappy
 - [x] Gzip
 - [x] Brotli
-- [x] ZSTD. Supported in `arrow1`, will be supported in `arrow2` when the next version of the upstream `parquet2` package is released.
-- [ ] LZ4. Work is progressing but no support yet. Will be supported in `arrow2` when the next version of the upstream `parquet2` package is released.
+- [x] ZSTD
+- [ ] LZ4 (deprecated)
+- [x] LZ4_RAW. Supported in `arrow2` only.
+
+LZ4 support in Parquet is a bit messy. As described [here](https://github.com/apache/parquet-format/blob/54e53e5d7794d383529dd30746378f19a12afd58/Compression.md), there are _two_ LZ4 compression options in Parquet (as of version 2.9.0). The original version `LZ4` is now deprecated; it used an undocumented framing scheme which made interoperability difficult. The specification now reads:
+
+> It is strongly suggested that implementors of Parquet writers deprecate this compression codec in their user-facing APIs, and advise users to switch to the newer, interoperable `LZ4_RAW` codec.
+
+It's currently unknown how widespread the ecosystem support is for `LZ4_RAW`. As of `pyarrow` v7, it now writes `LZ4_RAW` by default and presumably has read support for it as well.
 
 ## Custom builds
 
@@ -175,13 +182,17 @@ Refer to the [`wasm-pack` documentation](https://rustwasm.github.io/docs/wasm-pa
   - `parquet2/brotli`: Activate Brotli compression in the `parquet2` crate.
   - `parquet2/gzip`: Activate Gzip compression in the `parquet2` crate.
   - `parquet2/snappy`: Activate Snappy compression in the `parquet2` crate.
-  - ~~`parquet2/lz4`~~: ~~Activate LZ4 compression in the `parquet2` crate~~. WASM-compatible version not yet implemented, pending https://github.com/jorgecarleitao/parquet2/pull/91
-  - ~~`parquet2/zstd`~~: ~~Activate ZSTD compression in the `parquet2` crate.~~ ZSTD should work in parquet2's next release.
+  - `parquet2/lz4_flex`: Activate LZ4_RAW compression in the `parquet2` crate.
+  - `parquet2/zstd`: Activate ZSTD compression in the `parquet2` crate.
 - `console_error_panic_hook`: Expose the `setPanicHook` function for better error messages for Rust panics.
 
 ## Future work
 
-- [ ] More tests :smile:
+- [ ] Async support to make requests for Parquet chunks directly from Rust. **If you're familiar with Rust async, I would love some help in [#96](https://github.com/kylebarron/parquet-wasm/pull/96)** :slightly_smiling_face:. This would additionally support:
+  - [ ] Pushdown predicate filtering, to download only chunks that match a specific condition
+  - [ ] Column filtering, to download only certain columns
+  - [ ] Async iterable support, to return chunks as they arrive
+- [ ] More tests
 
 ## Acknowledgements
 

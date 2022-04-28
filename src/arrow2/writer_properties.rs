@@ -30,10 +30,10 @@ impl Compression {
             Compression::SNAPPY => arrow2::io::parquet::write::CompressionOptions::Snappy,
             Compression::GZIP => arrow2::io::parquet::write::CompressionOptions::Gzip,
             Compression::BROTLI => arrow2::io::parquet::write::CompressionOptions::Brotli,
-            // TODO: should this be Lz4Raw?
             Compression::LZ4 => arrow2::io::parquet::write::CompressionOptions::Lz4,
-            // Pass None to use the default ZSTD compression level
+            // Note: We pass None to use the default ZSTD compression level
             Compression::ZSTD => arrow2::io::parquet::write::CompressionOptions::Zstd(None),
+            Compression::LZ4_RAW => arrow2::io::parquet::write::CompressionOptions::Lz4Raw,
         }
     }
 }
