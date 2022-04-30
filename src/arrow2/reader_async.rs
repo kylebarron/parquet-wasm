@@ -10,7 +10,7 @@ use arrow2::array::{Array, Int64Array};
 use arrow2::datatypes::DataType;
 // use arrow2::error::Result;
 use arrow2::io::parquet::read;
-use futures::{future::BoxFuture, StreamExt, future::LocalBoxFuture};
+use futures::{future::BoxFuture, future::LocalBoxFuture, StreamExt};
 use parquet2::read::read_metadata_async;
 // use range_reader::{RangeOutput, RangedAsyncReader};
 use crate::arrow2::ranged_reader::{RangeOutput, RangedAsyncReader};
@@ -19,7 +19,7 @@ use crate::arrow2::ranged_reader::{RangeOutput, RangedAsyncReader};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-use wasm_bindgen_futures::{JsFuture, spawn_local};
+use wasm_bindgen_futures::{future_to_promise, spawn_local, JsFuture};
 use wasm_rs_async_executor::single_threaded as executor;
 use web_sys::{Request, RequestInit, RequestMode, Response};
 
@@ -92,17 +92,23 @@ pub async fn get_content_length(url: String) -> Result<usize, JsValue> {
 
 #[wasm_bindgen]
 pub async fn read_parquet_metadata_async(parquet_file_url: String) -> Result<(), JsValue> {
-    let length = get_content_length(parquet_file_url).await.unwrap();
+    let length = get_content_length(parquet_file_url.clone()).await.unwrap();
+    let (sender, receiver) = oneshot::channel::<()>();
 
     let range_get = Box::new(move |start: u64, length: usize| {
         let url = parquet_file_url.clone();
 
         Box::pin(async move {
-            let url = url.clone();
-            let data = make_range_request(url, start, length).await.unwrap();
+            let (sender2, receiver2) = oneshot::channel::<Vec<u8>>();
+            executor::spawn(async move {
+                let innerData = make_range_request(url, start, length).await.unwrap();
+                sender2.send(innerData);
+            });
+            // let url = url.clone();
+            let data = receiver2.await.unwrap();
 
             Ok(RangeOutput { start, data })
-        }) as LocalBoxFuture<'static, std::io::Result<RangeOutput>>
+        }) as BoxFuture<'static, std::io::Result<RangeOutput>>
     });
 
     // at least 4kb per s3 request. Adjust to your liking.
@@ -112,6 +118,36 @@ pub async fn read_parquet_metadata_async(parquet_file_url: String) -> Result<(),
 
     Ok(())
 }
+
+// #[wasm_bindgen]
+// pub async fn read_parquet_metadata_async(parquet_file_url: String) -> Result<(), JsValue> {
+//     let length = get_content_length(parquet_file_url).await.unwrap();
+
+//     let range_get = Box::new(move |start: u64, length: usize| {
+//         let url = parquet_file_url.clone();
+
+//         let future = Box::pin(async move {
+//             let (sender, receiver) = oneshot::channel::<()>();
+
+//             let url = url.clone();
+//             let temp = executor::spawn(make_range_request(url, start, length));
+//             let temp2 = executor::run(None);
+//             // let data = .await.unwrap();
+//             let _ = receiver.await;
+
+//             Ok(RangeOutput { start, data })
+//         }) as BoxFuture<'static, std::io::Result<RangeOutput>>;
+//         future
+//         // spawn_local(future)
+//     });
+
+//     // at least 4kb per s3 request. Adjust to your liking.
+//     let mut reader = RangedAsyncReader::new(length, 4 * 1024, range_get);
+
+//     let metadata = read_metadata_async(&mut reader).await.unwrap();
+
+//     Ok(())
+// }
 
 // #[tokio::main]
 // async fn main() -> Result<()> {
