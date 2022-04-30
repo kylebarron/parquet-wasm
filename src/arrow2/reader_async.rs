@@ -1,6 +1,7 @@
 use arrow2::error::ArrowError;
 use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};
 // NOTE: It's FileReader on latest main but RecordReader in 0.9.2
+use arrow2::io::parquet::read::FileMetaData;
 use arrow2::io::parquet::read::FileReader as ParquetFileReader;
 use futures::channel::oneshot;
 use std::io::Cursor;
@@ -13,7 +14,7 @@ use crate::arrow2::ranged_reader::{RangeOutput, RangedAsyncReader};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 
-use crate::fetch::{get_content_length, make_range_request};
+use crate::fetch::make_range_request;
 
 use crate::log;
 
@@ -41,14 +42,12 @@ pub fn read_parquet(parquet_file: &[u8]) -> Result<Vec<u8>, ArrowError> {
     Ok(output_file)
 }
 
-#[wasm_bindgen]
-pub async fn read_parquet_metadata_async(parquet_file_url: String) -> Result<usize, JsValue> {
-    log!("Hello world from read_parquet_metadata_async");
-    let length = get_content_length(parquet_file_url.clone()).await.unwrap();
-    log!("Found length: {}", length);
-
+pub async fn read_parquet_metadata_async(
+    url: String,
+    content_length: usize,
+) -> Result<FileMetaData, JsValue> {
     let range_get = Box::new(move |start: u64, length: usize| {
-        let url = parquet_file_url.clone();
+        let url = url.clone();
 
         Box::pin(async move {
             let (sender2, receiver2) = oneshot::channel::<Vec<u8>>();
@@ -65,10 +64,10 @@ pub async fn read_parquet_metadata_async(parquet_file_url: String) -> Result<usi
     });
 
     // at least 4kb per s3 request. Adjust to your liking.
-    let mut reader = RangedAsyncReader::new(length, 4 * 1024, range_get);
+    let mut reader = RangedAsyncReader::new(content_length, 4 * 1024, range_get);
 
     let metadata = read_metadata_async(&mut reader).await.unwrap();
     log!("Number of rows: {}", metadata.num_rows);
 
-    Ok(metadata.num_rows)
+    Ok(metadata)
 }

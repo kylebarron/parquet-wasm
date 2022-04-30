@@ -2,14 +2,14 @@ import * as wasm from "parquet-wasm";
 
 wasm.setPanicHook();
 window.wasm = wasm;
+const url = 'https://raw.githubusercontent.com/opengeospatial/geoparquet/main/examples/example.parquet';
+window.url = url;
 
 async function main() {
   console.log('hello world');
-  const url = 'https://raw.githubusercontent.com/opengeospatial/geoparquet/main/examples/example.parquet';
-  // const test1 = await wasm.getContentLength(url);
-  // const test2 = wasm.read_parquet_metadata_async_arrow1(url);
-  const test3 = await wasm.read_parquet_metadata_async(url);
-  console.log('test3', test3);
+  const parquetFile = await new wasm.AsyncParquetFile(url);
+  console.log('parquetFile', parquetFile);
+  console.log('content length', parquetFile.content_length());
 
   // await wasm.readParquet
   // wasm.
