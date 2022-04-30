@@ -1,7 +1,5 @@
 extern crate web_sys;
 
-pub mod async_testing;
-
 #[cfg(feature = "arrow")]
 pub mod arrow1;
 
@@ -10,6 +8,7 @@ pub mod arrow2;
 
 pub mod common;
 pub mod utils;
+pub mod fetch;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
