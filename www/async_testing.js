@@ -8,6 +8,7 @@ window.url = url;
 async function main() {
   console.log('hello world');
   const parquetFile = await new wasm.AsyncParquetFile(url);
+  window.parquetFile = parquetFile;
   console.log('parquetFile', parquetFile);
   console.log('content length', parquetFile.content_length());
 

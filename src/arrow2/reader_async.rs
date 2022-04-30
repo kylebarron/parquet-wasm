@@ -42,6 +42,29 @@ pub fn read_parquet(parquet_file: &[u8]) -> Result<Vec<u8>, ArrowError> {
     Ok(output_file)
 }
 
+pub fn create_reader(url: String, content_length: usize) -> RangedAsyncReader {
+    let range_get = Box::new(move |start: u64, length: usize| {
+        let url = url.clone();
+
+        Box::pin(async move {
+            let (sender2, receiver2) = oneshot::channel::<Vec<u8>>();
+            spawn_local(async move {
+                log!("Making range request");
+                let inner_data = make_range_request(url, start, length).await.unwrap();
+                sender2.send(inner_data).unwrap();
+            });
+            let data = receiver2.await.unwrap();
+
+            Ok(RangeOutput { start, data })
+        }) as BoxFuture<'static, std::io::Result<RangeOutput>>
+    });
+
+    // at least 4kb per s3 request. Adjust to your liking.
+    let reader = RangedAsyncReader::new(content_length, 4 * 1024, range_get);
+
+    reader
+}
+
 pub async fn read_parquet_metadata_async(
     url: String,
     content_length: usize,
@@ -54,7 +77,6 @@ pub async fn read_parquet_metadata_async(
             spawn_local(async move {
                 log!("Making range request");
                 let inner_data = make_range_request(url, start, length).await.unwrap();
-                log!("Got data: {:?}", inner_data);
                 sender2.send(inner_data).unwrap();
             });
             let data = receiver2.await.unwrap();
