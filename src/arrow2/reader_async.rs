@@ -23,6 +23,8 @@ use wasm_bindgen_futures::{future_to_promise, spawn_local, JsFuture};
 use wasm_rs_async_executor::single_threaded as executor;
 use web_sys::{Request, RequestInit, RequestMode, Response};
 
+use crate::log;
+
 /// Internal function to read a buffer with Parquet data into a buffer with Arrow IPC Stream data
 /// using the arrow2 and parquet2 crates
 pub fn read_parquet(parquet_file: &[u8]) -> Result<Vec<u8>, ArrowError> {
@@ -76,14 +78,20 @@ async fn make_range_request(url: String, start: u64, length: usize) -> Result<Ve
 }
 
 pub async fn get_content_length(url: String) -> Result<usize, JsValue> {
+    log!("Constructing requestInit options");
     let mut opts = RequestInit::new();
     opts.method("HEAD");
     opts.mode(RequestMode::Cors);
 
+    log!("Constructing request");
     let request = Request::new_with_str_and_init(&url, &opts)?;
     let window = web_sys::window().unwrap();
+
+    log!("Making fetch");
     let resp_value = JsFuture::from(window.fetch_with_request(&request)).await?;
     let resp: Response = resp_value.dyn_into().unwrap();
+
+    log!("Getting content-length header");
     let length = resp.headers().get("content-length")?;
     let a = length.unwrap();
     let lengthInt = a.parse::<usize>().unwrap();
@@ -91,8 +99,10 @@ pub async fn get_content_length(url: String) -> Result<usize, JsValue> {
 }
 
 #[wasm_bindgen]
-pub async fn read_parquet_metadata_async(parquet_file_url: String) -> Result<(), JsValue> {
+pub async fn read_parquet_metadata_async(parquet_file_url: String) -> Result<usize, JsValue> {
+    log!("Hello world from read_parquet_metadata_async");
     let length = get_content_length(parquet_file_url.clone()).await.unwrap();
+    log!("Found length: {}", length);
     let (sender, receiver) = oneshot::channel::<()>();
 
     let range_get = Box::new(move |start: u64, length: usize| {
@@ -100,11 +110,14 @@ pub async fn read_parquet_metadata_async(parquet_file_url: String) -> Result<(),
 
         Box::pin(async move {
             let (sender2, receiver2) = oneshot::channel::<Vec<u8>>();
-            executor::spawn(async move {
+            spawn_local(async move {
+                log!("Making range request");
                 let innerData = make_range_request(url, start, length).await.unwrap();
+                log!("Got data: {:?}", innerData);
                 sender2.send(innerData);
             });
             // let url = url.clone();
+            // executor::run(None);
             let data = receiver2.await.unwrap();
 
             Ok(RangeOutput { start, data })
@@ -115,8 +128,9 @@ pub async fn read_parquet_metadata_async(parquet_file_url: String) -> Result<(),
     let mut reader = RangedAsyncReader::new(length, 4 * 1024, range_get);
 
     let metadata = read_metadata_async(&mut reader).await.unwrap();
+    log!("Number of rows: {}", metadata.num_rows);
 
-    Ok(())
+    Ok(metadata.num_rows)
 }
 
 // #[wasm_bindgen]
