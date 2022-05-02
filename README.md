@@ -136,6 +136,8 @@ It's currently unknown how widespread the ecosystem support is for `LZ4_RAW`. As
 
 In some cases, you may know ahead of time that your Parquet files will only include a single compression codec, say Snappy, or even no compression at all. In these cases, you may want to create a custom build of `parquet-wasm` to keep bundle size at a minimum. If you install the Rust toolchain and `wasm-pack` (see [Development](DEVELOP.md)), you can create a custom build with only the compression codecs you require.
 
+Note that this project uses Cargo syntax newly released in version **1.60**. So you need version 1.60 or higher to compile this project. To upgrade your toolchain, use `rustup update stable`.
+
 ### Example custom builds
 
 Reader-only bundle with Snappy compression using the `arrow` and `parquet` crates:
