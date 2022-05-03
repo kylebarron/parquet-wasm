@@ -14,48 +14,24 @@ categories = ["wasm"]
 crate-type = ["cdylib", "rlib"]
 
 [features]
-default = ["arrow1", "parquet_supported_compressions", "reader", "writer"]
-arrow1 = ["arrow", "parquet"]
+default = ["arrow1", "all_compressions", "reader", "writer"]
+arrow1 = ["dep:arrow", "dep:parquet"]
+arrow2 = ["dep:arrow2", "dep:parquet2"]
 reader = []
 writer = []
 debug = ["console_error_panic_hook", "clap"]
 
-parquet_supported_compressions = [
-  "parquet/brotli",
-  "parquet/flate2",
-  "parquet/snap",
-  "parquet/zstd",
-]
+brotli = ["parquet?/brotli", "parquet2?/brotli"]
+gzip = ["parquet?/flate2", "parquet2?/gzip"]
+snappy = ["parquet?/snap", "parquet2?/snappy"]
+zstd = ["parquet?/zstd", "parquet2?/zstd"]
+# LZ4 not yet supported on parquet crate
+lz4 = ["parquet2?/lz4_flex"]
 
-parquet2_supported_compressions = [
-  "parquet2/brotli",
-  "parquet2/gzip",
-  "parquet2/lz4_flex",
-  "parquet2/snappy",
-  "parquet2/zstd",
-]
+all_compressions = ["brotli", "gzip", "snappy", "zstd", "lz4"]
 
 # Full list of available features
-full = [
-  "arrow",
-  "arrow2",
-  "console_error_panic_hook",
-  "parquet",
-  "parquet2",
-  "parquet/brotli",
-  "parquet/flate2",
-  # wasm-compatible lz4 not yet implemented
-  # "parquet/lz4",
-  "parquet/snap",
-  "parquet/zstd",
-  "parquet2/brotli",
-  "parquet2/gzip",
-  "parquet2/lz4_flex",
-  "parquet2/snappy",
-  "parquet2/zstd",
-  "reader",
-  "writer",
-]
+full = ["arrow1", "arrow2", "debug", "all_compressions", "reader", "writer"]
 
 [dependencies]
 wasm-bindgen = "0.2.80"
