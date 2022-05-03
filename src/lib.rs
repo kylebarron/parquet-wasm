@@ -1,6 +1,6 @@
 extern crate web_sys;
 
-#[cfg(feature = "arrow")]
+#[cfg(feature = "arrow1")]
 pub mod arrow1;
 
 #[cfg(feature = "arrow2")]
