@@ -1,8 +1,8 @@
 use arrow2::error::ArrowError;
 use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};
 // NOTE: It's FileReader on latest main but RecordReader in 0.9.2
-use arrow2::io::parquet::read::FileMetaData;
 use arrow2::io::parquet::read::FileReader as ParquetFileReader;
+use arrow2::io::parquet::read::{infer_schema, FileMetaData};
 use futures::channel::oneshot;
 use std::io::Cursor;
 
@@ -17,6 +17,11 @@ use wasm_bindgen_futures::spawn_local;
 use crate::fetch::make_range_request;
 
 use crate::log;
+
+use crate::utils::copy_vec_to_uint8_array;
+use arrow2::error::Result as ArrowResult;
+use arrow2::io::parquet::read::{read_columns_many_async, RowGroupDeserializer};
+use js_sys::Uint8Array;
 
 /// Internal function to read a buffer with Parquet data into a buffer with Arrow IPC Stream data
 /// using the arrow2 and parquet2 crates
@@ -92,4 +97,71 @@ pub async fn read_parquet_metadata_async(
     log!("Number of rows: {}", metadata.num_rows);
 
     Ok(metadata)
+}
+
+#[wasm_bindgen]
+pub async fn read_row_group(
+    url: String,
+    content_length: usize,
+    metadata: FileMetaData,
+    // i: usize,
+) -> Result<Uint8Array, JsValue> {
+    let range_get = Box::new(move |start: u64, length: usize| {
+        let url = url.clone();
+
+        Box::pin(async move {
+            let (local_oneshot_sender, local_oneshot_receiver) = oneshot::channel::<Vec<u8>>();
+            spawn_local(async move {
+                log!("Making range request");
+                let inner_data = make_range_request(url, start, length).await.unwrap();
+                local_oneshot_sender.send(inner_data);
+            });
+            let data = local_oneshot_receiver.await.unwrap();
+
+            Ok(RangeOutput { start, data })
+        }) as BoxFuture<'static, std::io::Result<RangeOutput>>
+    });
+
+    let min_request_size = 4 * 1024;
+
+    let reader_factory = || {
+        Box::pin(futures::future::ready(Ok(RangedAsyncReader::new(
+            content_length,
+            min_request_size,
+            range_get.clone(),
+        )))) as BoxFuture<'static, std::result::Result<RangedAsyncReader, std::io::Error>>
+    };
+
+    // let's read the first row group only. Iterate over them to your liking
+    let group = &metadata.row_groups[0];
+
+    // no chunk size in deserializing
+    let chunk_size = None;
+
+    let schema = infer_schema(&metadata).unwrap();
+    let fields = schema.fields.clone();
+
+    // this is IO-bounded (and issues a join, thus the reader_factory)
+    let column_chunks = read_columns_many_async(reader_factory, group, fields, chunk_size)
+        .await
+        .unwrap();
+
+    // Create IPC writer
+    let mut output_file = Vec::new();
+    let options = IPCWriteOptions { compression: None };
+    let mut writer = IPCStreamWriter::new(&mut output_file, options);
+    writer.start(&schema, None).unwrap();
+
+    // this is CPU-bounded and should be sent to a separate thread-pool.
+    // We do it here for simplicity
+    let chunks = RowGroupDeserializer::new(column_chunks, group.num_rows() as usize, None);
+    let chunks = chunks.collect::<ArrowResult<Vec<_>>>().unwrap();
+    for chunk in chunks {
+        // let chunk2 = chunk;
+        writer.write(&chunk, None);
+    }
+
+    writer.finish().unwrap();
+    let array = copy_vec_to_uint8_array(output_file).unwrap();
+    Ok(array)
 }

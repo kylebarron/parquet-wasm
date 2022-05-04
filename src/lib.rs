@@ -7,8 +7,8 @@ pub mod arrow1;
 pub mod arrow2;
 
 pub mod common;
-pub mod utils;
 pub mod fetch;
+pub mod utils;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
