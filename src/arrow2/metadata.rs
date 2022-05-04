@@ -38,6 +38,10 @@ impl FileMetaData {
         RowGroupMetaData::new(self.0.row_groups[i].clone())
     }
 
+    pub fn schema(&self) -> SchemaDescriptor {
+        SchemaDescriptor::new(self.0.schema().clone())
+    }
+
     // /// key_value_metadata of this file.
     // pub key_value_metadata: Option<Vec<KeyValue>>,
     // /// schema descriptor.
@@ -231,4 +235,49 @@ impl ColumnChunkMetaData {
         vec.push(byte_range.1);
         vec
     }
+}
+
+/// A schema descriptor. This encapsulates the top-level schemas for all the columns,
+/// as well as all descriptors for all the primitive columns.
+#[wasm_bindgen]
+#[derive(Debug, Clone)]
+pub struct SchemaDescriptor(parquet2::metadata::SchemaDescriptor);
+
+impl SchemaDescriptor {
+    pub fn new(meta: parquet2::metadata::SchemaDescriptor) -> Self {
+        Self(meta)
+    }
+}
+
+#[wasm_bindgen]
+impl SchemaDescriptor {
+    /// The schemas' name.
+    #[wasm_bindgen]
+    pub fn name(&self) -> String {
+        self.0.name().to_string()
+    }
+
+    /// The number of columns in the schema
+    #[wasm_bindgen]
+    pub fn num_columns(&self) -> usize {
+        self.0.columns().len()
+    }
+
+    // /// The [`ColumnDescriptor`] (leafs) of this schema.
+    // ///
+    // /// Note that, for nested fields, this may contain more entries than the number of fields
+    // /// in the file - e.g. a struct field may have two columns.
+    // pub fn column(&self, i: usize) -> ColumnDescriptor {
+    //     ColumnDescriptor::new(self.0.columns()[i])
+    // }
+
+    /// The number of fields in the schema
+    pub fn num_fields(&self) -> usize {
+        self.0.fields().len()
+    }
+
+    // /// The schemas' fields.
+    // pub fn fields(&self, i: usize) -> ParquetType {
+    //     ParquetType::new(self.0.fields()[i])
+    // }
 }
