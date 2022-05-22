@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 // use crate::common::writer_properties::Compression;x
 
@@ -38,12 +39,26 @@ impl FileMetaData {
         RowGroupMetaData::new(self.0.row_groups[i].clone())
     }
 
+    #[wasm_bindgen]
     pub fn schema(&self) -> SchemaDescriptor {
         SchemaDescriptor::new(self.0.schema().clone())
     }
 
-    // /// key_value_metadata of this file.
-    // pub key_value_metadata: Option<Vec<KeyValue>>,
+    #[wasm_bindgen]
+    pub fn key_value_metadata(&self) -> Result<JsValue, JsValue> {
+        let mut map: HashMap<String, Option<String>> = HashMap::new();
+        let metadata = &self.0.key_value_metadata;
+        if let Some(metadata) = metadata {
+            for item in metadata {
+                map.insert(item.key.clone(), item.value.clone());
+            }
+        }
+        match serde_wasm_bindgen::to_value(&map) {
+            Ok(value) => Ok(value),
+            Err(error) => Err(JsValue::from_str(format!("{}", error).as_str())),
+        }
+    }
+
     // /// schema descriptor.
     // pub schema_descr: SchemaDescriptor,
     // /// Column (sort) order used for `min` and `max` values of each column in this file.
