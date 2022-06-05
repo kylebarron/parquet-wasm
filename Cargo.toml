@@ -52,15 +52,13 @@ js-sys = "0.3.53"
 getrandom = { version = "0.2.6", features = ["js"] }
 web-sys = { version = "0.3", features = ["console"] }
 
-arrow2 = { version = "0.11", optional = true, features = [
+arrow2 = { version = "0.12", optional = true, features = [
   "io_ipc",
   "io_parquet",
 ] }
 # parquet2 is only used indirectly through arrow2, but we define it here so that we can turn on
 # parquet2 features as needed, e.g. with --features parquet2/gzip
-parquet2 = { version = "0.12", default_features = false, optional = true, features = [
-  "stream",
-] }
+parquet2 = { version = "0.13", default_features = false, optional = true }
 
 arrow = { version = "12.0.0", default-features = false, optional = true }
 parquet = { version = "12.0.0", default-features = false, optional = true, features = [
