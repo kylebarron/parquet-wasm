@@ -1,7 +1,6 @@
 use arrow::ipc::reader::StreamReader;
 use parquet::arrow::arrow_writer::ArrowWriter;
 use parquet::errors::ParquetError;
-use parquet::file::writer::InMemoryWriteableCursor;
 use std::io::Cursor;
 
 /// Internal function to write a buffer of data in Arrow IPC Stream format to a Parquet file using
@@ -16,9 +15,9 @@ pub fn write_parquet(
     let arrow_schema = arrow_ipc_reader.schema();
 
     // Create Parquet writer
-    let cursor = InMemoryWriteableCursor::default();
+    let mut output_file: Vec<u8> = vec![];
     let props = writer_properties.to_upstream();
-    let mut writer = ArrowWriter::try_new(cursor.clone(), arrow_schema, Some(props))?;
+    let mut writer = ArrowWriter::try_new(&mut output_file, arrow_schema, Some(props))?;
 
     // Iterate over IPC chunks, writing each batch to Parquet
     for maybe_record_batch in arrow_ipc_reader {
@@ -28,5 +27,5 @@ pub fn write_parquet(
 
     writer.close()?;
 
-    Ok(cursor.data())
+    Ok(output_file)
 }
