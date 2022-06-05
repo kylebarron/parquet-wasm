@@ -28,10 +28,12 @@ impl Compression {
                 arrow2::io::parquet::write::CompressionOptions::Uncompressed
             }
             Compression::SNAPPY => arrow2::io::parquet::write::CompressionOptions::Snappy,
-            Compression::GZIP => arrow2::io::parquet::write::CompressionOptions::Gzip,
-            Compression::BROTLI => arrow2::io::parquet::write::CompressionOptions::Brotli,
+            // Use the default gzip compression level
+            Compression::GZIP => arrow2::io::parquet::write::CompressionOptions::Gzip(None),
+            // Use the default brotli compression level
+            Compression::BROTLI => arrow2::io::parquet::write::CompressionOptions::Brotli(None),
             Compression::LZ4 => arrow2::io::parquet::write::CompressionOptions::Lz4,
-            // Note: We pass None to use the default ZSTD compression level
+            // Use the default zstd compression level
             Compression::ZSTD => arrow2::io::parquet::write::CompressionOptions::Zstd(None),
             Compression::LZ4_RAW => arrow2::io::parquet::write::CompressionOptions::Lz4Raw,
         }
