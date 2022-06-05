@@ -1,4 +1,4 @@
-use arrow2::error::ArrowError;
+use arrow2::error::Error as ArrowError;
 use arrow2::io::ipc::read::{read_file_metadata, FileReader as IPCFileReader};
 use arrow2::io::parquet::write::{FileWriter as ParquetFileWriter, RowGroupIterator};
 use std::io::Cursor;
@@ -21,7 +21,6 @@ pub fn write_parquet(
 
     let schema = stream_metadata.schema.clone();
     let mut parquet_writer = ParquetFileWriter::try_new(&mut output_file, schema, options)?;
-    parquet_writer.start()?;
 
     for maybe_chunk in arrow_ipc_reader {
         let chunk = maybe_chunk?;
@@ -31,7 +30,9 @@ pub fn write_parquet(
         // Need to create an encoding for each column
         let mut encodings = vec![];
         for _ in &stream_metadata.schema.fields {
-            encodings.push(encoding);
+            // Note, the nested encoding is for nested Parquet columns
+            // Here we assume columns are not nested
+            encodings.push(vec![encoding]);
         }
 
         let row_groups = RowGroupIterator::try_new(

@@ -1,4 +1,4 @@
-use arrow2::error::ArrowError;
+use arrow2::error::Error as ArrowError;
 use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};
 // NOTE: It's FileReader on latest main but RecordReader in 0.9.2
 use arrow2::io::parquet::read::FileReader as ParquetFileReader;
