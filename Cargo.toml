@@ -9,6 +9,7 @@ repository = "https://github.com/kylebarron/parquet-wasm"
 license = "MIT OR Apache-2.0"
 keywords = ["parquet", "webassembly", "arrow"]
 categories = ["wasm"]
+rust-version = "1.60"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
