@@ -1,9 +1,10 @@
 #[cfg(feature = "reader")]
 pub mod reader;
 
-#[cfg(feature = "reader")]
+// #[cfg(feature = "reader")]
 pub mod metadata;
 
+pub mod serde;
 pub mod wasm;
 
 #[cfg(feature = "writer")]

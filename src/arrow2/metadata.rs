@@ -1,5 +1,8 @@
 use std::collections::HashMap;
+use serde::{Serialize, Serializer, Deserialize};
 use wasm_bindgen::prelude::*;
+use crate::arrow2::serde::parquet_format::{StatisticsDef}
+// use serde_wasm_bindgen::{Serializer};
 // use crate::common::writer_properties::Compression;x
 
 /// Metadata for a Parquet file.
@@ -59,8 +62,6 @@ impl FileMetaData {
         }
     }
 
-    // /// schema descriptor.
-    // pub schema_descr: SchemaDescriptor,
     // /// Column (sort) order used for `min` and `max` values of each column in this file.
     // ///
     // /// Each column order corresponds to one column, determined by its position in the
@@ -68,7 +69,10 @@ impl FileMetaData {
     // ///
     // /// When `None` is returned, there are no column orders available, and each column
     // /// should be assumed to have undefined (legacy) column order.
-    // pub column_orders: Option<Vec<ColumnOrder>>,
+    // pub fn column_order(&self, i: usize) -> ColumnOrder {
+    //     let col_order = self.0.column_order(i);
+    //     col_order.
+    // }
 }
 
 /// Metadata for a row group.
@@ -147,8 +151,12 @@ impl ColumnChunkMetaData {
 
     // /// Returns this column's [`ColumnChunk`]
     // #[wasm_bindgen]
-    // pub fn column_chunk(&self) -> &ColumnChunk {
-    //     &self.column_chunk
+    // pub fn column_chunk(&self) -> usize {
+    //     // let a = self.0.column_chunk();
+    //     // let map
+    //     // let val = serde_wasm_bindgen::to_value(a);
+
+    //     // &self.column_chunk
     // }
 
     // /// The column's [`ColumnMetaData`]
@@ -169,6 +177,16 @@ impl ColumnChunkMetaData {
     // pub fn physical_type(&self) -> PhysicalType {
     //     self.column_descr.descriptor.primitive_type.physical_type
     // }
+
+    #[wasm_bindgen]
+    pub fn get_statistics(&self) -> () {
+        let maybe_statistics = self.0.statistics();
+        if let Some(statistics) = maybe_statistics {
+            let statistics = statistics.unwrap();
+            let js_val:  serde_wasm_bindgen::to_value(statistics);
+            statistics.physical_type()
+        }
+    }
 
     // /// Decodes the raw statistics into [`Statistics`].
     // #[wasm_bindgen]

@@ -8,9 +8,10 @@ setPanicHook();
 
 // const filePath = "./water-stress_rcp26and85_2020-2040-10.parquet";
 
+const filePath = "./data/2-partition-none.parquet";
 // const filePath = "./data/2-partition-brotli.parquet";
 // const filePath = "./data/1-partition-gzip.parquet";
-const filePath = "./data/1-partition-none.parquet";
+// const filePath = "./data/1-partition-none.parquet";
 // const filePath = "./data/1-partition-snappy.parquet";
 // const filePath = "./data/1-partition-none.parquet";
 // const filePath = "./data/2-partition-brotli.parquet";
