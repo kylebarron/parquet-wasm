@@ -60,7 +60,7 @@ arrow2 = { version = "0.12", optional = true, features = [
 # parquet2 features as needed, e.g. with --features parquet2/gzip
 parquet2 = { version = "0.13", default_features = false, optional = true }
 
-arrow = { version = "12.0.0", default-features = false, optional = true }
+arrow = { version = "15.0.0", default-features = false, optional = true }
 parquet = { version = "12.0.0", default-features = false, optional = true, features = [
   "arrow",
   "base64",
