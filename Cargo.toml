@@ -69,7 +69,7 @@ parquet = { version = "16.0", default-features = false, optional = true, feature
 bytes = { version = "1", optional = true }
 
 # 3.2 added deprecations that don't currently pass clippy
-clap = { version = ">=3.1.15, <3.2", optional = true, features = ["derive"] }
+clap = { version = ">=3.1.15, <3.3", optional = true, features = ["derive"] }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.13"
