@@ -812,6 +812,7 @@ version = "0.3.1"
 dependencies = [
  "arrow",
  "arrow2",
+ "bytes",
  "clap",
  "console_error_panic_hook",
  "getrandom",

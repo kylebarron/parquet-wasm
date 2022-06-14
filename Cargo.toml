@@ -16,7 +16,7 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 default = ["arrow1", "all_compressions", "reader", "writer"]
-arrow1 = ["dep:arrow", "dep:parquet"]
+arrow1 = ["dep:arrow", "dep:parquet", "dep:bytes"]
 arrow2 = ["dep:arrow2", "dep:parquet2"]
 reader = []
 writer = []
@@ -66,6 +66,7 @@ parquet = { version = "16.0", default-features = false, optional = true, feature
   "arrow",
   "base64",
 ] }
+bytes = { version = "1", optional = true }
 
 clap = { version = "3.1.15", optional = true, features = ["derive"] }
 
