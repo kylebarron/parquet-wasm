@@ -16,7 +16,7 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 default = ["arrow1", "all_compressions", "reader", "writer"]
-arrow1 = ["dep:arrow", "dep:parquet"]
+arrow1 = ["dep:arrow", "dep:parquet", "dep:bytes"]
 arrow2 = ["dep:arrow2", "dep:parquet2"]
 reader = []
 writer = []
@@ -61,11 +61,12 @@ arrow2 = { version = "0.12", optional = true, features = [
 # parquet2 features as needed, e.g. with --features parquet2/gzip
 parquet2 = { version = "0.13", default_features = false, optional = true }
 
-arrow = { version = "15.0", default-features = false, optional = true }
-parquet = { version = "15.0", default-features = false, optional = true, features = [
+arrow = { version = "16.0", default-features = false, optional = true }
+parquet = { version = "16.0", default-features = false, optional = true, features = [
   "arrow",
   "base64",
 ] }
+bytes = { version = "1", optional = true }
 
 # 3.2 added deprecations that don't currently pass clippy
 clap = { version = ">=3.1.15, <3.2", optional = true, features = ["derive"] }
