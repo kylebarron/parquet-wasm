@@ -35,7 +35,7 @@ all_compressions = ["brotli", "gzip", "snappy", "zstd", "lz4"]
 full = ["arrow1", "arrow2", "debug", "all_compressions", "reader", "writer"]
 
 [dependencies]
-wasm-bindgen = "0.2.80"
+wasm-bindgen = "0.2.81"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
