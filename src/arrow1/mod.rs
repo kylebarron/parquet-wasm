@@ -1,6 +1,8 @@
 #[cfg(feature = "reader")]
 pub mod reader;
 
+#[cfg(feature = "reader")]
+pub mod metadata;
 pub mod wasm;
 
 #[cfg(feature = "writer")]
