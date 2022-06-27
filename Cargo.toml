@@ -72,7 +72,7 @@ bytes = { version = "1", optional = true }
 clap = { version = ">=3.1.15, <3.2", optional = true, features = ["derive"] }
 
 [dev-dependencies]
-wasm-bindgen-test = "0.3.13"
+wasm-bindgen-test = "0.3.31"
 
 [[bin]]
 name = "read_parquet"
