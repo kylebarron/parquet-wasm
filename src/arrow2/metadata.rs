@@ -35,7 +35,7 @@ impl FileMetaData {
     /// Returns a single RowGroupMetaData by index
     #[wasm_bindgen]
     pub fn row_group(&self, i: usize) -> RowGroupMetaData {
-        RowGroupMetaData::new(self.0.row_groups[i].clone())
+        self.0.row_groups[i].clone().into()
     }
 
     #[wasm_bindgen]
@@ -72,16 +72,16 @@ impl FileMetaData {
     // }
 }
 
+impl From<arrow2::io::parquet::read::FileMetaData> for FileMetaData {
+    fn from(meta: arrow2::io::parquet::read::FileMetaData) -> Self {
+        FileMetaData(meta)
+    }
+}
+
 /// Metadata for a row group.
 #[derive(Debug, Clone)]
 #[wasm_bindgen]
 pub struct RowGroupMetaData(arrow2::io::parquet::read::RowGroupMetaData);
-
-impl RowGroupMetaData {
-    pub fn new(meta: arrow2::io::parquet::read::RowGroupMetaData) -> Self {
-        Self(meta)
-    }
-}
 
 #[wasm_bindgen]
 impl RowGroupMetaData {
@@ -100,7 +100,7 @@ impl RowGroupMetaData {
     /// Returns a single column chunk metadata by index
     #[wasm_bindgen]
     pub fn column(&self, i: usize) -> ColumnChunkMetaData {
-        ColumnChunkMetaData::new(self.0.columns()[i].clone())
+        self.0.columns()[i].clone().into()
     }
 
     /// Total byte size of all uncompressed column data in this row group.
@@ -116,18 +116,18 @@ impl RowGroupMetaData {
     }
 }
 
+impl From<arrow2::io::parquet::read::RowGroupMetaData> for RowGroupMetaData {
+    fn from(meta: arrow2::io::parquet::read::RowGroupMetaData) -> Self {
+        RowGroupMetaData(meta)
+    }
+}
+
 /// Metadata for a column chunk.
 // This contains the `ColumnDescriptor` associated with the chunk so that deserializers have
 // access to the descriptor (e.g. physical, converted, logical).
 #[derive(Debug, Clone)]
 #[wasm_bindgen]
 pub struct ColumnChunkMetaData(arrow2::io::parquet::read::ColumnChunkMetaData);
-
-impl ColumnChunkMetaData {
-    pub fn new(meta: arrow2::io::parquet::read::ColumnChunkMetaData) -> Self {
-        Self(meta)
-    }
-}
 
 #[wasm_bindgen]
 impl ColumnChunkMetaData {
@@ -264,6 +264,12 @@ impl ColumnChunkMetaData {
         vec.push(byte_range.0);
         vec.push(byte_range.1);
         vec
+    }
+}
+
+impl From<arrow2::io::parquet::read::ColumnChunkMetaData> for ColumnChunkMetaData {
+    fn from(meta: arrow2::io::parquet::read::ColumnChunkMetaData) -> Self {
+        ColumnChunkMetaData(meta)
     }
 }
 

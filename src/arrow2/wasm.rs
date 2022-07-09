@@ -35,6 +35,39 @@ pub fn read_parquet2(parquet_file: &[u8]) -> Result<Uint8Array, JsValue> {
     }
 }
 
+/// Read metadata from a Parquet file using the [`arrow2`](https://crates.io/crates/arrow2) and
+/// [`parquet2`](https://crates.io/crates/parquet2) Rust crates.
+///
+/// Example:
+///
+/// ```js
+/// // Edit the `parquet-wasm` import as necessary
+/// import { readMetadata2 } from "parquet-wasm/node2";
+///
+/// const resp = await fetch("https://example.com/file.parquet");
+/// const parquetUint8Array = new Uint8Array(await resp.arrayBuffer());
+/// const parquetFileMetaData = readMetadata2(parquetUint8Array);
+/// ```
+///
+/// @param parquet_file Uint8Array containing Parquet data
+/// @returns a {@linkcode FileMetaData} object containing metadata of the Parquet file.
+#[wasm_bindgen(js_name = readMetadata2)]
+#[cfg(feature = "reader")]
+pub fn read_metadata2(
+    parquet_file: &[u8],
+) -> Result<crate::arrow2::metadata::FileMetaData, JsValue> {
+    if parquet_file.is_empty() {
+        return Err(JsValue::from_str(
+            "Empty input provided or not a Uint8Array.",
+        ));
+    }
+
+    match crate::arrow2::reader::read_metadata(parquet_file) {
+        Ok(metadata) => Ok(metadata.into()),
+        Err(error) => Err(JsValue::from_str(format!("{}", error).as_str())),
+    }
+}
+
 /// Write Arrow data to a Parquet file using the [`arrow2`](https://crates.io/crates/arrow2) and
 /// [`parquet2`](https://crates.io/crates/parquet2) Rust crates.
 ///
