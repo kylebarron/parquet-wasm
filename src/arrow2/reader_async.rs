@@ -14,7 +14,7 @@ use crate::arrow2::ranged_reader::{RangeOutput, RangedAsyncReader};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 
-use crate::fetch::make_range_request;
+use crate::common::fetch::make_range_request;
 
 use crate::log;
 
