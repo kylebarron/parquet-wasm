@@ -1,9 +1,5 @@
 use std::collections::HashMap;
-use serde::{Serialize, Serializer, Deserialize};
 use wasm_bindgen::prelude::*;
-use crate::arrow2::serde::parquet_format::{StatisticsDef}
-// use serde_wasm_bindgen::{Serializer};
-// use crate::common::writer_properties::Compression;x
 
 /// Metadata for a Parquet file.
 #[derive(Debug, Clone)]
@@ -56,6 +52,7 @@ impl FileMetaData {
                 map.insert(item.key.clone(), item.value.clone());
             }
         }
+
         match serde_wasm_bindgen::to_value(&map) {
             Ok(value) => Ok(value),
             Err(error) => Err(JsValue::from_str(format!("{}", error).as_str())),
@@ -178,15 +175,15 @@ impl ColumnChunkMetaData {
     //     self.column_descr.descriptor.primitive_type.physical_type
     // }
 
-    #[wasm_bindgen]
-    pub fn get_statistics(&self) -> () {
-        let maybe_statistics = self.0.statistics();
-        if let Some(statistics) = maybe_statistics {
-            let statistics = statistics.unwrap();
-            let js_val:  serde_wasm_bindgen::to_value(statistics);
-            statistics.physical_type()
-        }
-    }
+    // #[wasm_bindgen]
+    // pub fn get_statistics(&self) -> () {
+    //     let maybe_statistics = self.0.statistics();
+    //     if let Some(statistics) = maybe_statistics {
+    //         let statistics = statistics.unwrap();
+    //         let js_val:  serde_wasm_bindgen::to_value(statistics);
+    //         statistics.physical_type()
+    //     }
+    // }
 
     // /// Decodes the raw statistics into [`Statistics`].
     // #[wasm_bindgen]
