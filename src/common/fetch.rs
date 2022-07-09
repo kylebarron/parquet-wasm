@@ -27,6 +27,20 @@ pub async fn get_content_length(url: String) -> Result<usize, JsValue> {
     Ok(length_int)
 }
 
+/// Construct range header from start and length
+pub fn range_from_start_and_length(start: u64, length: u64) -> String {
+    // TODO: should this be start + length - 1?
+    format!("bytes={}-{}", start, start + length)
+}
+
+pub fn range_from_start(start: u64) -> String {
+    format!("bytes={}-", start)
+}
+
+pub fn range_from_end(length: u64) -> String {
+    format!("bytes=-{}", length)
+}
+
 /// Make range request on remote file
 pub async fn make_range_request(
     url: String,

@@ -1,27 +1,25 @@
 use crate::arrow2::ranged_reader::{RangeOutput, RangedAsyncReader};
 use crate::arrow2::reader_async::{create_reader, read_parquet_metadata_async};
-use crate::fetch::get_content_length;
+use crate::common::fetch::{get_content_length, make_range_request};
+use crate::log;
 use arrow2::datatypes::Schema;
+use arrow2::error::Error as ArrowError;
+use arrow2::error::Result as ArrowResult;
+use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};
 use arrow2::io::parquet::read::FileMetaData;
 use arrow2::io::parquet::read::{
     infer_schema, read_columns_async, read_columns_many_async, read_metadata_async,
     RowGroupDeserializer,
 };
 use futures::channel::{mpsc, oneshot};
+use futures::future::BoxFuture;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
-
-use crate::fetch::make_range_request;
-use crate::log;
-use arrow2::error::ArrowError;
-use arrow2::error::Result as ArrowResult;
-use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};
-use futures::future::BoxFuture;
 // NOTE: It's FileReader on latest main but RecordReader in 0.9.2
-use arrow2::io::parquet::read::FileReader as ParquetFileReader;
-use std::io::Cursor;
 use crate::utils::copy_vec_to_uint8_array;
+use arrow2::io::parquet::read::FileReader as ParquetFileReader;
 use js_sys::Uint8Array;
+use std::io::Cursor;
 
 /// Asynchronous implementation of ParquetFile
 #[wasm_bindgen]

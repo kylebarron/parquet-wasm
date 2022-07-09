@@ -1,4 +1,4 @@
-use arrow2::error::ArrowError;
+use arrow2::error::Error as ArrowError;
 use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};
 // NOTE: It's FileReader on latest main but RecordReader in 0.9.2
 use arrow2::io::parquet::read::FileReader as ParquetFileReader;
@@ -8,9 +8,7 @@ use std::io::Cursor;
 
 use futures::future::BoxFuture;
 use parquet2::read::read_metadata_async;
-// use range_reader::{RangeOutput, RangedAsyncReader};
-use crate::arrow2::ranged_reader::{RangeOutput, RangedAsyncReader};
-
+use range_reader::{RangeOutput, RangedAsyncReader};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 
@@ -18,10 +16,8 @@ use crate::common::fetch::make_range_request;
 
 use crate::log;
 
-use crate::utils::copy_vec_to_uint8_array;
 use arrow2::error::Result as ArrowResult;
 use arrow2::io::parquet::read::{read_columns_many_async, RowGroupDeserializer};
-use js_sys::Uint8Array;
 
 /// Internal function to read a buffer with Parquet data into a buffer with Arrow IPC Stream data
 /// using the arrow2 and parquet2 crates
@@ -99,13 +95,13 @@ pub async fn read_parquet_metadata_async(
     Ok(metadata)
 }
 
-#[wasm_bindgen]
 pub async fn read_row_group(
     url: String,
     content_length: usize,
     metadata: FileMetaData,
-    // i: usize,
-) -> Result<Uint8Array, JsValue> {
+    i: usize,
+) -> Result<Vec<u8>, ArrowError> {
+    // Closure for making an individual HTTP range request to a file
     let range_get = Box::new(move |start: u64, length: usize| {
         let url = url.clone();
 
@@ -133,7 +129,7 @@ pub async fn read_row_group(
     };
 
     // let's read the first row group only. Iterate over them to your liking
-    let group = &metadata.row_groups[0];
+    let group = &metadata.row_groups[i];
 
     // no chunk size in deserializing
     let chunk_size = None;
@@ -161,7 +157,6 @@ pub async fn read_row_group(
         writer.write(&chunk, None);
     }
 
-    writer.finish().unwrap();
-    let array = copy_vec_to_uint8_array(output_file).unwrap();
-    Ok(array)
+    writer.finish()?;
+    Ok(output_file)
 }
