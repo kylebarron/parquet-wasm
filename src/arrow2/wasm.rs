@@ -35,6 +35,16 @@ pub fn read_parquet2(parquet_file: &[u8]) -> Result<Uint8Array, JsValue> {
     }
 }
 
+#[wasm_bindgen(js_name = readParquetRowGroup2)]
+#[cfg(feature = "reader")]
+pub async fn read_parquet_row_group2(
+    url: String,
+    content_length: usize,
+    metadata: FileMetaData,
+    // i: usize,
+) -> Result<Uint8Array, JsValue> {
+}
+
 /// Write Arrow data to a Parquet file using the [`arrow2`](https://crates.io/crates/arrow2) and
 /// [`parquet2`](https://crates.io/crates/parquet2) Rust crates.
 ///
