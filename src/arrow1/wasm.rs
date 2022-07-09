@@ -53,6 +53,9 @@ pub fn read_parquet(parquet_file: &[u8]) -> Result<Uint8Array, JsValue> {
 /// const parquetUint8Array = writeParquet(arrowUint8Array, writerProperties);
 /// ```
 ///
+/// If `writerProperties` is not provided or is `null`, the default writer properties will be used.
+/// This is equivalent to `new WriterPropertiesBuilder().build()`.
+///
 /// @param arrow_file Uint8Array containing Arrow data in [IPC Stream format](https://arrow.apache.org/docs/format/Columnar.html#ipc-streaming-format). If you have an Arrow table in JS, call `tableToIPC(table)` in the JS bindings and pass the result here.
 /// @param writer_properties Configuration for writing to Parquet. Use the {@linkcode WriterPropertiesBuilder} to build a writing configuration, then call `.build()` to create an immutable writer properties to pass in here.
 /// @returns Uint8Array containing written Parquet data.
@@ -60,10 +63,13 @@ pub fn read_parquet(parquet_file: &[u8]) -> Result<Uint8Array, JsValue> {
 #[cfg(feature = "writer")]
 pub fn write_parquet(
     arrow_file: &[u8],
-    // TODO: make this param optional?
-    writer_properties: crate::arrow1::writer_properties::WriterProperties,
+    writer_properties: Option<crate::arrow1::writer_properties::WriterProperties>,
 ) -> Result<Uint8Array, JsValue> {
-    match crate::arrow1::writer::write_parquet(arrow_file, writer_properties) {
+    let writer_props = writer_properties.unwrap_or_else(|| {
+        crate::arrow1::writer_properties::WriterPropertiesBuilder::default().build()
+    });
+
+    match crate::arrow1::writer::write_parquet(arrow_file, writer_props) {
         Ok(buffer) => copy_vec_to_uint8_array(buffer),
         Err(error) => return Err(JsValue::from_str(format!("{}", error).as_str())),
     }
