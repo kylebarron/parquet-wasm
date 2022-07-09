@@ -1,16 +1,16 @@
 use arrow::ipc::writer::StreamWriter;
+use bytes::Bytes;
 use parquet::arrow::{ArrowReader, ParquetFileArrowReader};
 use parquet::errors::ParquetError;
 use parquet::file::reader::{FileReader, SerializedFileReader};
-use parquet::file::serialized_reader::SliceableCursor;
 use std::sync::Arc;
 
 /// Internal function to read a buffer with Parquet data into a buffer with Arrow IPC Stream data
 /// using the arrow and parquet crates
 pub fn read_parquet(parquet_file: &[u8]) -> Result<Vec<u8>, ParquetError> {
     // Create Parquet reader
-    let sliceable_cursor = SliceableCursor::new(Arc::new(parquet_file.to_vec()));
-    let parquet_reader = SerializedFileReader::new(sliceable_cursor)?;
+    let cursor = Bytes::copy_from_slice(parquet_file);
+    let parquet_reader = SerializedFileReader::new(cursor)?;
     let parquet_metadata = parquet_reader.metadata();
     // TODO check that there exists at least one row group
     let first_row_group_metadata = parquet_metadata.row_group(0);

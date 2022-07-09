@@ -9,13 +9,14 @@ repository = "https://github.com/kylebarron/parquet-wasm"
 license = "MIT OR Apache-2.0"
 keywords = ["parquet", "webassembly", "arrow"]
 categories = ["wasm"]
+rust-version = "1.60"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [features]
 default = ["arrow1", "all_compressions", "reader", "writer"]
-arrow1 = ["dep:arrow", "dep:parquet"]
+arrow1 = ["dep:arrow", "dep:parquet", "dep:bytes"]
 arrow2 = ["dep:arrow2", "dep:parquet2"]
 reader = []
 writer = []
@@ -48,28 +49,28 @@ console_error_panic_hook = { version = "0.1.6", optional = true }
 # if wee_alloc only saves 10KB, might not be worth the slower allocation speed?
 # wee_alloc = "0.4.5"
 
-js-sys = "0.3.57"
+js-sys = "0.3.58"
 getrandom = { version = "0.2.6", features = ["js"] }
 
-arrow2 = { version = "0.11", optional = true, features = [
+arrow2 = { version = "0.12", optional = true, features = [
   "io_ipc",
   "io_parquet",
 ] }
 # parquet2 is only used indirectly through arrow2, but we define it here so that we can turn on
 # parquet2 features as needed, e.g. with --features parquet2/gzip
-parquet2 = { version = "0.12", default_features = false, optional = true, features = [
-  "stream",
-] }
+parquet2 = { version = "0.13", default_features = false, optional = true }
 
-arrow = { version = "12.0.0", default-features = false, optional = true }
-parquet = { version = "12.0.0", default-features = false, optional = true, features = [
+arrow = { version = "17.0", default-features = false, optional = true }
+parquet = { version = "17.0", default-features = false, optional = true, features = [
   "arrow",
   "base64",
   "async",
 ] }
 async-compat = "0.2.1"
+bytes = { version = "1", optional = true }
 
-clap = { version = "3.1.15", optional = true, features = ["derive"] }
+# 3.2 added deprecations that don't currently pass clippy
+clap = { version = ">=3.1.15, <3.2", optional = true, features = ["derive"] }
 
 wasm-bindgen-futures = "0.4.30"
 futures = "0.3"
@@ -89,7 +90,7 @@ features = [
 ]
 
 [dev-dependencies]
-wasm-bindgen-test = "0.3.13"
+wasm-bindgen-test = "0.3.31"
 
 [[bin]]
 name = "read_parquet"
