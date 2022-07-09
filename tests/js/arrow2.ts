@@ -34,7 +34,7 @@ test("read file", async (t) => {
   t.end();
 });
 
-test("write and read file", async (t) => {
+test("read-write-read round trip (with writer properties)", async (t) => {
   const dataPath = `${dataDir}/1-partition-brotli.parquet`;
   const buffer = readFileSync(dataPath);
   const arr = new Uint8Array(buffer);
@@ -46,6 +46,19 @@ test("write and read file", async (t) => {
     tableToIPC(initialTable, "file"),
     writerProperties
   );
+  const table = tableFromIPC(wasm.readParquet2(parquetBuffer));
+
+  testArrowTablesEqual(t, initialTable, table);
+  t.end();
+});
+
+test("read-write-read round trip (no writer properties provided)", async (t) => {
+  const dataPath = `${dataDir}/1-partition-brotli.parquet`;
+  const buffer = readFileSync(dataPath);
+  const arr = new Uint8Array(buffer);
+  const initialTable = tableFromIPC(wasm.readParquet2(arr));
+
+  const parquetBuffer = wasm.writeParquet2(tableToIPC(initialTable, "file"));
   const table = tableFromIPC(wasm.readParquet2(parquetBuffer));
 
   testArrowTablesEqual(t, initialTable, table);
