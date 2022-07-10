@@ -2,42 +2,16 @@ use crate::common::fetch::make_range_request;
 use crate::log;
 use arrow2::error::Error as ArrowError;
 use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};
-use arrow2::io::parquet::read::FileReader as ParquetFileReader;
 use arrow2::io::parquet::read::{infer_schema, FileMetaData};
 use arrow2::io::parquet::read::{read_columns_many_async, RowGroupDeserializer};
 use futures::channel::oneshot;
 use futures::future::BoxFuture;
 use parquet2::read::read_metadata_async as _read_metadata_async;
 use range_reader::{RangeOutput, RangedAsyncReader};
-use std::io::Cursor;
 use wasm_bindgen_futures::spawn_local;
 
-/// Internal function to read a buffer with Parquet data into a buffer with Arrow IPC Stream data
-/// using the arrow2 and parquet2 crates
-pub fn read_parquet(parquet_file: &[u8]) -> Result<Vec<u8>, ArrowError> {
-    // Create Parquet reader
-    let input_file = Cursor::new(parquet_file);
-    let file_reader = ParquetFileReader::try_new(input_file, None, None, None, None)?;
-    let schema = file_reader.schema().clone();
-
-    // Create IPC writer
-    let mut output_file = Vec::new();
-    let options = IPCWriteOptions { compression: None };
-    let mut writer = IPCStreamWriter::new(&mut output_file, options);
-    writer.start(&schema, None)?;
-
-    // Iterate over reader chunks, writing each into the IPC writer
-    for maybe_chunk in file_reader {
-        let chunk = maybe_chunk?;
-        writer.write(&chunk, None)?;
-    }
-
-    writer.finish()?;
-    Ok(output_file)
-}
-
 /// Create a RangedAsyncReader
-pub fn create_reader(
+fn create_reader(
     url: String,
     content_length: usize,
     min_request_size: Option<usize>,
