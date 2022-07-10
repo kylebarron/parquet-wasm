@@ -27,7 +27,7 @@ fn create_reader(
             let (sender2, receiver2) = oneshot::channel::<Vec<u8>>();
             spawn_local(async move {
                 log!("Making range request");
-                let inner_data = make_range_request(url, start, length).await.unwrap();
+                let inner_data = make_range_request(&url, start, length).await.unwrap();
                 sender2.send(inner_data).unwrap();
             });
             let data = receiver2.await.unwrap();

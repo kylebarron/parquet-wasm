@@ -43,7 +43,7 @@ pub fn range_from_end(length: u64) -> String {
 
 /// Make range request on remote file
 pub async fn make_range_request(
-    url: String,
+    url: &str,
     start: u64,
     length: usize,
 ) -> Result<Vec<u8>, JsValue> {
@@ -51,12 +51,11 @@ pub async fn make_range_request(
     opts.method("GET");
     opts.mode(RequestMode::Cors);
 
-    let request = Request::new_with_str_and_init(&url, &opts)?;
+    let request = Request::new_with_str_and_init(url, &opts)?;
 
-    request.headers().set(
-        "Range",
-        format!("bytes={}-{}", start, start + length as u64).as_str(),
-    )?;
+    request
+        .headers()
+        .set("Range", &range_from_start_and_length(start, length as u64))?;
 
     let window = web_sys::window().unwrap();
     let resp_value = JsFuture::from(window.fetch_with_request(&request)).await?;
