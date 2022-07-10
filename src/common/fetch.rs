@@ -42,11 +42,7 @@ pub fn range_from_end(length: u64) -> String {
 }
 
 /// Make range request on remote file
-pub async fn make_range_request(
-    url: &str,
-    start: u64,
-    length: usize,
-) -> Result<Vec<u8>, JsValue> {
+pub async fn make_range_request(url: &str, start: u64, length: usize) -> Result<Vec<u8>, JsValue> {
     let mut opts = RequestInit::new();
     opts.method("GET");
     opts.mode(RequestMode::Cors);
