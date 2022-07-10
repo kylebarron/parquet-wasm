@@ -121,7 +121,7 @@ pub async fn read_metadata_async2(
 ) -> Result<crate::arrow2::metadata::FileMetaData, JsValue> {
     match crate::arrow2::reader_async::read_metadata_async(url, content_length).await {
         Ok(metadata) => Ok(metadata.into()),
-        Err(error) => Err(error),
+        Err(error) => Err(JsValue::from_str(format!("{}", error).as_str())),
     }
 }
 

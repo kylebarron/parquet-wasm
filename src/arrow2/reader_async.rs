@@ -1,22 +1,16 @@
+use crate::common::fetch::make_range_request;
+use crate::log;
 use arrow2::error::Error as ArrowError;
 use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};
 use arrow2::io::parquet::read::FileReader as ParquetFileReader;
 use arrow2::io::parquet::read::{infer_schema, FileMetaData};
+use arrow2::io::parquet::read::{read_columns_many_async, RowGroupDeserializer};
 use futures::channel::oneshot;
-use std::io::Cursor;
-
 use futures::future::BoxFuture;
 use parquet2::read::read_metadata_async as _read_metadata_async;
 use range_reader::{RangeOutput, RangedAsyncReader};
-use wasm_bindgen::prelude::*;
+use std::io::Cursor;
 use wasm_bindgen_futures::spawn_local;
-
-use crate::common::fetch::make_range_request;
-
-use crate::log;
-
-use arrow2::error::Result as ArrowResult;
-use arrow2::io::parquet::read::{read_columns_many_async, RowGroupDeserializer};
 
 /// Internal function to read a buffer with Parquet data into a buffer with Arrow IPC Stream data
 /// using the arrow2 and parquet2 crates
@@ -42,6 +36,7 @@ pub fn read_parquet(parquet_file: &[u8]) -> Result<Vec<u8>, ArrowError> {
     Ok(output_file)
 }
 
+/// Create a RangedAsyncReader
 pub fn create_reader(
     url: String,
     content_length: usize,
@@ -73,9 +68,9 @@ pub fn create_reader(
 pub async fn read_metadata_async(
     url: String,
     content_length: usize,
-) -> Result<FileMetaData, JsValue> {
+) -> Result<FileMetaData, ArrowError> {
     let mut reader = create_reader(url, content_length, None);
-    let metadata = _read_metadata_async(&mut reader).await.unwrap();
+    let metadata = _read_metadata_async(&mut reader).await?;
     Ok(metadata)
 }
 
@@ -111,12 +106,9 @@ pub async fn read_row_group(
     let mut writer = IPCStreamWriter::new(&mut output_file, options);
     writer.start(&schema, None)?;
 
-    // this is CPU-bounded and should be sent to a separate thread-pool.
-    // We do it here for simplicity
-    let chunks = RowGroupDeserializer::new(column_chunks, group.num_rows() as usize, None);
-    let chunks = chunks.collect::<ArrowResult<Vec<_>>>()?;
-    for chunk in chunks {
-        // let chunk2 = chunk;
+    let deserializer = RowGroupDeserializer::new(column_chunks, group.num_rows() as usize, None);
+    for maybe_chunk in deserializer {
+        let chunk = maybe_chunk?;
         writer.write(&chunk, None)?;
     }
 
