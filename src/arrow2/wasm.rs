@@ -114,7 +114,7 @@ pub fn read_row_group2(
 }
 
 #[wasm_bindgen(js_name = readMetadataAsync2)]
-#[cfg(feature = "reader")]
+#[cfg(all(feature = "reader", feature = "async"))]
 pub async fn read_metadata_async2(
     url: String,
     content_length: usize,
@@ -126,7 +126,7 @@ pub async fn read_metadata_async2(
 }
 
 #[wasm_bindgen(js_name = readRowGroupAsync2)]
-#[cfg(feature = "reader")]
+#[cfg(all(feature = "reader", feature = "async"))]
 pub async fn read_row_group_async2(
     url: String,
     content_length: usize,

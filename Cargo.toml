@@ -17,9 +17,10 @@ crate-type = ["cdylib", "rlib"]
 [features]
 default = ["arrow1", "all_compressions", "reader", "writer"]
 arrow1 = ["dep:arrow", "dep:parquet", "dep:bytes"]
-arrow2 = ["dep:arrow2", "dep:parquet2"]
+arrow2 = ["dep:arrow2", "dep:parquet2", "dep:serde-wasm-bindgen"]
 reader = []
 writer = []
+async = ["dep:wasm-bindgen-futures", "dep:futures", "dep:range-reader"]
 debug = ["console_error_panic_hook", "clap"]
 
 brotli = ["parquet?/brotli", "parquet2?/brotli"]
@@ -32,7 +33,7 @@ lz4 = ["parquet2?/lz4_flex"]
 all_compressions = ["brotli", "gzip", "snappy", "zstd", "lz4"]
 
 # Full list of available features
-full = ["arrow1", "arrow2", "debug", "all_compressions", "reader", "writer"]
+full = ["arrow1", "arrow2", "async", "debug", "all_compressions", "reader", "writer"]
 
 [dependencies]
 wasm-bindgen = { version = "0.2.80", features = ["serde-serialize"]  }
@@ -56,8 +57,6 @@ arrow2 = { version = "0.12", optional = true, features = [
   "io_ipc",
   "io_parquet",
 ] }
-# parquet2 is only used indirectly through arrow2, but we define it here so that we can turn on
-# parquet2 features as needed, e.g. with --features parquet2/gzip
 parquet2 = { version = "0.13", default_features = false, optional = true }
 
 arrow = { version = "17.0", default-features = false, optional = true }
@@ -69,14 +68,14 @@ parquet = { version = "17.0", default-features = false, optional = true, feature
 async-compat = "0.2.1"
 bytes = { version = "1", optional = true }
 
-serde-wasm-bindgen = "0.4.3"
-# serde = "1.0.137"
+serde-wasm-bindgen = {version = "0.4.3", optional = true}
+
 # 3.2 added deprecations that don't currently pass clippy
 clap = { version = ">=3.1.15, <3.2", optional = true, features = ["derive"] }
 
-wasm-bindgen-futures = "0.4.30"
-futures = "0.3"
-range-reader = "0.1"
+wasm-bindgen-futures = {version = "0.4.30", optional = true}
+futures = {version = "0.3", optional = true}
+range-reader = {version = "0.1", optional = true}
 
 [dependencies.web-sys]
 version = "0.3.4"

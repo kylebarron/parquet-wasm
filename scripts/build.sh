@@ -53,6 +53,7 @@ wasm-pack build \
   --features reader \
   --features writer \
   --features all_compressions \
+  --features async \
   $FLAGS
 
 # Build web version into tmp_build/esm2
@@ -67,6 +68,7 @@ wasm-pack build \
   --features reader \
   --features writer \
   --features all_compressions \
+  --features async \
   $FLAGS
 
 # Build bundler version into tmp_build/bundler2
@@ -81,6 +83,7 @@ wasm-pack build \
   --features reader \
   --features writer \
   --features all_compressions \
+  --features async \
   $FLAGS
 
 # Copy files into pkg/
