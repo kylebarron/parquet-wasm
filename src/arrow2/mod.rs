@@ -10,6 +10,9 @@ pub mod ranged_reader;
 #[cfg(feature = "reader")]
 pub mod async_parquet_file;
 
+#[cfg(feature = "reader")]
+pub mod metadata;
+
 pub mod wasm;
 
 #[cfg(feature = "writer")]
