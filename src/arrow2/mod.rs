@@ -1,6 +1,9 @@
 #[cfg(feature = "reader")]
 pub mod reader;
 
+#[cfg(all(feature = "reader", feature = "async"))]
+pub mod reader_async;
+
 #[cfg(feature = "reader")]
 pub mod metadata;
 
