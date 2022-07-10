@@ -84,7 +84,7 @@ test("iterate over row groups", (t) => {
   const fileMetaData = wasm.readMetadata2(arr);
 
   const chunks: RecordBatch[] = [];
-  for (let i = 0; i < fileMetaData.num_row_groups(); i++) {
+  for (let i = 0; i < fileMetaData.numRowGroups(); i++) {
     let arrowIpcBuffer = wasm.readRowGroup2(arr, fileMetaData, i);
     chunks.push(...tableFromIPC(arrowIpcBuffer).batches);
   }
