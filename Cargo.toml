@@ -68,6 +68,8 @@ parquet = { version = "17.0", default-features = false, optional = true, feature
 ] }
 bytes = { version = "1", optional = true }
 
+serde-wasm-bindgen = "0.4.3"
+# serde = "1.0.137"
 # 3.2 added deprecations that don't currently pass clippy
 clap = { version = ">=3.1.15, <3.2", optional = true, features = ["derive"] }
 

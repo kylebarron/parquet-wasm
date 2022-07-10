@@ -1,7 +1,7 @@
 import * as test from "tape";
 import * as wasm from "../../pkg/node/arrow2";
 import { readFileSync } from "fs";
-import { tableFromIPC, tableToIPC } from "apache-arrow";
+import { RecordBatch, Table, tableFromIPC, tableToIPC } from "apache-arrow";
 import { testArrowTablesEqual, readExpectedArrowData } from "./utils";
 
 // Path from repo root
@@ -73,6 +73,25 @@ test("error produced trying to read file with arrayBuffer", (t) => {
   } catch (err) {
     t.equals(err, "Empty input provided or not a Uint8Array.");
   }
+
+  t.end();
+});
+
+test("iterate over row groups", (t) => {
+  const dataPath = `${dataDir}/2-partition-brotli.parquet`;
+  const buffer = readFileSync(dataPath);
+  const arr = new Uint8Array(buffer);
+  const fileMetaData = wasm.readMetadata2(arr);
+
+  const chunks: RecordBatch[] = [];
+  for (let i = 0; i < fileMetaData.numRowGroups(); i++) {
+    let arrowIpcBuffer = wasm.readRowGroup2(arr, fileMetaData, i);
+    chunks.push(...tableFromIPC(arrowIpcBuffer).batches);
+  }
+
+  const table = new Table(chunks);
+  const expectedTable = readExpectedArrowData();
+  testArrowTablesEqual(t, expectedTable, table);
 
   t.end();
 });
