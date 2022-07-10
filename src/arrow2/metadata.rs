@@ -15,25 +15,25 @@ impl FileMetaData {
     }
 
     /// number of rows in the file.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = numRows)]
     pub fn num_rows(&self) -> usize {
         self.0.num_rows
     }
 
     /// String message for application that wrote this file.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = createdBy)]
     pub fn created_by(&self) -> Option<String> {
         self.0.created_by.clone()
     }
 
     /// Number of row groups in the file
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = numRowGroups)]
     pub fn num_row_groups(&self) -> usize {
         self.0.row_groups.len()
     }
 
     /// Returns a single RowGroupMetaData by index
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = rowGroup)]
     pub fn row_group(&self, i: usize) -> RowGroupMetaData {
         self.0.row_groups[i].clone().into()
     }
@@ -43,7 +43,7 @@ impl FileMetaData {
         SchemaDescriptor::new(self.0.schema().clone())
     }
 
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = keyValueMetadata)]
     pub fn key_value_metadata(&self) -> Result<JsValue, JsValue> {
         let mut map: HashMap<String, Option<String>> = HashMap::new();
         let metadata = &self.0.key_value_metadata;
@@ -92,13 +92,13 @@ pub struct RowGroupMetaData(arrow2::io::parquet::read::RowGroupMetaData);
 #[wasm_bindgen]
 impl RowGroupMetaData {
     /// Number of rows in this row group.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = numRows)]
     pub fn num_rows(&self) -> usize {
         self.0.num_rows()
     }
 
     /// Number of columns in this row group.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = numColumns)]
     pub fn num_columns(&self) -> usize {
         self.0.columns().len()
     }
@@ -110,13 +110,13 @@ impl RowGroupMetaData {
     }
 
     /// Total byte size of all uncompressed column data in this row group.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = totalByteSize)]
     pub fn total_byte_size(&self) -> usize {
         self.0.total_byte_size()
     }
 
     /// Total size of all compressed column data in this row group.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = compressedSize)]
     pub fn compressed_size(&self) -> usize {
         self.0.compressed_size()
     }
@@ -141,19 +141,19 @@ impl ColumnChunkMetaData {
     ///
     /// If not set, assumed to belong to the same file as the metadata.
     /// This path is relative to the current file.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = filePath)]
     pub fn file_path(&self) -> Option<String> {
         self.0.file_path().clone()
     }
 
     /// Byte offset in `file_path()`.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = fileOffset)]
     pub fn file_offset(&self) -> i64 {
         self.0.file_offset()
     }
 
     // /// Returns this column's [`ColumnChunk`]
-    // #[wasm_bindgen]
+    // #[wasm_bindgen(js_name = columnChunk)]
     // pub fn column_chunk(&self) -> usize {
     //     // let a = self.0.column_chunk();
     //     // let map
@@ -176,12 +176,12 @@ impl ColumnChunkMetaData {
     // }
 
     // /// The [`PhysicalType`] of this column.
-    // #[wasm_bindgen]
+    // #[wasm_bindgen(js_name = physicalType)]
     // pub fn physical_type(&self) -> PhysicalType {
     //     self.column_descr.descriptor.primitive_type.physical_type
     // }
 
-    // #[wasm_bindgen]
+    // #[wasm_bindgen(js_name = getStatistics)]
     // pub fn get_statistics(&self) -> () {
     //     let maybe_statistics = self.0.statistics();
     //     if let Some(statistics) = maybe_statistics {
@@ -202,68 +202,68 @@ impl ColumnChunkMetaData {
 
     /// Total number of values in this column chunk. Note that this is not necessarily the number
     /// of rows. E.g. the (nested) array `[[1, 2], [3]]` has 2 rows and 3 values.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = numValues)]
     pub fn num_values(&self) -> i64 {
         self.0.num_values()
     }
 
     // /// [`Compression`] for this column.
-    // #[wasm_bindgen]
+    // #[wasm_bindgen(js_name = compression)]
     // pub fn compression(&self) -> Compression {
     //     let compression = self.0.compression();
     //     compression.
     // }
 
     /// Returns the total compressed data size of this column chunk.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = compressedSize)]
     pub fn compressed_size(&self) -> i64 {
         self.0.compressed_size()
     }
 
     /// Returns the total uncompressed data size of this column chunk.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = uncompressedSize)]
     pub fn uncompressed_size(&self) -> i64 {
         self.0.uncompressed_size()
     }
 
     /// Returns the offset for the column data.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = dataPageOffset)]
     pub fn data_page_offset(&self) -> i64 {
         self.0.data_page_offset()
     }
 
     /// Returns `true` if this column chunk contains a index page, `false` otherwise.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = hasIndexPage)]
     pub fn has_index_page(&self) -> bool {
         self.0.has_index_page()
     }
 
     /// Returns the offset for the index page.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = indexPageOffset)]
     pub fn index_page_offset(&self) -> Option<i64> {
         self.0.index_page_offset()
     }
 
     /// Returns the offset for the dictionary page, if any.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = dictionaryPageOffset)]
     pub fn dictionary_page_offset(&self) -> Option<i64> {
         self.0.dictionary_page_offset()
     }
 
     /// Returns the number of encodings for this column
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = numColumnEncodings)]
     pub fn num_column_encodings(&self) -> usize {
         self.0.column_encoding().len()
     }
 
     // /// Returns the encoding for this column
-    // #[wasm_bindgen]
+    // #[wasm_bindgen(js_name = columnEncoding)]
     // pub fn column_encoding(&self, i: usize) -> Encoding {
     //     self.0.column_encoding()[i]
     // }
 
     /// Returns the offset and length in bytes of the column chunk within the file
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = byteRange)]
     pub fn byte_range(&self) -> Vec<u64> {
         let mut vec: Vec<u64> = Vec::new();
         let byte_range = self.0.byte_range();
@@ -300,7 +300,7 @@ impl SchemaDescriptor {
     }
 
     /// The number of columns in the schema
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = numColumns)]
     pub fn num_columns(&self) -> usize {
         self.0.columns().len()
     }
@@ -314,11 +314,13 @@ impl SchemaDescriptor {
     // }
 
     /// The number of fields in the schema
+    #[wasm_bindgen(js_name = numFields)]
     pub fn num_fields(&self) -> usize {
         self.0.fields().len()
     }
 
     // /// The schemas' fields.
+    // #[wasm_bindgen]
     // pub fn fields(&self, i: usize) -> ParquetType {
     //     ParquetType::new(self.0.fields()[i])
     // }
