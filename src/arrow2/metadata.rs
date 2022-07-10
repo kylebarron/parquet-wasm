@@ -8,6 +8,12 @@ pub struct FileMetaData(arrow2::io::parquet::read::FileMetaData);
 
 #[wasm_bindgen]
 impl FileMetaData {
+    /// Clone this struct in wasm memory.
+    #[wasm_bindgen]
+    pub fn copy(&self) -> Self {
+        FileMetaData(self.0.clone())
+    }
+
     /// Version of this file.
     #[wasm_bindgen]
     pub fn version(&self) -> i32 {

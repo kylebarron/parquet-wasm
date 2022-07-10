@@ -113,15 +113,33 @@ pub fn read_row_group2(
     }
 }
 
-// #[wasm_bindgen(js_name = readParquetRowGroup2)]
-// #[cfg(feature = "reader")]
-// pub async fn read_parquet_row_group2(
-//     url: String,
-//     content_length: usize,
-//     metadata: FileMetaData,
-//     // i: usize,
-// ) -> Result<Uint8Array, JsValue> {
-// }
+#[wasm_bindgen(js_name = readMetadataAsync2)]
+#[cfg(feature = "reader")]
+pub async fn read_metadata_async2(
+    url: String,
+    content_length: usize,
+) -> Result<crate::arrow2::metadata::FileMetaData, JsValue> {
+    match crate::arrow2::reader_async::read_metadata_async(url, content_length).await {
+        Ok(metadata) => Ok(metadata.into()),
+        Err(error) => Err(error),
+    }
+}
+
+#[wasm_bindgen(js_name = readRowGroupAsync2)]
+#[cfg(feature = "reader")]
+pub async fn read_row_group_async2(
+    url: String,
+    content_length: usize,
+    meta: crate::arrow2::metadata::FileMetaData,
+    i: usize,
+) -> Result<Uint8Array, JsValue> {
+    match crate::arrow2::reader_async::read_row_group(url, content_length, &meta.clone().into(), i)
+        .await
+    {
+        Ok(buffer) => copy_vec_to_uint8_array(buffer),
+        Err(error) => Err(JsValue::from_str(format!("{}", error).as_str())),
+    }
+}
 
 /// Write Arrow data to a Parquet file using the [`arrow2`](https://crates.io/crates/arrow2) and
 /// [`parquet2`](https://crates.io/crates/parquet2) Rust crates.
