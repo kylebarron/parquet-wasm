@@ -4,8 +4,10 @@ mkdir -p tmp_build
 
 if [ "$ENV" == "DEV" ]; then
    BUILD="--dev"
+   FLAGS="--features debug"
 else
    BUILD="--release"
+   FLAGS=""
 fi
 
 ######################################
@@ -16,7 +18,8 @@ wasm-pack build \
   $BUILD \
   --out-dir tmp_build/node \
   --out-name arrow1 \
-  --target nodejs
+  --target nodejs \
+  $FLAGS
 
 # Build web version into tmp_build/esm
 echo "Building arrow-rs esm"
@@ -24,7 +27,8 @@ wasm-pack build \
   $BUILD \
   --out-dir tmp_build/esm \
   --out-name arrow1 \
-  --target web
+  --target web \
+  $FLAGS
 
 # Build bundler version into tmp_build/bundler
 echo "Building arrow-rs bundler"
@@ -32,7 +36,8 @@ wasm-pack build \
   $BUILD \
   --out-dir tmp_build/bundler \
   --out-name arrow1 \
-  --target bundler
+  --target bundler \
+  $FLAGS
 
 ######################################
 # ARROW 2 turn on the feature manually
@@ -47,7 +52,8 @@ wasm-pack build \
   --features arrow2 \
   --features reader \
   --features writer \
-  --features all_compressions
+  --features all_compressions \
+  $FLAGS
 
 # Build web version into tmp_build/esm2
 echo "Building arrow2 esm"
@@ -60,7 +66,8 @@ wasm-pack build \
   --features arrow2 \
   --features reader \
   --features writer \
-  --features all_compressions
+  --features all_compressions \
+  $FLAGS
 
 # Build bundler version into tmp_build/bundler2
 echo "Building arrow2 bundler"
@@ -73,7 +80,8 @@ wasm-pack build \
   --features arrow2 \
   --features reader \
   --features writer \
-  --features all_compressions
+  --features all_compressions \
+  $FLAGS
 
 # Copy files into pkg/
 mkdir -p pkg/{node,esm,bundler}

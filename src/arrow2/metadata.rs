@@ -78,6 +78,12 @@ impl From<arrow2::io::parquet::read::FileMetaData> for FileMetaData {
     }
 }
 
+impl From<FileMetaData> for arrow2::io::parquet::read::FileMetaData {
+    fn from(meta: FileMetaData) -> arrow2::io::parquet::read::FileMetaData {
+        meta.0
+    }
+}
+
 /// Metadata for a row group.
 #[derive(Debug, Clone)]
 #[wasm_bindgen]
