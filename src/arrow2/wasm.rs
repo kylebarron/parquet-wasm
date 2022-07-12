@@ -1,5 +1,5 @@
 use crate::arrow2::error::WasmResult;
-use crate::utils::copy_vec_to_uint8_array;
+use crate::utils::{assert_parquet_file_not_empty, copy_vec_to_uint8_array};
 use js_sys::Uint8Array;
 use wasm_bindgen::prelude::*;
 
@@ -24,9 +24,7 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen(js_name = readParquet2)]
 #[cfg(feature = "reader")]
 pub fn read_parquet2(parquet_file: &[u8]) -> WasmResult<Uint8Array> {
-    if parquet_file.is_empty() {
-        return Err(JsError::new("Empty input provided or not a Uint8Array."));
-    }
+    assert_parquet_file_not_empty(parquet_file)?;
 
     let buffer = crate::arrow2::reader::read_parquet(parquet_file)?;
     copy_vec_to_uint8_array(buffer)
@@ -51,9 +49,7 @@ pub fn read_parquet2(parquet_file: &[u8]) -> WasmResult<Uint8Array> {
 #[wasm_bindgen(js_name = readMetadata2)]
 #[cfg(feature = "reader")]
 pub fn read_metadata2(parquet_file: &[u8]) -> WasmResult<crate::arrow2::metadata::FileMetaData> {
-    if parquet_file.is_empty() {
-        return Err(JsError::new("Empty input provided or not a Uint8Array."));
-    }
+    assert_parquet_file_not_empty(parquet_file)?;
 
     let metadata = crate::arrow2::reader::read_metadata(parquet_file)?;
     Ok(metadata.into())
@@ -92,9 +88,7 @@ pub fn read_row_group2(
     meta: &crate::arrow2::metadata::FileMetaData,
     i: usize,
 ) -> WasmResult<Uint8Array> {
-    if parquet_file.is_empty() {
-        return Err(JsError::new("Empty input provided or not a Uint8Array."));
-    }
+    assert_parquet_file_not_empty(parquet_file)?;
 
     let buffer = crate::arrow2::reader::read_row_group(parquet_file, &meta.clone().into(), i)?;
     copy_vec_to_uint8_array(buffer)

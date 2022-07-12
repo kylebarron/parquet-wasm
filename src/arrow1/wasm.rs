@@ -1,5 +1,5 @@
 use crate::arrow1::error::WasmResult;
-use crate::utils::copy_vec_to_uint8_array;
+use crate::utils::{assert_parquet_file_not_empty, copy_vec_to_uint8_array};
 use js_sys::Uint8Array;
 use wasm_bindgen::prelude::*;
 
@@ -24,9 +24,7 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen(js_name = readParquet)]
 #[cfg(feature = "reader")]
 pub fn read_parquet(parquet_file: &[u8]) -> WasmResult<Uint8Array> {
-    if parquet_file.is_empty() {
-        return Err(JsError::new("Empty input provided or not a Uint8Array."));
-    }
+    assert_parquet_file_not_empty(parquet_file)?;
 
     let buffer = crate::arrow1::reader::read_parquet(parquet_file)?;
     copy_vec_to_uint8_array(buffer)

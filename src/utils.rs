@@ -42,3 +42,11 @@ pub fn copy_vec_to_uint8_array(buffer: Vec<u8>) -> Result<Uint8Array, JsError> {
     return_vec.copy_from(&buffer);
     Ok(return_vec)
 }
+
+/// Raise an error if the input array is empty
+pub fn assert_parquet_file_not_empty(parquet_file: &[u8]) -> Result<(), JsError> {
+    if parquet_file.is_empty() {
+        return Err(JsError::new("Empty input provided or not a Uint8Array."));
+    }
+    Ok(())
+}
