@@ -835,6 +835,7 @@ dependencies = [
  "parquet2",
  "range-reader",
  "serde-wasm-bindgen",
+ "thiserror",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "wasm-bindgen-test",

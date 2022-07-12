@@ -14,3 +14,5 @@ pub mod writer;
 
 #[cfg(feature = "writer")]
 pub mod writer_properties;
+
+pub mod error;

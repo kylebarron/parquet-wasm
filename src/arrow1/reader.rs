@@ -1,13 +1,13 @@
+use crate::arrow1::error::Result;
 use arrow::ipc::writer::StreamWriter;
 use bytes::Bytes;
 use parquet::arrow::{ArrowReader, ParquetFileArrowReader};
-use parquet::errors::ParquetError;
 use parquet::file::reader::{FileReader, SerializedFileReader};
 use std::sync::Arc;
 
 /// Internal function to read a buffer with Parquet data into a buffer with Arrow IPC Stream data
 /// using the arrow and parquet crates
-pub fn read_parquet(parquet_file: &[u8]) -> Result<Vec<u8>, ParquetError> {
+pub fn read_parquet(parquet_file: &[u8]) -> Result<Vec<u8>> {
     // Create Parquet reader
     let cursor = Bytes::copy_from_slice(parquet_file);
     let parquet_reader = SerializedFileReader::new(cursor)?;
