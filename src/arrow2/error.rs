@@ -1,6 +1,6 @@
 use arrow2::error::Error as ArrowError;
-use thiserror::Error;
 use parquet2::error::Error as ParquetError;
+use thiserror::Error;
 use wasm_bindgen::JsError;
 
 #[derive(Error, Debug)]
