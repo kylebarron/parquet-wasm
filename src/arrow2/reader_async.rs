@@ -1,6 +1,6 @@
+use crate::arrow2::error::Result;
 use crate::common::fetch::make_range_request;
 use crate::log;
-use arrow2::error::Error as ArrowError;
 use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};
 use arrow2::io::parquet::read::{infer_schema, FileMetaData};
 use arrow2::io::parquet::read::{read_columns_many_async, RowGroupDeserializer};
@@ -39,10 +39,7 @@ fn create_reader(
     RangedAsyncReader::new(content_length, min_request_size, range_get)
 }
 
-pub async fn read_metadata_async(
-    url: String,
-    content_length: usize,
-) -> Result<FileMetaData, ArrowError> {
+pub async fn read_metadata_async(url: String, content_length: usize) -> Result<FileMetaData> {
     let mut reader = create_reader(url, content_length, None);
     let metadata = _read_metadata_async(&mut reader).await?;
     Ok(metadata)
@@ -53,7 +50,7 @@ pub async fn read_row_group(
     content_length: usize,
     metadata: &FileMetaData,
     i: usize,
-) -> Result<Vec<u8>, ArrowError> {
+) -> Result<Vec<u8>> {
     let reader_factory = || {
         Box::pin(futures::future::ready(Ok(create_reader(
             url.clone(),

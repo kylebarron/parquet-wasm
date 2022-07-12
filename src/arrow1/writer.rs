@@ -1,6 +1,6 @@
+use crate::arrow1::error::Result;
 use arrow::ipc::reader::StreamReader;
 use parquet::arrow::arrow_writer::ArrowWriter;
-use parquet::errors::ParquetError;
 use std::io::Cursor;
 
 /// Internal function to write a buffer of data in Arrow IPC Stream format to a Parquet file using
@@ -8,7 +8,7 @@ use std::io::Cursor;
 pub fn write_parquet(
     arrow_file: &[u8],
     writer_properties: crate::arrow1::writer_properties::WriterProperties,
-) -> Result<Vec<u8>, ParquetError> {
+) -> Result<Vec<u8>> {
     // Create IPC reader
     let input_file = Cursor::new(arrow_file);
     let arrow_ipc_reader = StreamReader::try_new(input_file, None)?;

@@ -1,4 +1,5 @@
-use crate::utils::copy_vec_to_uint8_array;
+use crate::arrow2::error::WasmResult;
+use crate::utils::{assert_parquet_file_not_empty, copy_vec_to_uint8_array};
 use js_sys::Uint8Array;
 use wasm_bindgen::prelude::*;
 
@@ -22,17 +23,11 @@ use wasm_bindgen::prelude::*;
 /// @returns Uint8Array containing Arrow data in [IPC Stream format](https://arrow.apache.org/docs/format/Columnar.html#ipc-streaming-format). To parse this into an Arrow table, pass to `tableFromIPC` in the Arrow JS bindings.
 #[wasm_bindgen(js_name = readParquet2)]
 #[cfg(feature = "reader")]
-pub fn read_parquet2(parquet_file: &[u8]) -> Result<Uint8Array, JsValue> {
-    if parquet_file.is_empty() {
-        return Err(JsValue::from_str(
-            "Empty input provided or not a Uint8Array.",
-        ));
-    }
+pub fn read_parquet2(parquet_file: &[u8]) -> WasmResult<Uint8Array> {
+    assert_parquet_file_not_empty(parquet_file)?;
 
-    match crate::arrow2::reader::read_parquet(parquet_file) {
-        Ok(buffer) => copy_vec_to_uint8_array(buffer),
-        Err(error) => Err(JsValue::from_str(format!("{}", error).as_str())),
-    }
+    let buffer = crate::arrow2::reader::read_parquet(parquet_file)?;
+    copy_vec_to_uint8_array(buffer)
 }
 
 /// Read metadata from a Parquet file using the [`arrow2`](https://crates.io/crates/arrow2) and
@@ -53,19 +48,11 @@ pub fn read_parquet2(parquet_file: &[u8]) -> Result<Uint8Array, JsValue> {
 /// @returns a {@linkcode FileMetaData} object containing metadata of the Parquet file.
 #[wasm_bindgen(js_name = readMetadata2)]
 #[cfg(feature = "reader")]
-pub fn read_metadata2(
-    parquet_file: &[u8],
-) -> Result<crate::arrow2::metadata::FileMetaData, JsValue> {
-    if parquet_file.is_empty() {
-        return Err(JsValue::from_str(
-            "Empty input provided or not a Uint8Array.",
-        ));
-    }
+pub fn read_metadata2(parquet_file: &[u8]) -> WasmResult<crate::arrow2::metadata::FileMetaData> {
+    assert_parquet_file_not_empty(parquet_file)?;
 
-    match crate::arrow2::reader::read_metadata(parquet_file) {
-        Ok(metadata) => Ok(metadata.into()),
-        Err(error) => Err(JsValue::from_str(format!("{}", error).as_str())),
-    }
+    let metadata = crate::arrow2::reader::read_metadata(parquet_file)?;
+    Ok(metadata.into())
 }
 
 /// Read a single row group from a Parquet file into Arrow data using the
@@ -100,17 +87,11 @@ pub fn read_row_group2(
     parquet_file: &[u8],
     meta: &crate::arrow2::metadata::FileMetaData,
     i: usize,
-) -> Result<Uint8Array, JsValue> {
-    if parquet_file.is_empty() {
-        return Err(JsValue::from_str(
-            "Empty input provided or not a Uint8Array.",
-        ));
-    }
+) -> WasmResult<Uint8Array> {
+    assert_parquet_file_not_empty(parquet_file)?;
 
-    match crate::arrow2::reader::read_row_group(parquet_file, &meta.clone().into(), i) {
-        Ok(buffer) => copy_vec_to_uint8_array(buffer),
-        Err(error) => Err(JsValue::from_str(format!("{}", error).as_str())),
-    }
+    let buffer = crate::arrow2::reader::read_row_group(parquet_file, &meta.clone().into(), i)?;
+    copy_vec_to_uint8_array(buffer)
 }
 
 #[wasm_bindgen(js_name = readMetadataAsync2)]
@@ -118,11 +99,9 @@ pub fn read_row_group2(
 pub async fn read_metadata_async2(
     url: String,
     content_length: usize,
-) -> Result<crate::arrow2::metadata::FileMetaData, JsValue> {
-    match crate::arrow2::reader_async::read_metadata_async(url, content_length).await {
-        Ok(metadata) => Ok(metadata.into()),
-        Err(error) => Err(JsValue::from_str(format!("{}", error).as_str())),
-    }
+) -> WasmResult<crate::arrow2::metadata::FileMetaData> {
+    let metadata = crate::arrow2::reader_async::read_metadata_async(url, content_length).await?;
+    Ok(metadata.into())
 }
 
 #[wasm_bindgen(js_name = readRowGroupAsync2)]
@@ -132,13 +111,11 @@ pub async fn read_row_group_async2(
     content_length: usize,
     meta: crate::arrow2::metadata::FileMetaData,
     i: usize,
-) -> Result<Uint8Array, JsValue> {
-    match crate::arrow2::reader_async::read_row_group(url, content_length, &meta.clone().into(), i)
-        .await
-    {
-        Ok(buffer) => copy_vec_to_uint8_array(buffer),
-        Err(error) => Err(JsValue::from_str(format!("{}", error).as_str())),
-    }
+) -> WasmResult<Uint8Array> {
+    let buffer =
+        crate::arrow2::reader_async::read_row_group(url, content_length, &meta.clone().into(), i)
+            .await?;
+    copy_vec_to_uint8_array(buffer)
 }
 
 /// Write Arrow data to a Parquet file using the [`arrow2`](https://crates.io/crates/arrow2) and
@@ -170,13 +147,11 @@ pub async fn read_row_group_async2(
 pub fn write_parquet2(
     arrow_file: &[u8],
     writer_properties: Option<crate::arrow2::writer_properties::WriterProperties>,
-) -> Result<Uint8Array, JsValue> {
+) -> WasmResult<Uint8Array> {
     let writer_props = writer_properties.unwrap_or_else(|| {
         crate::arrow2::writer_properties::WriterPropertiesBuilder::default().build()
     });
 
-    match crate::arrow2::writer::write_parquet(arrow_file, writer_props) {
-        Ok(buffer) => copy_vec_to_uint8_array(buffer),
-        Err(error) => Err(JsValue::from_str(format!("{}", error).as_str())),
-    }
+    let buffer = crate::arrow2::writer::write_parquet(arrow_file, writer_props)?;
+    copy_vec_to_uint8_array(buffer)
 }
