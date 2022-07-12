@@ -71,7 +71,8 @@ test("error produced trying to read file with arrayBuffer", (t) => {
     // @ts-expect-error input should be Uint8Array
     wasm.readParquet2(arrayBuffer);
   } catch (err) {
-    t.equals(err, "Empty input provided or not a Uint8Array.");
+    t.ok(err instanceof Error, "err expected to be an Error");
+    t.equals(err.message, "Empty input provided or not a Uint8Array.", "Expected error message");
   }
 
   t.end();
