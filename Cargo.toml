@@ -36,7 +36,7 @@ all_compressions = ["brotli", "gzip", "snappy", "zstd", "lz4"]
 full = ["arrow1", "arrow2", "async", "debug", "all_compressions", "reader", "writer"]
 
 [dependencies]
-wasm-bindgen = { version = "0.2.80", features = ["serde-serialize"]  }
+wasm-bindgen = { version = "0.2.82", features = ["serde-serialize"]  }
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
