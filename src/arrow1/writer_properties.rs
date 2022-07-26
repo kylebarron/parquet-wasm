@@ -41,6 +41,28 @@ impl WriterVersion {
     }
 }
 
+/// Controls the level of statistics to be computed by the writer
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[wasm_bindgen]
+pub enum EnabledStatistics {
+    /// Compute no statistics
+    None,
+    /// Compute chunk-level statistics but not page-level
+    Chunk,
+    /// Compute page-level and chunk-level statistics
+    Page,
+}
+
+impl From<EnabledStatistics> for parquet::file::properties::EnabledStatistics {
+    fn from(statistics: EnabledStatistics) -> Self {
+        match statistics {
+            EnabledStatistics::None => parquet::file::properties::EnabledStatistics::None,
+            EnabledStatistics::Chunk => parquet::file::properties::EnabledStatistics::Chunk,
+            EnabledStatistics::Page => parquet::file::properties::EnabledStatistics::Page,
+        }
+    }
+}
+
 /// Immutable struct to hold writing configuration for `writeParquet`.
 ///
 /// Use {@linkcode WriterPropertiesBuilder} to create a configuration, then call {@linkcode
@@ -157,8 +179,8 @@ impl WriterPropertiesBuilder {
 
     /// Sets flag to enable/disable statistics for any column.
     #[wasm_bindgen(js_name = setStatisticsEnabled)]
-    pub fn set_statistics_enabled(self, value: bool) -> Self {
-        Self(self.0.set_statistics_enabled(value))
+    pub fn set_statistics_enabled(self, value: EnabledStatistics) -> Self {
+        Self(self.0.set_statistics_enabled(value.into()))
     }
 
     /// Sets max statistics size for any column.
@@ -209,9 +231,12 @@ impl WriterPropertiesBuilder {
     /// Sets flag to enable/disable statistics for a column.
     /// Takes precedence over globally defined settings.
     #[wasm_bindgen(js_name = setColumnStatisticsEnabled)]
-    pub fn set_column_statistics_enabled(self, col: String, value: bool) -> Self {
+    pub fn set_column_statistics_enabled(self, col: String, value: EnabledStatistics) -> Self {
         let column_path = parquet::schema::types::ColumnPath::from(col);
-        Self(self.0.set_column_statistics_enabled(column_path, value))
+        Self(
+            self.0
+                .set_column_statistics_enabled(column_path, value.into()),
+        )
     }
 
     /// Sets max size for statistics for a column.
