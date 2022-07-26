@@ -1,9 +1,9 @@
 use crate::common::writer_properties::{Compression, Encoding, WriterVersion};
 use wasm_bindgen::prelude::*;
 
-impl Encoding {
-    pub fn to_arrow2(self) -> arrow2::io::parquet::write::Encoding {
-        match self {
+impl From<Encoding> for arrow2::io::parquet::write::Encoding {
+    fn from(x: Encoding) -> arrow2::io::parquet::write::Encoding {
+        match x {
             Encoding::PLAIN => arrow2::io::parquet::write::Encoding::Plain,
             Encoding::PLAIN_DICTIONARY => arrow2::io::parquet::write::Encoding::PlainDictionary,
             Encoding::RLE => arrow2::io::parquet::write::Encoding::Rle,
@@ -21,9 +21,9 @@ impl Encoding {
     }
 }
 
-impl Compression {
-    pub fn to_arrow2(self) -> arrow2::io::parquet::write::CompressionOptions {
-        match self {
+impl From<Compression> for arrow2::io::parquet::write::CompressionOptions {
+    fn from(x: Compression) -> arrow2::io::parquet::write::CompressionOptions {
+        match x {
             Compression::UNCOMPRESSED => {
                 arrow2::io::parquet::write::CompressionOptions::Uncompressed
             }
@@ -40,9 +40,9 @@ impl Compression {
     }
 }
 
-impl WriterVersion {
-    pub fn to_arrow2(self) -> arrow2::io::parquet::write::Version {
-        match self {
+impl From<WriterVersion> for arrow2::io::parquet::write::Version {
+    fn from(x: WriterVersion) -> arrow2::io::parquet::write::Version {
+        match x {
             WriterVersion::V1 => arrow2::io::parquet::write::Version::V1,
             WriterVersion::V2 => arrow2::io::parquet::write::Version::V2,
         }
@@ -110,7 +110,7 @@ impl WriterPropertiesBuilder {
         let write_options = arrow2::io::parquet::write::WriteOptions {
             write_statistics: self.write_options.write_statistics,
             compression: self.write_options.compression,
-            version: value.to_arrow2(),
+            version: value.into(),
         };
         self.write_options = write_options;
         self
@@ -129,7 +129,7 @@ impl WriterPropertiesBuilder {
     /// encoding flag being set.
     #[wasm_bindgen(js_name = setEncoding)]
     pub fn set_encoding(mut self, value: Encoding) -> Self {
-        self.encoding = value.to_arrow2();
+        self.encoding = value.into();
         self
     }
 
@@ -138,7 +138,7 @@ impl WriterPropertiesBuilder {
     pub fn set_compression(mut self, value: Compression) -> Self {
         let write_options = arrow2::io::parquet::write::WriteOptions {
             write_statistics: self.write_options.write_statistics,
-            compression: value.to_arrow2(),
+            compression: value.into(),
             version: self.write_options.version,
         };
         self.write_options = write_options;
