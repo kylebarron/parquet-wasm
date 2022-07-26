@@ -50,7 +50,7 @@ console_error_panic_hook = { version = "0.1.6", optional = true }
 # if wee_alloc only saves 10KB, might not be worth the slower allocation speed?
 # wee_alloc = "0.4.5"
 
-js-sys = "0.3.58"
+js-sys = "0.3.59"
 getrandom = { version = "0.2.6", features = ["js"] }
 thiserror = "1.0"
 
