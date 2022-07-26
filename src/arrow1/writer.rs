@@ -16,7 +16,11 @@ pub fn write_parquet(
 
     // Create Parquet writer
     let mut output_file: Vec<u8> = vec![];
-    let mut writer = ArrowWriter::try_new(&mut output_file, arrow_schema, Some(writer_properties.into()))?;
+    let mut writer = ArrowWriter::try_new(
+        &mut output_file,
+        arrow_schema,
+        Some(writer_properties.into()),
+    )?;
 
     // Iterate over IPC chunks, writing each batch to Parquet
     for maybe_record_batch in arrow_ipc_reader {
