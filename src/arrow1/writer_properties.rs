@@ -1,9 +1,9 @@
 use crate::common::writer_properties::{Compression, Encoding, WriterVersion};
 use wasm_bindgen::prelude::*;
 
-impl Encoding {
-    pub fn to_arrow1(self) -> parquet::basic::Encoding {
-        match self {
+impl From<Encoding> for parquet::basic::Encoding {
+    fn from(x: Encoding) -> parquet::basic::Encoding {
+        match x {
             Encoding::PLAIN => parquet::basic::Encoding::PLAIN,
             Encoding::PLAIN_DICTIONARY => parquet::basic::Encoding::PLAIN_DICTIONARY,
             Encoding::RLE => parquet::basic::Encoding::RLE,
@@ -17,9 +17,9 @@ impl Encoding {
     }
 }
 
-impl Compression {
-    pub fn to_arrow1(self) -> parquet::basic::Compression {
-        match self {
+impl From<Compression> for parquet::basic::Compression {
+    fn from(x: Compression) -> parquet::basic::Compression {
+        match x {
             Compression::UNCOMPRESSED => parquet::basic::Compression::UNCOMPRESSED,
             Compression::SNAPPY => parquet::basic::Compression::SNAPPY,
             Compression::GZIP => parquet::basic::Compression::GZIP,
@@ -32,9 +32,9 @@ impl Compression {
     }
 }
 
-impl WriterVersion {
-    pub fn to_arrow1(self) -> parquet::file::properties::WriterVersion {
-        match self {
+impl From<WriterVersion> for parquet::file::properties::WriterVersion {
+    fn from(x: WriterVersion) -> parquet::file::properties::WriterVersion {
+        match x {
             WriterVersion::V1 => parquet::file::properties::WriterVersion::PARQUET_1_0,
             WriterVersion::V2 => parquet::file::properties::WriterVersion::PARQUET_2_0,
         }
@@ -70,9 +70,9 @@ impl From<EnabledStatistics> for parquet::file::properties::EnabledStatistics {
 #[wasm_bindgen]
 pub struct WriterProperties(parquet::file::properties::WriterProperties);
 
-impl WriterProperties {
-    pub fn to_upstream(self) -> parquet::file::properties::WriterProperties {
-        self.0
+impl From<WriterProperties> for parquet::file::properties::WriterProperties {
+    fn from(props: WriterProperties) -> Self {
+        props.0
     }
 }
 
@@ -102,7 +102,7 @@ impl WriterPropertiesBuilder {
     /// Sets writer version.
     #[wasm_bindgen(js_name = setWriterVersion)]
     pub fn set_writer_version(self, value: WriterVersion) -> Self {
-        Self(self.0.set_writer_version(value.to_arrow1()))
+        Self(self.0.set_writer_version(value.into()))
     }
 
     /// Sets data page size limit.
@@ -159,13 +159,13 @@ impl WriterPropertiesBuilder {
     /// encoding flag being set.
     #[wasm_bindgen(js_name = setEncoding)]
     pub fn set_encoding(self, value: Encoding) -> Self {
-        Self(self.0.set_encoding(value.to_arrow1()))
+        Self(self.0.set_encoding(value.into()))
     }
 
     /// Sets compression codec for any column.
     #[wasm_bindgen(js_name = setCompression)]
     pub fn set_compression(self, value: Compression) -> Self {
-        Self(self.0.set_compression(value.to_arrow1()))
+        Self(self.0.set_compression(value.into()))
     }
 
     /// Sets flag to enable/disable dictionary encoding for any column.
@@ -206,7 +206,7 @@ impl WriterPropertiesBuilder {
     #[wasm_bindgen(js_name = setColumnEncoding)]
     pub fn set_column_encoding(self, col: String, value: Encoding) -> Self {
         let column_path = parquet::schema::types::ColumnPath::from(col);
-        Self(self.0.set_column_encoding(column_path, value.to_arrow1()))
+        Self(self.0.set_column_encoding(column_path, value.into()))
     }
 
     /// Sets compression codec for a column.
@@ -214,10 +214,7 @@ impl WriterPropertiesBuilder {
     #[wasm_bindgen(js_name = setColumnCompression)]
     pub fn set_column_compression(self, col: String, value: Compression) -> Self {
         let column_path = parquet::schema::types::ColumnPath::from(col);
-        Self(
-            self.0
-                .set_column_compression(column_path, value.to_arrow1()),
-        )
+        Self(self.0.set_column_compression(column_path, value.into()))
     }
 
     /// Sets flag to enable/disable dictionary encoding for a column.
