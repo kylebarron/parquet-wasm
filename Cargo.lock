@@ -89,7 +89,7 @@ dependencies = [
  "futures",
  "hash_hasher",
  "num-traits",
- "parquet2",
+ "parquet2 0.13.2",
  "simdutf8",
  "streaming-iterator",
 ]
@@ -845,7 +845,7 @@ dependencies = [
  "getrandom",
  "js-sys",
  "parquet",
- "parquet2",
+ "parquet2 0.14.1",
  "range-reader",
  "serde-wasm-bindgen",
  "thiserror",
@@ -860,6 +860,19 @@ name = "parquet2"
 version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73fd2690ad041f9296876daef1f2706f6347073bdbcc719090887f1691e4a09d"
+dependencies = [
+ "async-stream",
+ "bitpacking",
+ "futures",
+ "parquet-format-async-temp",
+ "streaming-decompression",
+]
+
+[[package]]
+name = "parquet2"
+version = "0.14.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "33e434af3293ba384075a56d4b400ce659868ca7823142194ef204f01ab35e50"
 dependencies = [
  "async-stream",
  "bitpacking",

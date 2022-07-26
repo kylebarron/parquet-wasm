@@ -58,7 +58,7 @@ arrow2 = { version = "0.12", optional = true, features = [
   "io_ipc",
   "io_parquet",
 ] }
-parquet2 = { version = "0.13", default_features = false, optional = true }
+parquet2 = { version = "0.14", default_features = false, optional = true }
 
 arrow = { version = "18.0", default-features = false, optional = true }
 parquet = { version = "18.0", default-features = false, optional = true, features = [
