@@ -48,6 +48,7 @@ pub fn read_row_group(parquet_file: &[u8], meta: &FileMetaData, i: usize) -> Res
         row_group_meta,
         arrow_schema.fields.clone(),
         None,
+        None,
     )?;
 
     let result = RowGroupDeserializer::new(column_chunks, row_group_meta.num_rows() as usize, None);

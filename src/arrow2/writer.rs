@@ -12,7 +12,7 @@ pub fn write_parquet(
     // Create IPC reader
     let mut input_file = Cursor::new(arrow_file);
     let stream_metadata = read_file_metadata(&mut input_file)?;
-    let arrow_ipc_reader = IPCFileReader::new(input_file, stream_metadata.clone(), None);
+    let arrow_ipc_reader = IPCFileReader::new(input_file, stream_metadata.clone(), None, None);
 
     // Create Parquet writer
     let mut output_file: Vec<u8> = vec![];
