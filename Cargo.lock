@@ -65,6 +65,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "arrow"
+version = "19.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "89b7e88e4739c3616cae75adce6660c9c1a80f2660545eb77afbe0e4a0f048a0"
+dependencies = [
+ "ahash",
+ "bitflags",
+ "chrono",
+ "half",
+ "hashbrown",
+ "hex",
+ "indexmap",
+ "lazy_static",
+ "lexical-core",
+ "multiversion",
+ "num",
+ "regex",
+ "serde",
+ "serde_derive",
+ "serde_json",
+]
+
+[[package]]
 name = "arrow-format"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -811,7 +834,7 @@ version = "18.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "65f61759af307fad711e7656c705218402a8a79b776c893c20fef96e8ffd2a7d"
 dependencies = [
- "arrow",
+ "arrow 18.0.0",
  "base64",
  "brotli",
  "byteorder",
@@ -853,7 +876,7 @@ dependencies = [
 name = "parquet-wasm"
 version = "0.3.1"
 dependencies = [
- "arrow",
+ "arrow 19.0.0",
  "arrow2",
  "async-compat",
  "bytes",
