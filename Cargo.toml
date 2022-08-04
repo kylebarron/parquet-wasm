@@ -9,7 +9,7 @@ repository = "https://github.com/kylebarron/parquet-wasm"
 license = "MIT OR Apache-2.0"
 keywords = ["parquet", "webassembly", "arrow"]
 categories = ["wasm"]
-rust-version = "1.60"
+rust-version = "1.62"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -60,8 +60,8 @@ arrow2 = { version = "0.13", optional = true, features = [
 ] }
 parquet2 = { version = "0.14", default_features = false, optional = true }
 
-arrow = { version = "18.0", default-features = false, optional = true }
-parquet = { version = "18.0", default-features = false, optional = true, features = [
+arrow = { version = "19.0", default-features = false, optional = true }
+parquet = { version = "19.0", default-features = false, optional = true, features = [
   "arrow",
   "base64",
   "async",
