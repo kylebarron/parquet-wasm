@@ -52,16 +52,15 @@ Note that when using the `esm` bundles, the default export must be awaited. See 
 
 ### `arrow2` API
 
-This implementation uses the [`arrow2`](https://crates.io/crates/arrow2) and [`parquet2`](https://crates.io/crates/parquet2) Rust crates. This implementation is the default in this library and is more full-featured, including metadata handling and async reading.
+This implementation uses the [`arrow2`](https://crates.io/crates/arrow2) and [`parquet2`](https://crates.io/crates/parquet2) Rust crates.
 
-Refer to the [API documentation](https://kylebarron.dev/parquet-wasm/modules/bundler_arrow2.html) for more details and examples.
+This is the default implementation and is more full-featured, including metadata handling and async reading. Refer to the [API documentation](https://kylebarron.dev/parquet-wasm/modules/bundler_arrow2.html) for more details and examples.
 
 ### `arrow` API
 
 This implementation uses the [`arrow`](https://crates.io/crates/arrow) and [`parquet`](https://crates.io/crates/parquet) Rust crates.
 
 Refer to the [API documentation](https://kylebarron.dev/parquet-wasm/modules/bundler_arrow1.html) for more details and examples.
-
 
 ### Debug functions
 
@@ -197,10 +196,8 @@ By default, `arrow`, `all_compressions`, `reader`, and `writer` features are ena
 
 ## Future work
 
-- [ ] Async support to make requests for Parquet chunks directly from Rust. **If you're familiar with Rust async, I would love some help in [#96](https://github.com/kylebarron/parquet-wasm/pull/96)** :slightly_smiling_face:. This would additionally support:
-  - [ ] Pushdown predicate filtering, to download only chunks that match a specific condition
-  - [ ] Column filtering, to download only certain columns
-  - [ ] Async iterable support, to return chunks as they arrive
+- [ ] Example of pushdown predicate filtering, to download only chunks that match a specific condition
+- [ ] Column filtering, to download only certain columns
 - [ ] More tests
 
 ## Acknowledgements

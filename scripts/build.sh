@@ -53,7 +53,6 @@ wasm-pack build \
   --features reader \
   --features writer \
   --features all_compressions \
-  --features async \
   $FLAGS
 
 # Build web version into tmp_build/esm2

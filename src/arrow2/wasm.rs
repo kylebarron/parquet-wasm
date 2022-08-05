@@ -94,6 +94,29 @@ pub fn read_row_group(
     copy_vec_to_uint8_array(buffer)
 }
 
+/// Asynchronously read metadata from a Parquet file using the
+/// [`arrow2`](https://crates.io/crates/arrow2) and [`parquet2`](https://crates.io/crates/parquet2)
+/// Rust crates.
+///
+/// For now, this requires knowing the content length of the file, but hopefully this will be
+/// relaxed in the future.
+///
+/// Example:
+///
+/// ```js
+/// // Edit the `parquet-wasm` import as necessary
+/// import { readMetadataAsync } from "parquet-wasm";
+///
+/// const url = "https://example.com/file.parquet";
+/// const headResp = await fetch(url, {method: 'HEAD'});
+/// const length = parseInt(headResp.headers.get('Content-Length'));
+///
+/// const parquetFileMetaData = await readMetadataAsync(url, length);
+/// ```
+///
+/// @param url String location of remote Parquet file containing Parquet data
+/// @param content_length Number content length of file in bytes
+/// @returns a {@linkcode FileMetaData} object containing metadata of the Parquet file.
 #[wasm_bindgen(js_name = readMetadataAsync)]
 #[cfg(all(feature = "reader", feature = "async"))]
 pub async fn read_metadata_async(
@@ -104,6 +127,43 @@ pub async fn read_metadata_async(
     Ok(metadata.into())
 }
 
+/// Asynchronously read a single row group from a Parquet file into Arrow data using the
+/// [`arrow2`](https://crates.io/crates/arrow2) and [`parquet2`](https://crates.io/crates/parquet2)
+/// Rust crates.
+///
+/// Example:
+///
+/// ```js
+/// import { tableFromIPC } from "apache-arrow";
+/// // Edit the `parquet-wasm` import as necessary
+/// import { readRowGroupAsync, readMetadataAsync } from "parquet-wasm";
+///
+/// const url = "https://example.com/file.parquet";
+/// const headResp = await fetch(url, {method: 'HEAD'});
+/// const length = parseInt(headResp.headers.get('Content-Length'));
+///
+/// const parquetFileMetaData = await readMetadataAsync(url, length);
+///
+/// // Read all batches from the file in parallel
+/// const promises = [];
+/// for (let i = 0; i < parquetFileMetaData.numRowGroups(); i++) {
+///   // IMPORTANT: For now, calling `copy()` on the metadata object is required whenever passing in to
+///   // a function. Hopefully this can be resolved in the future sometime
+///   const rowGroupPromise = wasm.readRowGroupAsync2(url, length, parquetFileMetaData.copy(), i);
+///   promises.push(rowGroupPromise);
+/// }
+///
+/// const recordBatchChunks = await Promise.all(promises);
+/// const table = new arrow.Table(recordBatchChunks);
+/// ```
+///
+/// Note that you can get the number of row groups in a Parquet file using {@linkcode FileMetaData.numRowGroups}
+///
+/// @param url String location of remote Parquet file containing Parquet data
+/// @param content_length Number content length of file in bytes
+/// @param meta {@linkcode FileMetaData} from a call to {@linkcode readMetadata}
+/// @param i Number index of the row group to load
+/// @returns Uint8Array containing Arrow data in [IPC Stream format](https://arrow.apache.org/docs/format/Columnar.html#ipc-streaming-format). To parse this into an Arrow table, pass to `tableFromIPC` in the Arrow JS bindings.
 #[wasm_bindgen(js_name = readRowGroupAsync)]
 #[cfg(all(feature = "reader", feature = "async"))]
 pub async fn read_row_group_async(
