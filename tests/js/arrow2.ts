@@ -42,7 +42,7 @@ test("read-write-read round trip (with writer properties)", async (t) => {
 
   const writerProperties = new wasm.WriterPropertiesBuilder().build();
 
-  const parquetBuffer = wasm.writeParquet2(
+  const parquetBuffer = wasm.writeParquet(
     tableToIPC(initialTable, "file"),
     writerProperties
   );
@@ -58,7 +58,7 @@ test("read-write-read round trip (no writer properties provided)", async (t) =>
   const arr = new Uint8Array(buffer);
   const initialTable = tableFromIPC(wasm.readParquet(arr));
 
-  const parquetBuffer = wasm.writeParquet2(tableToIPC(initialTable, "file"));
+  const parquetBuffer = wasm.writeParquet(tableToIPC(initialTable, "file"));
   const table = tableFromIPC(wasm.readParquet(parquetBuffer));
 
   testArrowTablesEqual(t, initialTable, table);
@@ -69,7 +69,7 @@ test("error produced trying to read file with arrayBuffer", (t) => {
   const arrayBuffer = new ArrayBuffer(10);
   try {
     // @ts-expect-error input should be Uint8Array
-    wasm.readParquet2(arrayBuffer);
+    wasm.readParquet(arrayBuffer);
   } catch (err) {
     t.ok(err instanceof Error, "err expected to be an Error");
     t.equals(err.message, "Empty input provided or not a Uint8Array.", "Expected error message");
@@ -86,7 +86,7 @@ test("iterate over row groups", (t) => {
 
   const chunks: RecordBatch[] = [];
   for (let i = 0; i < fileMetaData.numRowGroups(); i++) {
-    let arrowIpcBuffer = wasm.readRowGroup2(arr, fileMetaData, i);
+    let arrowIpcBuffer = wasm.readRowGroup(arr, fileMetaData, i);
     chunks.push(...tableFromIPC(arrowIpcBuffer).batches);
   }
 
