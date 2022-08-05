@@ -14,11 +14,14 @@ async function main() {
 
   const metadata = await wasm.readMetadataAsync2(url, length);
 
-  const recordBatchChunks = [];
+  // Read all batches from the file in parallel
+  const promises = [];
   for (let i = 0; i < metadata.numRowGroups(); i++) {
-    const arrowIpcBuffer = await wasm.readRowGroupAsync2(url, length, metadata.copy(), i);
-    recordBatchChunks.push(...arrow.tableFromIPC(arrowIpcBuffer).batches);
+    const rowGroupPromise = wasm.readRowGroupAsync2(url, length, metadata.copy(), i);
+    promises.push(rowGroupPromise);
   }
+
+  const recordBatchChunks = await Promise.all(promises);
 
   const table = new arrow.Table(recordBatchChunks);
   window.table = table;
