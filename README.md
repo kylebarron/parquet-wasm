@@ -31,29 +31,37 @@ Since these parallel projects exist, why not give the user the choice of which t
 
 Presumably no one wants to use both `parquet` and `parquet2` at once, so the default bundles separate `parquet` and `parquet2` into separate entry points to keep bundle size as small as possible. The following describe the six bundles available:
 
-| Entry point                   | Rust crates used        | Description                                             |
-| ----------------------------- | ----------------------- | ------------------------------------------------------- |
-| `parquet-wasm`                | `parquet` and `arrow`   | "Bundler" build, to be used in bundlers such as Webpack |
-| `parquet-wasm/node/arrow1`    | `parquet` and `arrow`   | Node build, to be used with `require` in NodeJS         |
-| `parquet-wasm/esm/arrow1`     | `parquet` and `arrow`   | ESM, to be used directly from the Web as an ES Module   |
-|                               |                         |                                                         |
-| `parquet-wasm/bundler/arrow2` | `parquet2` and `arrow2` | "Bundler" build, to be used in bundlers such as Webpack |
-| `parquet-wasm/node/arrow2`    | `parquet2` and `arrow2` | Node build, to be used with `require` in NodeJS         |
-| `parquet-wasm/esm/arrow2`     | `parquet2` and `arrow2` | ESM, to be used directly from the Web as an ES Module   |
+| Entry point                                     | Rust crates used        | Description                                             | Documentation               |
+| ----------------------------------------------- | ----------------------- | ------------------------------------------------------- | --------------------------- |
+| `parquet-wasm/bundler/arrow1`                   | `parquet` and `arrow`   | "Bundler" build, to be used in bundlers such as Webpack | [Link][bundler-arrow1-docs] |
+| `parquet-wasm/node/arrow1`                      | `parquet` and `arrow`   | Node build, to be used with `require` in NodeJS         | [Link][node-arrow1-docs]    |
+| `parquet-wasm/esm/arrow1`                       | `parquet` and `arrow`   | ESM, to be used directly from the Web as an ES Module   | [Link][esm-arrow1-docs]     |
+|                                                 |                         |                                                         |                             |
+| `parquet-wasm` or `parquet-wasm/bundler/arrow2` | `parquet2` and `arrow2` | "Bundler" build, to be used in bundlers such as Webpack | [Link][bundler-arrow2-docs] |
+| `parquet-wasm/node/arrow2`                      | `parquet2` and `arrow2` | Node build, to be used with `require` in NodeJS         | [Link][node-arrow2-docs]    |
+| `parquet-wasm/esm/arrow2`                       | `parquet2` and `arrow2` | ESM, to be used directly from the Web as an ES Module   | [Link][esm-arrow2-docs]     |
+
+[bundler-arrow1-docs]: https://kylebarron.dev/parquet-wasm/modules/bundler_arrow1.html
+[node-arrow1-docs]: https://kylebarron.dev/parquet-wasm/modules/node_arrow1.html
+[esm-arrow1-docs]: https://kylebarron.dev/parquet-wasm/modules/esm_arrow1.html
+[bundler-arrow2-docs]: https://kylebarron.dev/parquet-wasm/modules/bundler_arrow2.html
+[node-arrow2-docs]: https://kylebarron.dev/parquet-wasm/modules/node_arrow2.html
+[esm-arrow2-docs]: https://kylebarron.dev/parquet-wasm/modules/esm_arrow2.html
 
 Note that when using the `esm` bundles, the default export must be awaited. See [here](https://rustwasm.github.io/docs/wasm-bindgen/examples/without-a-bundler.html) for an example.
 
-### `parquet` API
+### `arrow2` API
+
+This implementation uses the [`arrow2`](https://crates.io/crates/arrow2) and [`parquet2`](https://crates.io/crates/parquet2) Rust crates. This implementation is the default in this library and is more full-featured, including metadata handling and async reading.
+
+Refer to the [API documentation](https://kylebarron.dev/parquet-wasm/modules/bundler_arrow2.html) for more details and examples.
+
+### `arrow` API
 
 This implementation uses the [`arrow`](https://crates.io/crates/arrow) and [`parquet`](https://crates.io/crates/parquet) Rust crates.
 
 Refer to the [API documentation](https://kylebarron.dev/parquet-wasm/modules/bundler_arrow1.html) for more details and examples.
 
-### `parquet2` API
-
-This implementation uses the [`arrow2`](https://crates.io/crates/arrow2) and [`parquet2`](https://crates.io/crates/parquet2) Rust crates.
-
-Refer to the [API documentation](https://kylebarron.dev/parquet-wasm/modules/bundler_arrow2.html) for more details and examples.
 
 ### Debug functions
 
@@ -178,6 +186,7 @@ By default, `arrow`, `all_compressions`, `reader`, and `writer` features are ena
 - `arrow2`: Use the `arrow2` and `parquet2` crates
 - `reader`: Activate read support.
 - `writer`: Activate write support.
+- `async`: Activate asynchronous read support (only applies to the `arrow2` endpoints).
 - `all_compressions`: Activate all supported compressions for the crate(s) in use.
 - `brotli`: Activate Brotli compression.
 - `gzip`: Activate Gzip compression.
