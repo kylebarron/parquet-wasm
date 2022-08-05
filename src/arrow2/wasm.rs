@@ -21,9 +21,9 @@ use wasm_bindgen::prelude::*;
 ///
 /// @param parquet_file Uint8Array containing Parquet data
 /// @returns Uint8Array containing Arrow data in [IPC Stream format](https://arrow.apache.org/docs/format/Columnar.html#ipc-streaming-format). To parse this into an Arrow table, pass to `tableFromIPC` in the Arrow JS bindings.
-#[wasm_bindgen(js_name = readParquet2)]
+#[wasm_bindgen(js_name = readParquet)]
 #[cfg(feature = "reader")]
-pub fn read_parquet2(parquet_file: &[u8]) -> WasmResult<Uint8Array> {
+pub fn read_parquet(parquet_file: &[u8]) -> WasmResult<Uint8Array> {
     assert_parquet_file_not_empty(parquet_file)?;
 
     let buffer = crate::arrow2::reader::read_parquet(parquet_file)?;
@@ -46,9 +46,9 @@ pub fn read_parquet2(parquet_file: &[u8]) -> WasmResult<Uint8Array> {
 ///
 /// @param parquet_file Uint8Array containing Parquet data
 /// @returns a {@linkcode FileMetaData} object containing metadata of the Parquet file.
-#[wasm_bindgen(js_name = readMetadata2)]
+#[wasm_bindgen(js_name = readMetadata)]
 #[cfg(feature = "reader")]
-pub fn read_metadata2(parquet_file: &[u8]) -> WasmResult<crate::arrow2::metadata::FileMetaData> {
+pub fn read_metadata(parquet_file: &[u8]) -> WasmResult<crate::arrow2::metadata::FileMetaData> {
     assert_parquet_file_not_empty(parquet_file)?;
 
     let metadata = crate::arrow2::reader::read_metadata(parquet_file)?;
@@ -83,7 +83,7 @@ pub fn read_metadata2(parquet_file: &[u8]) -> WasmResult<crate::arrow2::metadata
 /// @returns Uint8Array containing Arrow data in [IPC Stream format](https://arrow.apache.org/docs/format/Columnar.html#ipc-streaming-format). To parse this into an Arrow table, pass to `tableFromIPC` in the Arrow JS bindings.
 #[wasm_bindgen(js_name = readRowGroup2)]
 #[cfg(feature = "reader")]
-pub fn read_row_group2(
+pub fn read_row_group(
     parquet_file: &[u8],
     meta: &crate::arrow2::metadata::FileMetaData,
     i: usize,
@@ -96,7 +96,7 @@ pub fn read_row_group2(
 
 #[wasm_bindgen(js_name = readMetadataAsync2)]
 #[cfg(all(feature = "reader", feature = "async"))]
-pub async fn read_metadata_async2(
+pub async fn read_metadata_async(
     url: String,
     content_length: usize,
 ) -> WasmResult<crate::arrow2::metadata::FileMetaData> {
@@ -106,7 +106,7 @@ pub async fn read_metadata_async2(
 
 #[wasm_bindgen(js_name = readRowGroupAsync2)]
 #[cfg(all(feature = "reader", feature = "async"))]
-pub async fn read_row_group_async2(
+pub async fn read_row_group_async(
     url: String,
     content_length: usize,
     meta: crate::arrow2::metadata::FileMetaData,
@@ -144,7 +144,7 @@ pub async fn read_row_group_async2(
 /// @returns Uint8Array containing written Parquet data.
 #[wasm_bindgen(js_name = writeParquet2)]
 #[cfg(feature = "writer")]
-pub fn write_parquet2(
+pub fn write_parquet(
     arrow_file: &[u8],
     writer_properties: Option<crate::arrow2::writer_properties::WriterProperties>,
 ) -> WasmResult<Uint8Array> {
