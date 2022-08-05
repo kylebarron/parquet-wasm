@@ -108,7 +108,7 @@ mv pkg/esm2/arrow2_new.js pkg/esm2/arrow2.js
 # Update files array in package.json using JQ
 # Set module field to bundler/arrow1.js
 # Set types field to bundler/arrow1.d.ts
-jq '.files = ["*"] | .module="bundler/arrow1.js" | .types="bundler/arrow1.d.ts"' pkg/package.json > pkg/package.json.tmp
+jq '.files = ["*"] | .module="bundler/arrow2.js" | .types="bundler/arrow2.d.ts"' pkg/package.json > pkg/package.json.tmp
 
 # Overwrite existing package.json file
 mv pkg/package.json.tmp pkg/package.json
