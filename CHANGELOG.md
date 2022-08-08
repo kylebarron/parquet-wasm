@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.4.0-beta.1] - 2022-08-08
+
+## What's Changed
+
+- Add lz4_raw and zstd compressions for parquet2 by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/114
+- Simplify cargo features by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/117
+- Add vscode rust-analyzer target setting by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/131
+- add msrv by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/132
+- pin clap to 3.1.\* by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/139
+- Make writerProperties optional in JS api by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/152
+- Add bindings for arrow2 metadata (without serde support) by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/153
+- Async reader by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/96
+- Cleaner error handling by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/157
+- implement `From` instead of custom methods by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/168
+- Remove "2" from function names in arrow2 api by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/173
+- Make arrow2 the default bundle by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/174
+- Improved documentation for async reading by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/175
+
+**Full Changelog**: https://github.com/kylebarron/parquet-wasm/compare/v0.3.1...v0.4.0-beta.1
+
 ## [0.3.1] - 2022-04-26
 
 ## What's Changed
