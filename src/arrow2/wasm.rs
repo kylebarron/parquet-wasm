@@ -168,13 +168,16 @@ pub async fn read_metadata_async(
 #[cfg(all(feature = "reader", feature = "async"))]
 pub async fn read_row_group_async(
     url: String,
-    content_length: usize,
-    meta: crate::arrow2::metadata::FileMetaData,
-    i: usize,
+    // content_length: usize,
+    row_group_meta: crate::arrow2::metadata::RowGroupMetaData,
+    arrow_schema: crate::arrow2::schema::ArrowSchema,
 ) -> WasmResult<Uint8Array> {
-    let buffer =
-        crate::arrow2::reader_async::read_row_group(url, content_length, &meta.clone().into(), i)
-            .await?;
+    let buffer = crate::arrow2::reader_async::read_row_group(
+        url,
+        &row_group_meta.into(),
+        &arrow_schema.into(),
+    )
+    .await?;
     copy_vec_to_uint8_array(buffer)
 }
 

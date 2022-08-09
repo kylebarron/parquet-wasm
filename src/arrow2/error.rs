@@ -10,6 +10,9 @@ pub enum ParquetWasmError {
 
     #[error(transparent)]
     ParquetError(Box<ParquetError>),
+
+    #[error("Internal error: `{0}`")]
+    InternalError(String),
 }
 
 pub type Result<T> = std::result::Result<T, ParquetWasmError>;

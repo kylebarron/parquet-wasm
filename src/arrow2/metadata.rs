@@ -1,3 +1,5 @@
+use crate::arrow2::error::WasmResult;
+use arrow2::io::parquet::read::infer_schema;
 use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 
@@ -76,6 +78,12 @@ impl FileMetaData {
     //     let col_order = self.0.column_order(i);
     //     col_order.
     // }
+
+    #[wasm_bindgen(js_name = arrowSchema)]
+    pub fn arrow_schema(&self) -> WasmResult<crate::arrow2::schema::ArrowSchema> {
+        let schema = infer_schema(&self.0)?;
+        Ok(schema.into())
+    }
 }
 
 impl From<arrow2::io::parquet::read::FileMetaData> for FileMetaData {
@@ -131,6 +139,12 @@ impl RowGroupMetaData {
 impl From<arrow2::io::parquet::read::RowGroupMetaData> for RowGroupMetaData {
     fn from(meta: arrow2::io::parquet::read::RowGroupMetaData) -> Self {
         RowGroupMetaData(meta)
+    }
+}
+
+impl From<RowGroupMetaData> for arrow2::io::parquet::read::RowGroupMetaData {
+    fn from(meta: RowGroupMetaData) -> arrow2::io::parquet::read::RowGroupMetaData {
+        meta.0
     }
 }
 

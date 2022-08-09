@@ -7,6 +7,9 @@ pub mod reader_async;
 #[cfg(feature = "reader")]
 pub mod metadata;
 
+#[cfg(feature = "reader")]
+pub mod schema;
+
 pub mod wasm;
 
 #[cfg(feature = "writer")]
