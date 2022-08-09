@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
+use crate::common::writer_properties::Encoding;
 
 /// Metadata for a Parquet file.
 #[derive(Debug, Clone)]
@@ -262,11 +263,13 @@ impl ColumnChunkMetaData {
         self.0.column_encoding().len()
     }
 
-    // /// Returns the encoding for this column
-    // #[wasm_bindgen(js_name = columnEncoding)]
-    // pub fn column_encoding(&self, i: usize) -> Encoding {
-    //     self.0.column_encoding()[i]
-    // }
+    /// Returns the encoding for this column
+    #[wasm_bindgen(js_name = columnEncoding)]
+    pub fn column_encoding(&self, i: usize) -> Encoding {
+        let encoding = self.0.column_encoding()[i];
+        encoding.
+        encoding.into()
+    }
 
     /// Returns the offset and length in bytes of the column chunk within the file
     #[wasm_bindgen(js_name = byteRange)]

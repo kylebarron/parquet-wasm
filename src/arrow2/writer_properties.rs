@@ -21,6 +21,26 @@ impl From<Encoding> for arrow2::io::parquet::write::Encoding {
     }
 }
 
+impl From<arrow2::io::parquet::write::Encoding> for Encoding {
+    fn from(encoding: arrow2::io::parquet::write::Encoding) -> Encoding {
+        match encoding {
+            arrow2::io::parquet::write::Encoding::Plain => Encoding::PLAIN,
+            arrow2::io::parquet::write::Encoding::PlainDictionary => Encoding::PLAIN_DICTIONARY,
+            arrow2::io::parquet::write::Encoding::Rle => Encoding::RLE,
+            arrow2::io::parquet::write::Encoding::BitPacked => Encoding::BIT_PACKED,
+            arrow2::io::parquet::write::Encoding::DeltaBinaryPacked => {
+                Encoding::DELTA_BINARY_PACKED
+            }
+            arrow2::io::parquet::write::Encoding::DeltaLengthByteArray => {
+                Encoding::DELTA_LENGTH_BYTE_ARRAY
+            }
+            arrow2::io::parquet::write::Encoding::DeltaByteArray => Encoding::DELTA_BYTE_ARRAY,
+            arrow2::io::parquet::write::Encoding::RleDictionary => Encoding::RLE_DICTIONARY,
+            arrow2::io::parquet::write::Encoding::ByteStreamSplit => Encoding::BYTE_STREAM_SPLIT,
+        }
+    }
+}
+
 impl From<Compression> for arrow2::io::parquet::write::CompressionOptions {
     fn from(x: Compression) -> arrow2::io::parquet::write::CompressionOptions {
         match x {
