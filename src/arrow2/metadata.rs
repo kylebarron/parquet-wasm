@@ -1,7 +1,13 @@
 use crate::arrow2::error::WasmResult;
 use arrow2::io::parquet::read::infer_schema;
+use parquet2::{
+    schema::types::PhysicalType,
+    statistics::{BooleanStatistics, PrimitiveStatistics},
+};
 use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
+
+use super::error::ParquetWasmError;
 
 /// Metadata for a Parquet file.
 #[derive(Debug, Clone)]
@@ -201,24 +207,150 @@ impl ColumnChunkMetaData {
     //     self.column_descr.descriptor.primitive_type.physical_type
     // }
 
-    // #[wasm_bindgen(js_name = getStatistics)]
-    // pub fn get_statistics(&self) -> () {
-    //     let maybe_statistics = self.0.statistics();
-    //     if let Some(statistics) = maybe_statistics {
-    //         let statistics = statistics.unwrap();
-    //         let js_val:  serde_wasm_bindgen::to_value(statistics);
-    //         statistics.physical_type()
-    //     }
-    // }
+    pub fn statistics_exist(&self) -> WasmResult<bool> {
+        Ok(self.0.statistics().is_some())
+    }
 
-    // /// Decodes the raw statistics into [`Statistics`].
-    // #[wasm_bindgen]
-    // pub fn statistics(&self) -> Option<Result<Arc<dyn Statistics>>> {
-    //     self.metadata()
-    //         .statistics
-    //         .as_ref()
-    //         .map(|x| deserialize_statistics(x, self.column_descr.descriptor.primitive_type.clone()))
-    // }
+    #[wasm_bindgen(js_name = getStatisticsMinValue)]
+    pub fn get_statistics_min_value(&self) -> WasmResult<JsValue> {
+        let statistics = self.0.statistics().unwrap()?;
+
+        let value: JsValue = match statistics.physical_type() {
+            PhysicalType::Boolean => statistics
+                .as_any()
+                .downcast_ref::<BooleanStatistics>()
+                .unwrap()
+                .min_value
+                .into(),
+            PhysicalType::Int32 => statistics
+                .as_any()
+                .downcast_ref::<PrimitiveStatistics<i32>>()
+                .unwrap()
+                .min_value
+                .into(),
+            PhysicalType::Int64 => statistics
+                .as_any()
+                .downcast_ref::<PrimitiveStatistics<i64>>()
+                .unwrap()
+                .min_value
+                .into(),
+            PhysicalType::Float => statistics
+                .as_any()
+                .downcast_ref::<PrimitiveStatistics<f32>>()
+                .unwrap()
+                .min_value
+                .into(),
+            PhysicalType::Double => statistics
+                .as_any()
+                .downcast_ref::<PrimitiveStatistics<f64>>()
+                .unwrap()
+                .min_value
+                .into(),
+            // Not implemented: Int96, ByteArray, FixedLenByteArray
+            _ => {
+                return Err(ParquetWasmError::InternalError(
+                    "Unsupported statistics type".to_string(),
+                )
+                .into())
+            }
+        };
+
+        Ok(value)
+    }
+
+    #[wasm_bindgen(js_name = getStatisticsMaxValue)]
+    pub fn get_statistics_max_value(&self) -> WasmResult<JsValue> {
+        let statistics = self.0.statistics().unwrap()?;
+
+        let value: JsValue = match statistics.physical_type() {
+            PhysicalType::Boolean => statistics
+                .as_any()
+                .downcast_ref::<BooleanStatistics>()
+                .unwrap()
+                .max_value
+                .into(),
+            PhysicalType::Int32 => statistics
+                .as_any()
+                .downcast_ref::<PrimitiveStatistics<i32>>()
+                .unwrap()
+                .max_value
+                .into(),
+            PhysicalType::Int64 => statistics
+                .as_any()
+                .downcast_ref::<PrimitiveStatistics<i64>>()
+                .unwrap()
+                .max_value
+                .into(),
+            PhysicalType::Float => statistics
+                .as_any()
+                .downcast_ref::<PrimitiveStatistics<f32>>()
+                .unwrap()
+                .max_value
+                .into(),
+            PhysicalType::Double => statistics
+                .as_any()
+                .downcast_ref::<PrimitiveStatistics<f64>>()
+                .unwrap()
+                .max_value
+                .into(),
+            // Not implemented: Int64, Int96, ByteArray, FixedLenByteArray
+            _ => {
+                return Err(ParquetWasmError::InternalError(
+                    "Unsupported statistics type".to_string(),
+                )
+                .into())
+            }
+        };
+
+        Ok(value)
+    }
+
+    #[wasm_bindgen(js_name = getStatisticsNullCount)]
+    pub fn get_statistics_null_count(&self) -> WasmResult<JsValue> {
+        let statistics = self.0.statistics().unwrap()?;
+
+        let value: JsValue = match statistics.physical_type() {
+            PhysicalType::Boolean => statistics
+                .as_any()
+                .downcast_ref::<BooleanStatistics>()
+                .unwrap()
+                .null_count
+                .into(),
+            PhysicalType::Int32 => statistics
+                .as_any()
+                .downcast_ref::<PrimitiveStatistics<i32>>()
+                .unwrap()
+                .null_count
+                .into(),
+            PhysicalType::Int64 => statistics
+                .as_any()
+                .downcast_ref::<PrimitiveStatistics<i64>>()
+                .unwrap()
+                .null_count
+                .into(),
+            PhysicalType::Float => statistics
+                .as_any()
+                .downcast_ref::<PrimitiveStatistics<f32>>()
+                .unwrap()
+                .null_count
+                .into(),
+            PhysicalType::Double => statistics
+                .as_any()
+                .downcast_ref::<PrimitiveStatistics<f64>>()
+                .unwrap()
+                .null_count
+                .into(),
+            // Not implemented: Int64, Int96, ByteArray, FixedLenByteArray
+            _ => {
+                return Err(ParquetWasmError::InternalError(
+                    "Unsupported statistics type".to_string(),
+                )
+                .into())
+            }
+        };
+
+        Ok(value)
+    }
 
     /// Total number of values in this column chunk. Note that this is not necessarily the number
     /// of rows. E.g. the (nested) array `[[1, 2], [3]]` has 2 rows and 3 values.
