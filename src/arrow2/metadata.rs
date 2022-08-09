@@ -178,6 +178,13 @@ impl ColumnChunkMetaData {
         self.0.file_offset()
     }
 
+    #[wasm_bindgen(js_name = pathInSchema)]
+    pub fn path_in_schema(&self) -> String {
+        let meta = self.0.metadata();
+        let path = &meta.path_in_schema;
+        path.join("/")
+    }
+
     // /// Returns this column's [`ColumnChunk`]
     // #[wasm_bindgen(js_name = columnChunk)]
     // pub fn column_chunk(&self) -> usize {
