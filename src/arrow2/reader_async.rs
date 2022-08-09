@@ -1,14 +1,15 @@
+use crate::arrow2::error::ParquetWasmError;
 use crate::arrow2::error::Result;
-use crate::common::fetch::make_range_request;
-use crate::log;
+use crate::common::fetch::{get_content_length, make_range_request};
+use arrow2::datatypes::Schema;
 use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};
-use arrow2::io::parquet::read::{infer_schema, FileMetaData};
+use arrow2::io::parquet::read::FileMetaData;
 use arrow2::io::parquet::read::{read_columns_many_async, RowGroupDeserializer};
-use futures::channel::oneshot;
 use futures::future::BoxFuture;
+// use parquet2::metadata::RowGroupMetaData;
+use arrow2::io::parquet::read::RowGroupMetaData;
 use parquet2::read::read_metadata_async as _read_metadata_async;
 use range_reader::{RangeOutput, RangedAsyncReader};
-use wasm_bindgen_futures::spawn_local;
 
 /// Create a RangedAsyncReader
 fn create_reader(
@@ -24,14 +25,9 @@ fn create_reader(
         let url = url.clone();
 
         Box::pin(async move {
-            let (sender2, receiver2) = oneshot::channel::<Vec<u8>>();
-            spawn_local(async move {
-                log!("Making range request");
-                let inner_data = make_range_request(&url, start, length).await.unwrap();
-                sender2.send(inner_data).unwrap();
-            });
-            let data = receiver2.await.unwrap();
-
+            let data = make_range_request(url.clone(), start, length)
+                .await
+                .unwrap();
             Ok(RangeOutput { start, data })
         }) as BoxFuture<'static, std::io::Result<RangeOutput>>
     });
@@ -45,12 +41,49 @@ pub async fn read_metadata_async(url: String, content_length: usize) -> Result<F
     Ok(metadata)
 }
 
+/// Check if all elements in an array are equal
+/// https://sts10.github.io/2019/06/06/is-all-equal-function.html
+fn all_elements_equal(arr: &[&Option<String>]) -> bool {
+    if arr.is_empty() {
+        return true;
+    }
+    let first = arr[0];
+    arr.iter().all(|&item| item == first)
+}
+
 pub async fn read_row_group(
     url: String,
-    content_length: usize,
-    metadata: &FileMetaData,
-    i: usize,
+    // content_length: Option<usize>,
+    row_group_meta: &RowGroupMetaData,
+    arrow_schema: &Schema,
 ) -> Result<Vec<u8>> {
+    // Extract the file paths from each underlying column
+    let file_paths: Vec<&Option<String>> = row_group_meta
+        .columns()
+        .iter()
+        .map(|column_chunk| column_chunk.file_path())
+        .collect();
+
+    if !all_elements_equal(&file_paths) {
+        return Err(ParquetWasmError::InternalError(
+            "Row groups with unequal paths are not supported".to_string(),
+        ));
+    }
+
+    // If a file path exists, append it to url
+    let file_path = file_paths[0];
+    let url = if let Some(file_path) = file_path {
+        let mut trimmed = url.trim_end_matches('/').to_string();
+        trimmed.push('/');
+        trimmed.push_str(file_path);
+        trimmed
+    } else {
+        url
+    };
+
+    // Note: for simplicity requesting the content length with a HEAD request always.
+    let content_length = get_content_length(url.clone()).await.unwrap();
+
     let reader_factory = || {
         Box::pin(futures::future::ready(Ok(create_reader(
             url.clone(),
@@ -59,25 +92,22 @@ pub async fn read_row_group(
         )))) as BoxFuture<'static, std::result::Result<RangedAsyncReader, std::io::Error>>
     };
 
-    // let's read the first row group only. Iterate over them to your liking
-    let group = &metadata.row_groups[i];
-
     // no chunk size in deserializing
     let chunk_size = None;
-
-    let schema = infer_schema(metadata)?;
-    let fields = schema.fields.clone();
+    let fields = arrow_schema.fields.clone();
 
     // this is IO-bounded (and issues a join, thus the reader_factory)
-    let column_chunks = read_columns_many_async(reader_factory, group, fields, chunk_size).await?;
+    let column_chunks =
+        read_columns_many_async(reader_factory, row_group_meta, fields, chunk_size).await?;
 
     // Create IPC writer
     let mut output_file = Vec::new();
     let options = IPCWriteOptions { compression: None };
     let mut writer = IPCStreamWriter::new(&mut output_file, options);
-    writer.start(&schema, None)?;
+    writer.start(arrow_schema, None)?;
 
-    let deserializer = RowGroupDeserializer::new(column_chunks, group.num_rows() as usize, None);
+    let deserializer =
+        RowGroupDeserializer::new(column_chunks, row_group_meta.num_rows() as usize, None);
     for maybe_chunk in deserializer {
         let chunk = maybe_chunk?;
         writer.write(&chunk, None)?;
