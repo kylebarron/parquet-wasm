@@ -2,6 +2,7 @@ use crate::arrow2::error::WasmResult;
 use crate::utils::{assert_parquet_file_not_empty, copy_vec_to_uint8_array};
 use js_sys::Uint8Array;
 use wasm_bindgen::prelude::*;
+use crate::arrow2::ffi::FFIArrowTable;
 
 /// Read a Parquet file into Arrow data using the [`arrow2`](https://crates.io/crates/arrow2) and
 /// [`parquet2`](https://crates.io/crates/parquet2) Rust crates.
@@ -28,6 +29,14 @@ pub fn read_parquet(parquet_file: &[u8]) -> WasmResult<Uint8Array> {
 
     let buffer = crate::arrow2::reader::read_parquet(parquet_file)?;
     copy_vec_to_uint8_array(buffer)
+}
+
+
+#[wasm_bindgen(js_name = readParquetView)]
+#[cfg(feature = "reader")]
+pub fn read_parquet_view(parquet_file: &[u8]) -> WasmResult<FFIArrowTable> {
+    assert_parquet_file_not_empty(parquet_file)?;
+    Ok(crate::arrow2::reader::read_parquet_ffi(parquet_file)?)
 }
 
 /// Read metadata from a Parquet file using the [`arrow2`](https://crates.io/crates/arrow2) and

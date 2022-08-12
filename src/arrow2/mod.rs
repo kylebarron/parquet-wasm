@@ -1,4 +1,7 @@
 #[cfg(feature = "reader")]
+pub mod ffi;
+
+#[cfg(feature = "reader")]
 pub mod reader;
 
 #[cfg(all(feature = "reader", feature = "async"))]
