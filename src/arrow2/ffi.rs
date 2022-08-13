@@ -19,6 +19,16 @@ impl FFIArrowArray {
     pub fn addr(&self) -> *const ffi::ArrowArray {
         &self.0 as *const _
     }
+
+    #[wasm_bindgen]
+    pub fn free(self) {
+        drop(self.0)
+    }
+
+    #[wasm_bindgen]
+    pub fn drop(self) {
+        drop(self.0)
+    }
 }
 
 #[wasm_bindgen]
@@ -96,5 +106,39 @@ pub struct FFIArrowTable {
 impl From<(FFIArrowSchema, Vec<FFIArrowChunk>)> for FFIArrowTable {
     fn from((schema, chunks): (FFIArrowSchema, Vec<FFIArrowChunk>)) -> Self {
         Self { schema, chunks }
+    }
+}
+
+#[wasm_bindgen]
+impl FFIArrowTable {
+    #[wasm_bindgen]
+    pub fn schema_length(&self) -> usize {
+        self.schema.length()
+    }
+
+    #[wasm_bindgen]
+    pub fn schema_addr(&self, i: usize) -> *const ffi::ArrowSchema {
+        self.schema.addr(i)
+    }
+
+    #[wasm_bindgen]
+    pub fn chunks_length(&self) -> usize {
+        self.chunks.len()
+    }
+
+    #[wasm_bindgen]
+    pub fn chunk_length(&self, i: usize) -> usize {
+        self.chunks[i].length()
+    }
+
+    #[wasm_bindgen]
+    pub fn array(&self, chunk: usize, column: usize) -> *const ffi::ArrowArray {
+        self.chunks[chunk].addr(column)
+    }
+
+    #[wasm_bindgen]
+    pub fn drop(self) {
+        drop(self.schema);
+        drop(self.chunks);
     }
 }
