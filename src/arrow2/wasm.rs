@@ -1,8 +1,8 @@
 use crate::arrow2::error::WasmResult;
+use crate::arrow2::ffi::FFIArrowTable;
 use crate::utils::{assert_parquet_file_not_empty, copy_vec_to_uint8_array};
 use js_sys::Uint8Array;
 use wasm_bindgen::prelude::*;
-use crate::arrow2::ffi::FFIArrowTable;
 
 /// Read a Parquet file into Arrow data using the [`arrow2`](https://crates.io/crates/arrow2) and
 /// [`parquet2`](https://crates.io/crates/parquet2) Rust crates.
@@ -30,7 +30,6 @@ pub fn read_parquet(parquet_file: &[u8]) -> WasmResult<Uint8Array> {
     let buffer = crate::arrow2::reader::read_parquet(parquet_file)?;
     copy_vec_to_uint8_array(buffer)
 }
-
 
 #[wasm_bindgen(js_name = readParquetView)]
 #[cfg(feature = "reader")]
@@ -225,5 +224,19 @@ pub fn write_parquet(
     });
 
     let buffer = crate::arrow2::writer::write_parquet(arrow_file, writer_props)?;
+    copy_vec_to_uint8_array(buffer)
+}
+
+#[wasm_bindgen(js_name = writeParquetFromView)]
+#[cfg(feature = "writer")]
+pub fn write_parquet_from_view(
+    arrow_table: FFIArrowTable,
+    writer_properties: Option<crate::arrow2::writer_properties::WriterProperties>,
+) -> WasmResult<Uint8Array> {
+    let writer_props = writer_properties.unwrap_or_else(|| {
+        crate::arrow2::writer_properties::WriterPropertiesBuilder::default().build()
+    });
+
+    let buffer = crate::arrow2::writer::write_ffi_table_to_parquet(arrow_table, writer_props)?;
     copy_vec_to_uint8_array(buffer)
 }

@@ -1,11 +1,10 @@
+use crate::arrow2::error::ParquetWasmError;
 use crate::arrow2::error::Result;
 use arrow2::array::Array;
 use arrow2::chunk::Chunk;
 use arrow2::datatypes::{DataType, Field, Schema};
 use arrow2::ffi;
 use wasm_bindgen::prelude::*;
-
-use super::error::ParquetWasmError;
 
 #[wasm_bindgen]
 pub struct FFIArrowArray(Box<ffi::ArrowArray>);
@@ -92,7 +91,7 @@ impl FFIArrowChunk {
     // box it?
     //
     // It would probably be good to see how Polars solves this problem.
-    pub fn import(self, data_types: &Vec<&DataType>) -> Result<Chunk<Box<dyn Array>>> {
+    pub fn import(self, data_types: &[&DataType]) -> Result<Chunk<Box<dyn Array>>> {
         let mut arrays: Vec<Box<dyn Array>> = vec![];
         for (i, ffi_array) in self.0.into_iter().enumerate() {
             arrays.push(ffi_array.import(data_types[i].clone())?);
@@ -209,7 +208,7 @@ impl FFIArrowTable {
 }
 
 impl FFIArrowTable {
-    pub fn import(self) -> Result<Vec<Chunk<Box<dyn Array>>>> {
+    pub fn import(self) -> Result<(Schema, Vec<Chunk<Box<dyn Array>>>)> {
         let schema: Schema = self.schema.as_ref().try_into()?;
         let data_types: Vec<&DataType> = schema
             .fields
@@ -223,6 +222,6 @@ impl FFIArrowTable {
             chunks.push(imported);
         }
 
-        Ok(chunks)
+        Ok((schema, chunks))
     }
 }
