@@ -1,4 +1,5 @@
 use crate::arrow2::error::Result;
+use crate::arrow2::ffi::FFIArrowTable;
 use arrow2::io::ipc::read::{read_file_metadata, FileReader as IPCFileReader};
 use arrow2::io::parquet::write::{FileWriter as ParquetFileWriter, RowGroupIterator};
 use std::io::Cursor;
@@ -41,6 +42,42 @@ pub fn write_parquet(
             options,
             encodings,
         );
+
+        if let Ok(row_group_iterator) = row_groups {
+            for maybe_group in row_group_iterator {
+                let group = maybe_group?;
+                parquet_writer.write(group)?;
+            }
+        }
+    }
+    let _size = parquet_writer.end(None)?;
+    Ok(output_file)
+}
+
+pub fn write_ffi_table_to_parquet(
+    table: FFIArrowTable,
+    writer_properties: crate::arrow2::writer_properties::WriterProperties,
+) -> Result<Vec<u8>> {
+    let (schema, chunks) = table.import()?;
+
+    // Create Parquet writer
+    let mut output_file: Vec<u8> = vec![];
+    let options = writer_properties.get_write_options();
+    let encoding = writer_properties.get_encoding();
+    let mut parquet_writer = ParquetFileWriter::try_new(&mut output_file, schema.clone(), options)?;
+
+    for chunk in chunks {
+        let iter = vec![Ok(chunk)];
+
+        // Need to create an encoding for each column
+        let mut encodings = vec![];
+        for _ in &schema.fields {
+            // Note, the nested encoding is for nested Parquet columns
+            // Here we assume columns are not nested
+            encodings.push(vec![encoding]);
+        }
+
+        let row_groups = RowGroupIterator::try_new(iter.into_iter(), &schema, options, encodings);
 
         if let Ok(row_group_iterator) = row_groups {
             for maybe_group in row_group_iterator {
