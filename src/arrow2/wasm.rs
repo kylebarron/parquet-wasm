@@ -31,9 +31,28 @@ pub fn read_parquet(parquet_file: &[u8]) -> WasmResult<Uint8Array> {
     copy_vec_to_uint8_array(buffer)
 }
 
-#[wasm_bindgen(js_name = readParquetView)]
+/// Read a Parquet file into Arrow data using the [`arrow2`](https://crates.io/crates/arrow2) and
+/// [`parquet2`](https://crates.io/crates/parquet2) Rust crates.
+///
+/// Example:
+///
+/// ```js
+/// import { tableFromIPC } from "apache-arrow";
+/// // Edit the `parquet-wasm` import as necessary
+/// import { _readParquetFFI } from "parquet-wasm/node2";
+///
+/// const resp = await fetch("https://example.com/file.parquet");
+/// const parquetUint8Array = new Uint8Array(await resp.arrayBuffer());
+/// const wasmArrowTable = _readParquetFFI(parquetUint8Array);
+/// // Pointer to the ArrowArray FFI struct for the first record batch and first column
+/// const arrayPtr = wasmArrowTable.array(0, 0);
+/// ```
+///
+/// @param parquet_file Uint8Array containing Parquet data
+/// @returns an {@linkcode FFIArrowTable} object containing the parsed Arrow table in WebAssembly memory. To read into an Arrow JS table, you'll need to use the Arrow C Data interface.
+#[wasm_bindgen(js_name = _readParquetFFI)]
 #[cfg(feature = "reader")]
-pub fn read_parquet_view(parquet_file: &[u8]) -> WasmResult<FFIArrowTable> {
+pub fn read_parquet_ffi(parquet_file: &[u8]) -> WasmResult<FFIArrowTable> {
     assert_parquet_file_not_empty(parquet_file)?;
     Ok(crate::arrow2::reader::read_parquet_ffi(parquet_file)?)
 }
@@ -227,9 +246,33 @@ pub fn write_parquet(
     copy_vec_to_uint8_array(buffer)
 }
 
-#[wasm_bindgen(js_name = writeParquetFromView)]
+/// Write Arrow data to a Parquet file using the [`arrow2`](https://crates.io/crates/arrow2) and
+/// [`parquet2`](https://crates.io/crates/parquet2) Rust crates.
+///
+/// For example, to create a Parquet file with Snappy compression:
+///
+/// ```js
+/// import { tableToIPC } from "apache-arrow";
+/// // Edit the `parquet-wasm` import as necessary
+/// import { WriterPropertiesBuilder, Compression, _writeParquetFFI } from "parquet-wasm/node2";
+///
+/// // Given an existing arrow table under `table`
+/// const arrowUint8Array = tableToIPC(table, "file");
+/// const writerProperties = new WriterPropertiesBuilder()
+///   .setCompression(Compression.SNAPPY)
+///   .build();
+/// const parquetUint8Array = writeParquet(arrowUint8Array, writerProperties);
+/// ```
+///
+/// If `writerProperties` is not provided or is `null`, the default writer properties will be used.
+/// This is equivalent to `new WriterPropertiesBuilder().build()`.
+///
+/// @param arrow_table {@linkcode FFIArrowTable} Arrow Table in Wasm memory
+/// @param writer_properties Configuration for writing to Parquet. Use the {@linkcode WriterPropertiesBuilder} to build a writing configuration, then call `.build()` to create an immutable writer properties to pass in here.
+/// @returns Uint8Array containing written Parquet data.
+#[wasm_bindgen(js_name = _writeParquetFFI)]
 #[cfg(feature = "writer")]
-pub fn write_parquet_from_view(
+pub fn write_parquet_ffi(
     arrow_table: FFIArrowTable,
     writer_properties: Option<crate::arrow2::writer_properties::WriterProperties>,
 ) -> WasmResult<Uint8Array> {

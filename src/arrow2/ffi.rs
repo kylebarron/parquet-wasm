@@ -8,6 +8,7 @@ use wasm_bindgen::prelude::*;
 
 type ArrowTable = Vec<Chunk<Box<dyn Array>>>;
 
+/// Wrapper around an ArrowArray FFI struct in Wasm memory.
 #[wasm_bindgen]
 pub struct FFIArrowArray(Box<ffi::ArrowArray>);
 
@@ -42,6 +43,7 @@ impl FFIArrowArray {
     }
 }
 
+/// Wrapper around an ArrowSchema FFI struct in Wasm memory.
 #[wasm_bindgen]
 pub struct FFIArrowField(Box<ffi::ArrowSchema>);
 
@@ -68,6 +70,8 @@ impl FFIArrowField {
     }
 }
 
+/// Wrapper to represent an Arrow Chunk in Wasm memory, e.g. a  collection of FFI ArrowArray
+/// structs
 #[wasm_bindgen]
 pub struct FFIArrowChunk(Vec<FFIArrowArray>);
 
@@ -81,18 +85,6 @@ impl From<Chunk<Box<dyn Array>>> for FFIArrowChunk {
 }
 
 impl FFIArrowChunk {
-    // NOTE: this todo may no longer apply:
-
-    // TODO: The idea was to try and import data via FFI as well to make sure that the exported
-    // data can _in principle_ be read back if you figure out the C ABI correctly
-    // One issue here is that since the FFI structs don't support `copy`, you have to _consume_
-    // this and similar structs when you import. E.g. take `self` instead of `&self`.
-    // Then the next issue is in returning an object whose size is not known at compile time.
-    // If we consume the struct, we need to import _all_ the data via FFI. But then we need to
-    // return a Chunk or Vec of arrays... but those aren't all known at compile time. Do we need to
-    // box it?
-    //
-    // It would probably be good to see how Polars solves this problem.
     pub fn import(self, data_types: &[&DataType]) -> Result<Chunk<Box<dyn Array>>> {
         let mut arrays: Vec<Box<dyn Array>> = vec![];
         for (i, ffi_array) in self.0.into_iter().enumerate() {
@@ -116,6 +108,7 @@ impl FFIArrowChunk {
     }
 }
 
+/// Wrapper around a collection of FFI ArrowSchema structs in Wasm memory
 #[wasm_bindgen]
 pub struct FFIArrowSchema(Vec<FFIArrowField>);
 
@@ -160,6 +153,8 @@ impl FFIArrowSchema {
     }
 }
 
+/// Wrapper around an Arrow Table in Wasm memory (a list of FFI ArrowSchema structs plus a list of
+/// lists of ArrowArray FFI structs.)
 #[wasm_bindgen]
 pub struct FFIArrowTable {
     schema: Box<FFIArrowSchema>,
