@@ -6,6 +6,8 @@ use arrow2::datatypes::{DataType, Field, Schema};
 use arrow2::ffi;
 use wasm_bindgen::prelude::*;
 
+type ArrowTable = Vec<Chunk<Box<dyn Array>>>;
+
 #[wasm_bindgen]
 pub struct FFIArrowArray(Box<ffi::ArrowArray>);
 
@@ -208,7 +210,7 @@ impl FFIArrowTable {
 }
 
 impl FFIArrowTable {
-    pub fn import(self) -> Result<(Schema, Vec<Chunk<Box<dyn Array>>>)> {
+    pub fn import(self) -> Result<(Schema, ArrowTable)> {
         let schema: Schema = self.schema.as_ref().try_into()?;
         let data_types: Vec<&DataType> = schema
             .fields
