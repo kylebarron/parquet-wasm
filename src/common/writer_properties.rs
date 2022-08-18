@@ -5,7 +5,7 @@ use wasm_bindgen::prelude::*;
 /// Codecs added in format version X.Y can be read by readers based on X.Y and later.
 /// Codec support may vary between readers based on the format version and
 /// libraries available at runtime.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 #[wasm_bindgen]
 pub enum Compression {
