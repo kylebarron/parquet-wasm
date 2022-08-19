@@ -153,7 +153,7 @@ impl FFIArrowSchema {
     }
 }
 
-/// Wrapper around an Arrow Table in Wasm memory (a list of FFI ArrowSchema structs plus a list of
+/// Wrapper around an Arrow Table in Wasm memory (a lisjst of FFI ArrowSchema structs plus a list of
 /// lists of ArrowArray FFI structs.)
 #[wasm_bindgen]
 pub struct FFIArrowTable {
@@ -172,28 +172,37 @@ impl From<(FFIArrowSchema, Vec<FFIArrowChunk>)> for FFIArrowTable {
 
 #[wasm_bindgen]
 impl FFIArrowTable {
-    #[wasm_bindgen]
+    /// Get the number of Fields in the table schema
+    #[wasm_bindgen(js_name = schemaLength)]
     pub fn schema_length(&self) -> usize {
         self.schema.length()
     }
 
-    #[wasm_bindgen]
+    /// Get the pointer to one ArrowSchema FFI struct
+    /// @param i number the index of the field in the schema to use
+    #[wasm_bindgen(js_name = schemaAddr)]
     pub fn schema_addr(&self, i: usize) -> *const ffi::ArrowSchema {
         self.schema.addr(i)
     }
 
-    #[wasm_bindgen]
+    /// Get the total number of chunks in the table
+    #[wasm_bindgen(js_name = chunksLength)]
     pub fn chunks_length(&self) -> usize {
         self.chunks.len()
     }
 
-    #[wasm_bindgen]
+    /// Get the number of columns in a given chunk
+    #[wasm_bindgen(js_name = chunkLength)]
     pub fn chunk_length(&self, i: usize) -> usize {
         self.chunks[i].length()
     }
 
-    #[wasm_bindgen]
-    pub fn array(&self, chunk: usize, column: usize) -> *const ffi::ArrowArray {
+    /// Get the pointer to one ArrowArray FFI struct for a given chunk index and column index
+    /// @param chunk number The chunk index to use
+    /// @param column number The column index to use
+    /// @returns number pointer to an ArrowArray FFI struct in Wasm memory
+    #[wasm_bindgen(js_name = arrayAddr)]
+    pub fn array_addr(&self, chunk: usize, column: usize) -> *const ffi::ArrowArray {
         self.chunks[chunk].addr(column)
     }
 
