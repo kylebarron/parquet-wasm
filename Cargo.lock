@@ -49,6 +49,29 @@ dependencies = [
  "ahash",
  "bitflags",
  "chrono",
+ "half",
+ "hashbrown",
+ "hex",
+ "indexmap",
+ "lazy_static",
+ "lexical-core",
+ "multiversion",
+ "num",
+ "regex",
+ "serde",
+ "serde_derive",
+ "serde_json",
+]
+
+[[package]]
+name = "arrow"
+version = "20.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c72a69495f06c8abb65b76a87be192a26fa724380d1f292d4e558a32afed9989"
+dependencies = [
+ "ahash",
+ "bitflags",
+ "chrono",
  "flatbuffers",
  "half",
  "hashbrown",
@@ -59,6 +82,7 @@ dependencies = [
  "multiversion",
  "num",
  "regex",
+ "regex-syntax",
  "serde",
  "serde_derive",
  "serde_json",
@@ -808,11 +832,12 @@ checksum = "648001efe5d5c0102d8cea768e348da85d90af8ba91f0bea908f157951493cd4"
 
 [[package]]
 name = "parquet"
-version = "19.0.0"
+version = "20.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2cfcf237362047888b342e4f0e213a9b303133b085853e447f2c58e65e00099d"
+checksum = "d0f0af698fcf8d1d9f2971766ebef25821ffe8c39c91837c276dcd97e075d950"
 dependencies = [
- "arrow",
+ "ahash",
+ "arrow 20.0.0",
  "base64",
  "brotli",
  "byteorder",
@@ -820,10 +845,12 @@ dependencies = [
  "chrono",
  "flate2",
  "futures",
+ "hashbrown",
  "num",
  "num-bigint",
  "parquet-format",
  "rand",
+ "seq-macro",
  "snap",
  "thrift",
  "tokio",
@@ -854,7 +881,7 @@ dependencies = [
 name = "parquet-wasm"
 version = "0.4.0-beta.5"
 dependencies = [
- "arrow",
+ "arrow 19.0.0",
  "arrow2",
  "async-compat",
  "bytes",
@@ -1026,6 +1053,12 @@ name = "scoped-tls"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ea6a9290e3c9cf0f18145ef7ffa62d68ee0bf5fcd651017e586dc7fd5da448c2"
+
+[[package]]
+name = "seq-macro"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0772c5c30e1a0d91f6834f8e545c69281c099dfa9a3ac58d96a9fd629c8d4898"
 
 [[package]]
 name = "serde"
