@@ -148,6 +148,7 @@ pub fn read_row_group(
 #[cfg(all(feature = "reader", feature = "async"))]
 pub async fn read_metadata_async(
     url: String,
+    // TODO: can this length be optional?
     content_length: usize,
 ) -> WasmResult<crate::arrow2::metadata::FileMetaData> {
     let metadata = crate::arrow2::reader_async::read_metadata_async(url, content_length).await?;
@@ -176,7 +177,7 @@ pub async fn read_metadata_async(
 /// for (let i = 0; i < parquetFileMetaData.numRowGroups(); i++) {
 ///   // IMPORTANT: For now, calling `copy()` on the metadata object is required whenever passing in to
 ///   // a function. Hopefully this can be resolved in the future sometime
-///   const rowGroupPromise = wasm.readRowGroupAsync2(url, length, parquetFileMetaData.copy(), i);
+///   const rowGroupPromise = wasm.readRowGroupAsync(url, metadata.copy().rowGroup(i));
 ///   promises.push(rowGroupPromise);
 /// }
 ///
@@ -191,6 +192,8 @@ pub async fn read_metadata_async(
 /// @param meta {@linkcode FileMetaData} from a call to {@linkcode readMetadata}
 /// @param i Number index of the row group to load
 /// @returns Uint8Array containing Arrow data in [IPC Stream format](https://arrow.apache.org/docs/format/Columnar.html#ipc-streaming-format). To parse this into an Arrow table, pass to `tableFromIPC` in the Arrow JS bindings.
+
+// TODO: update these docs!
 #[wasm_bindgen(js_name = readRowGroupAsync)]
 #[cfg(all(feature = "reader", feature = "async"))]
 pub async fn read_row_group_async(

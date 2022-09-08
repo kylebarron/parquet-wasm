@@ -6,7 +6,6 @@ use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IP
 use arrow2::io::parquet::read::FileMetaData;
 use arrow2::io::parquet::read::{read_columns_many_async, RowGroupDeserializer};
 use futures::future::BoxFuture;
-// use parquet2::metadata::RowGroupMetaData;
 use arrow2::io::parquet::read::RowGroupMetaData;
 use parquet2::read::read_metadata_async as _read_metadata_async;
 use range_reader::{RangeOutput, RangedAsyncReader};
