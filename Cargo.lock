@@ -107,19 +107,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "async-compat"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b48b4ff0c2026db683dea961cd8ea874737f56cffca86fa84415eaddc51c00d"
-dependencies = [
- "futures-core",
- "futures-io",
- "once_cell",
- "pin-project-lite",
- "tokio",
-]
-
-[[package]]
 name = "async-stream"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -982,14 +969,12 @@ dependencies = [
  "bytes",
  "chrono",
  "flate2",
- "futures",
  "num",
  "num-bigint",
  "parquet-format",
  "rand",
  "snap",
  "thrift",
- "tokio",
  "zstd",
 ]
 
@@ -1019,7 +1004,6 @@ version = "0.4.0-beta.5"
 dependencies = [
  "arrow",
  "arrow2",
- "async-compat",
  "bytes",
  "clap",
  "console_error_panic_hook",
@@ -1032,7 +1016,6 @@ dependencies = [
  "reqwest",
  "serde-wasm-bindgen",
  "thiserror",
- "tokio",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "wasm-bindgen-test",
@@ -1447,19 +1430,7 @@ dependencies = [
  "once_cell",
  "pin-project-lite",
  "socket2",
- "tokio-macros",
  "winapi",
-]
-
-[[package]]
-name = "tokio-macros"
-version = "1.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9724f9a975fb987ef7a3cd9be0350edcbe130698af5b8f7a631e23d42d052484"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]

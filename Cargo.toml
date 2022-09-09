@@ -20,7 +20,12 @@ arrow1 = ["dep:arrow", "dep:parquet", "dep:bytes"]
 arrow2 = ["dep:arrow2", "dep:parquet2", "dep:serde-wasm-bindgen"]
 reader = []
 writer = []
-async = ["dep:wasm-bindgen-futures", "dep:futures", "dep:range-reader", "dep:reqwest"]
+async = [
+  "dep:wasm-bindgen-futures",
+  "dep:futures",
+  "dep:range-reader",
+  "dep:reqwest",
+]
 debug = ["console_error_panic_hook", "clap"]
 
 brotli = ["parquet?/brotli", "parquet2?/brotli"]
@@ -33,10 +38,18 @@ lz4 = ["parquet2?/lz4_flex"]
 all_compressions = ["brotli", "gzip", "snappy", "zstd", "lz4"]
 
 # Full list of available features
-full = ["arrow1", "arrow2", "async", "debug", "all_compressions", "reader", "writer"]
+full = [
+  "arrow1",
+  "arrow2",
+  "async",
+  "debug",
+  "all_compressions",
+  "reader",
+  "writer",
+]
 
 [dependencies]
-wasm-bindgen = { version = "0.2.82", features = ["serde-serialize"]  }
+wasm-bindgen = { version = "0.2.82", features = ["serde-serialize"] }
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
@@ -64,24 +77,18 @@ arrow = { version = "19.0", default-features = false, optional = true }
 parquet = { version = "19.0", default-features = false, optional = true, features = [
   "arrow",
   "base64",
-  "async",
 ] }
-async-compat = "0.2.1"
 bytes = { version = "1", optional = true }
 
-serde-wasm-bindgen = {version = "0.4.3", optional = true}
+serde-wasm-bindgen = { version = "0.4.3", optional = true }
 
 # 3.2 added deprecations that don't currently pass clippy
 clap = { version = ">=3.1.15, <3.3", optional = true, features = ["derive"] }
 
-wasm-bindgen-futures = {version = "0.4.30", optional = true}
-futures = {version = "0.3", optional = true}
-range-reader = {version = "0.2", optional = true}
-reqwest = {version = "0.11.11", optional = true, default-features = false}
-
-# Unused but included to fix compilation errors
-# TODO: shouldn't need this
-tokio = {version = "*", default-features = false}
+wasm-bindgen-futures = { version = "0.4.30", optional = true }
+futures = { version = "0.3", optional = true }
+range-reader = { version = "0.2", optional = true }
+reqwest = { version = "0.11.11", optional = true, default-features = false }
 
 
 [dependencies.web-sys]
@@ -94,7 +101,8 @@ features = [
   'RequestMode',
   'Response',
   'Window',
-  "Document", "Element"
+  "Document",
+  "Element",
 ]
 
 [dev-dependencies]

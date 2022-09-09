@@ -1,7 +1,6 @@
 use std::convert::TryInto;
 
 use futures::channel::oneshot;
-use reqwest::header::{HeaderValue, RANGE};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 
@@ -42,7 +41,7 @@ async fn _make_range_request(url: &str, start: u64, length: usize) -> Result<Vec
     let range_str = range_from_start_and_length(start, length as u64);
     let resp = client
         .get(url)
-        .header(RANGE, HeaderValue::from_str(range_str.as_str()))
+        .header("Range", range_str)
         .send()
         .await?
         .error_for_status()?;
