@@ -5,7 +5,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 
 /// Get content-length of file
-pub async fn _get_content_length(url: String) -> Result<usize, JsValue> {
+pub async fn _get_content_length(url: String) -> Result<usize, reqwest::Error> {
     let client = reqwest::Client::new();
     let resp = client.head(url).send().await?;
     Ok(resp.content_length().unwrap().try_into().unwrap())
@@ -36,7 +36,11 @@ pub fn range_from_end(length: u64) -> String {
 }
 
 /// Make range request on remote file
-async fn _make_range_request(url: &str, start: u64, length: usize) -> Result<Vec<u8>, JsValue> {
+async fn _make_range_request(
+    url: &str,
+    start: u64,
+    length: usize,
+) -> Result<Vec<u8>, reqwest::Error> {
     let client = reqwest::Client::new();
     let range_str = range_from_start_and_length(start, length as u64);
     let resp = client
