@@ -1,7 +1,7 @@
 use clap::Parser;
+use parquet_wasm_arrow_1::common::writer_properties::Compression;
 use parquet_wasm_arrow_1::writer::write_parquet;
 use parquet_wasm_arrow_1::writer_properties::WriterPropertiesBuilder;
-use parquet_wasm_arrow_1::common::writer_properties::Compression;
 use std::fs;
 use std::path::PathBuf;
 use std::process;

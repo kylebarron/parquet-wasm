@@ -1,6 +1,6 @@
+use crate::common::fetch::{get_content_length, make_range_request};
 use crate::error::ParquetWasmError;
 use crate::error::Result;
-use crate::common::fetch::{get_content_length, make_range_request};
 use arrow2::datatypes::Schema;
 use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};
 use arrow2::io::parquet::read::FileMetaData;
