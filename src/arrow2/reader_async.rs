@@ -4,9 +4,9 @@ use crate::common::fetch::{get_content_length, make_range_request};
 use arrow2::datatypes::Schema;
 use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};
 use arrow2::io::parquet::read::FileMetaData;
+use arrow2::io::parquet::read::RowGroupMetaData;
 use arrow2::io::parquet::read::{read_columns_many_async, RowGroupDeserializer};
 use futures::future::BoxFuture;
-use arrow2::io::parquet::read::RowGroupMetaData;
 use parquet2::read::read_metadata_async as _read_metadata_async;
 use range_reader::{RangeOutput, RangedAsyncReader};
 
