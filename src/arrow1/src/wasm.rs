@@ -1,4 +1,4 @@
-use crate::arrow1::error::WasmResult;
+use crate::error::WasmResult;
 use crate::utils::{assert_parquet_file_not_empty, copy_vec_to_uint8_array};
 use js_sys::Uint8Array;
 use wasm_bindgen::prelude::*;
@@ -26,7 +26,7 @@ use wasm_bindgen::prelude::*;
 pub fn read_parquet(parquet_file: &[u8]) -> WasmResult<Uint8Array> {
     assert_parquet_file_not_empty(parquet_file)?;
 
-    let buffer = crate::arrow1::reader::read_parquet(parquet_file)?;
+    let buffer = crate::reader::read_parquet(parquet_file)?;
     copy_vec_to_uint8_array(buffer)
 }
 
@@ -58,12 +58,12 @@ pub fn read_parquet(parquet_file: &[u8]) -> WasmResult<Uint8Array> {
 #[cfg(feature = "writer")]
 pub fn write_parquet(
     arrow_file: &[u8],
-    writer_properties: Option<crate::arrow1::writer_properties::WriterProperties>,
+    writer_properties: Option<crate::writer_properties::WriterProperties>,
 ) -> WasmResult<Uint8Array> {
     let writer_props = writer_properties.unwrap_or_else(|| {
-        crate::arrow1::writer_properties::WriterPropertiesBuilder::default().build()
+        crate::writer_properties::WriterPropertiesBuilder::default().build()
     });
 
-    let buffer = crate::arrow1::writer::write_parquet(arrow_file, writer_props)?;
+    let buffer = crate::writer::write_parquet(arrow_file, writer_props)?;
     copy_vec_to_uint8_array(buffer)
 }

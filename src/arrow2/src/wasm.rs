@@ -1,5 +1,5 @@
-use crate::arrow2::error::WasmResult;
-use crate::arrow2::ffi::FFIArrowTable;
+use crate::error::WasmResult;
+use crate::ffi::FFIArrowTable;
 use crate::utils::{assert_parquet_file_not_empty, copy_vec_to_uint8_array};
 use js_sys::Uint8Array;
 use wasm_bindgen::prelude::*;
@@ -27,7 +27,7 @@ use wasm_bindgen::prelude::*;
 pub fn read_parquet(parquet_file: &[u8]) -> WasmResult<Uint8Array> {
     assert_parquet_file_not_empty(parquet_file)?;
 
-    let buffer = crate::arrow2::reader::read_parquet(parquet_file)?;
+    let buffer = crate::reader::read_parquet(parquet_file)?;
     copy_vec_to_uint8_array(buffer)
 }
 
@@ -54,7 +54,7 @@ pub fn read_parquet(parquet_file: &[u8]) -> WasmResult<Uint8Array> {
 #[cfg(feature = "reader")]
 pub fn read_parquet_ffi(parquet_file: &[u8]) -> WasmResult<FFIArrowTable> {
     assert_parquet_file_not_empty(parquet_file)?;
-    Ok(crate::arrow2::reader::read_parquet_ffi(parquet_file)?)
+    Ok(crate::reader::read_parquet_ffi(parquet_file)?)
 }
 
 /// Read metadata from a Parquet file using the [`arrow2`](https://crates.io/crates/arrow2) and
@@ -75,10 +75,10 @@ pub fn read_parquet_ffi(parquet_file: &[u8]) -> WasmResult<FFIArrowTable> {
 /// @returns a {@linkcode FileMetaData} object containing metadata of the Parquet file.
 #[wasm_bindgen(js_name = readMetadata)]
 #[cfg(feature = "reader")]
-pub fn read_metadata(parquet_file: &[u8]) -> WasmResult<crate::arrow2::metadata::FileMetaData> {
+pub fn read_metadata(parquet_file: &[u8]) -> WasmResult<crate::metadata::FileMetaData> {
     assert_parquet_file_not_empty(parquet_file)?;
 
-    let metadata = crate::arrow2::reader::read_metadata(parquet_file)?;
+    let metadata = crate::reader::read_metadata(parquet_file)?;
     Ok(metadata.into())
 }
 
@@ -112,12 +112,12 @@ pub fn read_metadata(parquet_file: &[u8]) -> WasmResult<crate::arrow2::metadata:
 #[cfg(feature = "reader")]
 pub fn read_row_group(
     parquet_file: &[u8],
-    meta: &crate::arrow2::metadata::FileMetaData,
+    meta: &crate::metadata::FileMetaData,
     i: usize,
 ) -> WasmResult<Uint8Array> {
     assert_parquet_file_not_empty(parquet_file)?;
 
-    let buffer = crate::arrow2::reader::read_row_group(parquet_file, &meta.clone().into(), i)?;
+    let buffer = crate::reader::read_row_group(parquet_file, &meta.clone().into(), i)?;
     copy_vec_to_uint8_array(buffer)
 }
 
@@ -149,8 +149,8 @@ pub fn read_row_group(
 pub async fn read_metadata_async(
     url: String,
     content_length: usize,
-) -> WasmResult<crate::arrow2::metadata::FileMetaData> {
-    let metadata = crate::arrow2::reader_async::read_metadata_async(url, content_length).await?;
+) -> WasmResult<crate::metadata::FileMetaData> {
+    let metadata = crate::reader_async::read_metadata_async(url, content_length).await?;
     Ok(metadata.into())
 }
 
@@ -196,10 +196,10 @@ pub async fn read_metadata_async(
 pub async fn read_row_group_async(
     url: String,
     // content_length: usize,
-    row_group_meta: crate::arrow2::metadata::RowGroupMetaData,
-    arrow_schema: crate::arrow2::schema::ArrowSchema,
+    row_group_meta: crate::metadata::RowGroupMetaData,
+    arrow_schema: crate::schema::ArrowSchema,
 ) -> WasmResult<Uint8Array> {
-    let buffer = crate::arrow2::reader_async::read_row_group(
+    let buffer = crate::reader_async::read_row_group(
         url,
         &row_group_meta.into(),
         &arrow_schema.into(),
@@ -236,13 +236,13 @@ pub async fn read_row_group_async(
 #[cfg(feature = "writer")]
 pub fn write_parquet(
     arrow_file: &[u8],
-    writer_properties: Option<crate::arrow2::writer_properties::WriterProperties>,
+    writer_properties: Option<crate::writer_properties::WriterProperties>,
 ) -> WasmResult<Uint8Array> {
     let writer_props = writer_properties.unwrap_or_else(|| {
-        crate::arrow2::writer_properties::WriterPropertiesBuilder::default().build()
+        crate::writer_properties::WriterPropertiesBuilder::default().build()
     });
 
-    let buffer = crate::arrow2::writer::write_parquet(arrow_file, writer_props)?;
+    let buffer = crate::writer::write_parquet(arrow_file, writer_props)?;
     copy_vec_to_uint8_array(buffer)
 }
 
@@ -274,12 +274,12 @@ pub fn write_parquet(
 #[cfg(feature = "writer")]
 pub fn write_parquet_ffi(
     arrow_table: FFIArrowTable,
-    writer_properties: Option<crate::arrow2::writer_properties::WriterProperties>,
+    writer_properties: Option<crate::writer_properties::WriterProperties>,
 ) -> WasmResult<Uint8Array> {
     let writer_props = writer_properties.unwrap_or_else(|| {
-        crate::arrow2::writer_properties::WriterPropertiesBuilder::default().build()
+        crate::writer_properties::WriterPropertiesBuilder::default().build()
     });
 
-    let buffer = crate::arrow2::writer::write_ffi_table_to_parquet(arrow_table, writer_props)?;
+    let buffer = crate::writer::write_ffi_table_to_parquet(arrow_table, writer_props)?;
     copy_vec_to_uint8_array(buffer)
 }

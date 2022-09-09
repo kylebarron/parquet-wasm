@@ -1,12 +1,9 @@
 use clap::Parser;
-use parquet_wasm::arrow2::writer::write_parquet;
-use parquet_wasm::arrow2::writer_properties::WriterPropertiesBuilder;
-use parquet_wasm::common::writer_properties::Compression;
+use parquet_wasm_arrow_1::reader::read_parquet;
 use std::fs;
 use std::path::PathBuf;
 use std::process;
 
-/// Simple program to greet a person
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
@@ -27,13 +24,9 @@ fn main() {
     let slice = data.as_slice();
 
     // Call read_parquet
-    let writer_properties = WriterPropertiesBuilder::new()
-        .set_compression(Compression::SNAPPY)
-        .build();
-
-    let arrow_ipc = write_parquet(slice, writer_properties)
+    let arrow_ipc = read_parquet(slice)
         .map_err(|err| {
-            eprintln!("Could not write parquet file: {}", err);
+            eprintln!("Could not read parquet file: {}", err);
             process::exit(1);
         })
         .unwrap();
