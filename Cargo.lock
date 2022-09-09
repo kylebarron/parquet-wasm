@@ -101,7 +101,7 @@ dependencies = [
  "futures",
  "hash_hasher",
  "num-traits",
- "parquet2",
+ "parquet2 0.14.3",
  "simdutf8",
  "streaming-iterator",
 ]
@@ -999,6 +999,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "parquet-format-safe"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1131c54b167dd4e4799ce762e1ab01549ebb94d5bdd13e6ec1b467491c378e1f"
+
+[[package]]
 name = "parquet-wasm"
 version = "0.4.0-beta.5"
 dependencies = [
@@ -1011,7 +1017,7 @@ dependencies = [
  "getrandom",
  "js-sys",
  "parquet",
- "parquet2",
+ "parquet2 0.16.3",
  "range-reader",
  "reqwest",
  "serde-wasm-bindgen",
@@ -1024,17 +1030,28 @@ dependencies = [
 
 [[package]]
 name = "parquet2"
-version = "0.14.2"
+version = "0.14.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f3eb21c37048a08693214d1f0d34eea97a8d90322e15c4a5e2017d56420e1195"
+checksum = "b8fa7afeef767fb16a37216cdf906268ae10db9825aa1ed8723b8493b1e99b0b"
 dependencies = [
  "async-stream",
  "bitpacking",
+ "futures",
+ "parquet-format-async-temp",
+ "streaming-decompression",
+]
+
+[[package]]
+name = "parquet2"
+version = "0.16.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7752b1a7d61b278f36820ba05557a2a8bfcb17f3559254577ef447beda0c4975"
+dependencies = [
  "brotli",
  "flate2",
- "futures",
  "lz4_flex",
- "parquet-format-async-temp",
+ "parquet-format-safe",
+ "seq-macro",
  "snap",
  "streaming-decompression",
  "zstd",
@@ -1214,6 +1231,12 @@ name = "scoped-tls"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ea6a9290e3c9cf0f18145ef7ffa62d68ee0bf5fcd651017e586dc7fd5da448c2"
+
+[[package]]
+name = "seq-macro"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0772c5c30e1a0d91f6834f8e545c69281c099dfa9a3ac58d96a9fd629c8d4898"
 
 [[package]]
 name = "serde"
