@@ -9,14 +9,21 @@
     "test": "ts-node node_modules/tape/bin/tape ./tests/js/index.ts"
   },
   "devDependencies": {
+    "@loaders.gl/polyfills": "^3.2.9",
     "@types/node": "^17.0.21",
     "@types/tape": "^4.13.2",
     "apache-arrow": "^7.0.0",
     "benny": "^3.7.1",
     "gh-pages": "^3.2.3",
+    "msw": "^0.47.0",
+    "node-fetch": "^3.2.10",
     "tape": "^5.5.2",
     "ts-node": "^10.7.0",
     "typedoc": "^0.22.13",
-    "typescript": "^4.6.2"
+    "typescript": "^4.6.2",
+    "whatwg-fetch": "^3.6.2"
+  },
+  "volta": {
+    "node": "16.17.0"
   }
 }
