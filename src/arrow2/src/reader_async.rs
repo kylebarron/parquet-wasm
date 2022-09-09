@@ -1,5 +1,5 @@
-use crate::arrow2::error::ParquetWasmError;
-use crate::arrow2::error::Result;
+use crate::error::ParquetWasmError;
+use crate::error::Result;
 use crate::common::fetch::{get_content_length, make_range_request};
 use arrow2::datatypes::Schema;
 use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};

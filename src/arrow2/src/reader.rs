@@ -1,5 +1,5 @@
-use crate::arrow2::error::Result;
-use crate::arrow2::ffi::{FFIArrowChunk, FFIArrowSchema, FFIArrowTable};
+use crate::error::Result;
+use crate::ffi::{FFIArrowChunk, FFIArrowSchema, FFIArrowTable};
 use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};
 use arrow2::io::parquet::read::{
     infer_schema, read_columns_many, FileReader as ParquetFileReader, RowGroupDeserializer,
