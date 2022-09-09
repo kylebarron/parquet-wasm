@@ -1,4 +1,4 @@
-use crate::arrow1::error::Result;
+use crate::error::Result;
 use arrow::ipc::reader::StreamReader;
 use parquet::arrow::arrow_writer::ArrowWriter;
 use std::io::Cursor;
@@ -7,7 +7,7 @@ use std::io::Cursor;
 /// the arrow and parquet crates
 pub fn write_parquet(
     arrow_file: &[u8],
-    writer_properties: crate::arrow1::writer_properties::WriterProperties,
+    writer_properties: crate::writer_properties::WriterProperties,
 ) -> Result<Vec<u8>> {
     // Create IPC reader
     let input_file = Cursor::new(arrow_file);

@@ -1,10 +1,17 @@
 extern crate web_sys;
 
-#[cfg(feature = "arrow1")]
-pub mod arrow1;
+#[cfg(feature = "reader")]
+pub mod reader;
 
-#[cfg(feature = "arrow2")]
-pub mod arrow2;
+pub mod wasm;
+
+#[cfg(feature = "writer")]
+pub mod writer;
+
+#[cfg(feature = "writer")]
+pub mod writer_properties;
+
+pub mod error;
 
 pub mod common;
 pub mod utils;

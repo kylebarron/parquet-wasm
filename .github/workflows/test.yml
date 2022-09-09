@@ -24,8 +24,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
 
-      - run: wasm-pack build --dev --target nodejs
-      - run: wasm-pack test --node
+      - run: yarn build:test
 
       - run: cargo check
       - run: cargo check --target wasm32-unknown-unknown

@@ -1,0 +1,87 @@
+[package]
+name = "parquet-wasm-arrow-1"
+version = "0.4.0-beta.5"
+authors = ["Kyle Barron <kylebarron2@gmail.com>"]
+edition = "2021"
+description = "WebAssembly Parquet reader and writer."
+readme = "README.md"
+repository = "https://github.com/kylebarron/parquet-wasm"
+license = "MIT OR Apache-2.0"
+keywords = ["parquet", "webassembly", "arrow"]
+categories = ["wasm"]
+rust-version = "1.62"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["all_compressions", "reader", "writer"]
+reader = []
+writer = []
+debug = ["console_error_panic_hook", "clap"]
+
+brotli = ["parquet/brotli"]
+gzip = ["parquet/flate2"]
+snappy = ["parquet/snap"]
+zstd = ["parquet/zstd"]
+# LZ4 not yet supported on parquet crate
+
+all_compressions = ["brotli", "gzip", "snappy", "zstd"]
+
+# Full list of available features
+full = ["debug", "all_compressions", "reader", "writer"]
+
+[dependencies]
+wasm-bindgen = { version = "0.2.82", features = ["serde-serialize"]  }
+
+# The `console_error_panic_hook` crate provides better debugging of panics by
+# logging them with `console.error`. This is great for development, but requires
+# all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
+# code size when deploying.
+console_error_panic_hook = { version = "0.1.6", optional = true }
+
+# `wee_alloc` is a tiny allocator for wasm that is only ~1K in code size
+# compared to the default allocator's ~10K. It is slower than the default
+# allocator, however.
+# if wee_alloc only saves 10KB, might not be worth the slower allocation speed?
+# wee_alloc = "0.4.5"
+
+js-sys = "0.3.59"
+getrandom = { version = "0.2.6", features = ["js"] }
+thiserror = "1.0"
+
+arrow = { version = "19.0", default-features = false }
+parquet = { version = "19.0", default-features = false, features = [
+  "arrow",
+  "base64",
+  "async",
+] }
+async-compat = "0.2.1"
+bytes = { version = "1" }
+
+# 3.2 added deprecations that don't currently pass clippy
+clap = { version = ">=3.1.15, <3.3", optional = true, features = ["derive"] }
+
+[dependencies.web-sys]
+version = "0.3.4"
+features = [
+  'console',
+  'Headers',
+  'Request',
+  'RequestInit',
+  'RequestMode',
+  'Response',
+  'Window',
+  "Document", "Element"
+]
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3.31"
+
+[[bin]]
+name = "read_parquet"
+required-features = ["debug"]
+
+[[bin]]
+name = "write_parquet"
+required-features = ["debug"]

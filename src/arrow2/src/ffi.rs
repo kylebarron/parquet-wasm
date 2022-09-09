@@ -1,5 +1,5 @@
-use crate::arrow2::error::ParquetWasmError;
-use crate::arrow2::error::Result;
+use crate::error::ParquetWasmError;
+use crate::error::Result;
 use arrow2::array::Array;
 use arrow2::chunk::Chunk;
 use arrow2::datatypes::{DataType, Field, Schema};

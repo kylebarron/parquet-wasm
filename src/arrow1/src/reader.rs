@@ -1,4 +1,4 @@
-use crate::arrow1::error::Result;
+use crate::error::Result;
 use arrow::ipc::writer::StreamWriter;
 use bytes::Bytes;
 use parquet::arrow::{ArrowReader, ParquetFileArrowReader};

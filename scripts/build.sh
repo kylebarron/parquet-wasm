@@ -14,9 +14,10 @@ fi
 # ARROW 1 (arrow-rs) the default feature
 # Build node version into tmp_build/node
 echo "Building arrow-rs node"
+cd src/arrow1/
 wasm-pack build \
   $BUILD \
-  --out-dir tmp_build/node \
+  --out-dir ../../tmp_build/node \
   --out-name arrow1 \
   --target nodejs \
   $FLAGS
@@ -25,7 +26,7 @@ wasm-pack build \
 echo "Building arrow-rs esm"
 wasm-pack build \
   $BUILD \
-  --out-dir tmp_build/esm \
+  --out-dir ../../tmp_build/esm \
   --out-name arrow1 \
   --target web \
   $FLAGS
@@ -34,22 +35,22 @@ wasm-pack build \
 echo "Building arrow-rs bundler"
 wasm-pack build \
   $BUILD \
-  --out-dir tmp_build/bundler \
+  --out-dir ../../tmp_build/bundler \
   --out-name arrow1 \
   --target bundler \
   $FLAGS
+cd ../../
 
 ######################################
 # ARROW 2 turn on the feature manually
 # Build node version into tmp_build/node2
 echo "Building arrow2 node"
+cd src/arrow2/
 wasm-pack build \
   $BUILD \
-  --out-dir tmp_build/node2 \
+  --out-dir ../../tmp_build/node2 \
   --out-name arrow2 \
   --target nodejs \
-  --no-default-features \
-  --features arrow2 \
   --features reader \
   --features writer \
   --features all_compressions \
@@ -59,31 +60,26 @@ wasm-pack build \
 echo "Building arrow2 esm"
 wasm-pack build \
   $BUILD \
-  --out-dir tmp_build/esm2 \
+  --out-dir ../../tmp_build/esm2 \
   --out-name arrow2 \
   --target web \
-  --no-default-features \
-  --features arrow2 \
   --features reader \
   --features writer \
   --features all_compressions \
-  --features async \
   $FLAGS
 
 # Build bundler version into tmp_build/bundler2
 echo "Building arrow2 bundler"
 wasm-pack build \
   $BUILD \
-  --out-dir tmp_build/bundler2 \
+  --out-dir ../../tmp_build/bundler2 \
   --out-name arrow2 \
   --target bundler \
-  --no-default-features \
-  --features arrow2 \
   --features reader \
   --features writer \
   --features all_compressions \
-  --features async \
   $FLAGS
+cd ../../
 
 # Copy files into pkg/
 mkdir -p pkg/{node,esm,bundler}

@@ -1,4 +1,4 @@
-use crate::arrow2::error::WasmResult;
+use crate::error::WasmResult;
 use arrow2::io::parquet::read::infer_schema;
 use parquet2::{
     schema::types::PhysicalType,
@@ -86,7 +86,7 @@ impl FileMetaData {
     // }
 
     #[wasm_bindgen(js_name = arrowSchema)]
-    pub fn arrow_schema(&self) -> WasmResult<crate::arrow2::schema::ArrowSchema> {
+    pub fn arrow_schema(&self) -> WasmResult<crate::schema::ArrowSchema> {
         let schema = infer_schema(&self.0)?;
         Ok(schema.into())
     }

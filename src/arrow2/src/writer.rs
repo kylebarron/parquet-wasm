@@ -1,5 +1,5 @@
-use crate::arrow2::error::Result;
-use crate::arrow2::ffi::FFIArrowTable;
+use crate::error::Result;
+use crate::ffi::FFIArrowTable;
 use arrow2::io::ipc::read::{read_file_metadata, FileReader as IPCFileReader};
 use arrow2::io::parquet::write::{FileWriter as ParquetFileWriter, RowGroupIterator};
 use std::io::Cursor;
@@ -8,7 +8,7 @@ use std::io::Cursor;
 /// the arrow2 and parquet2 crates
 pub fn write_parquet(
     arrow_file: &[u8],
-    writer_properties: crate::arrow2::writer_properties::WriterProperties,
+    writer_properties: crate::writer_properties::WriterProperties,
 ) -> Result<Vec<u8>> {
     // Create IPC reader
     let mut input_file = Cursor::new(arrow_file);
@@ -56,7 +56,7 @@ pub fn write_parquet(
 
 pub fn write_ffi_table_to_parquet(
     table: FFIArrowTable,
-    writer_properties: crate::arrow2::writer_properties::WriterProperties,
+    writer_properties: crate::writer_properties::WriterProperties,
 ) -> Result<Vec<u8>> {
     let (schema, chunks) = table.import()?;
 
