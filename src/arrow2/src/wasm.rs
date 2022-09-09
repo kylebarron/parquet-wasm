@@ -202,12 +202,9 @@ pub async fn read_row_group_async(
     row_group_meta: crate::metadata::RowGroupMetaData,
     arrow_schema: crate::schema::ArrowSchema,
 ) -> WasmResult<Uint8Array> {
-    let buffer = crate::reader_async::read_row_group(
-        url,
-        &row_group_meta.into(),
-        &arrow_schema.into(),
-    )
-    .await?;
+    let buffer =
+        crate::reader_async::read_row_group(url, &row_group_meta.into(), &arrow_schema.into())
+            .await?;
     copy_vec_to_uint8_array(buffer)
 }
 
@@ -241,9 +238,8 @@ pub fn write_parquet(
     arrow_file: &[u8],
     writer_properties: Option<crate::writer_properties::WriterProperties>,
 ) -> WasmResult<Uint8Array> {
-    let writer_props = writer_properties.unwrap_or_else(|| {
-        crate::writer_properties::WriterPropertiesBuilder::default().build()
-    });
+    let writer_props = writer_properties
+        .unwrap_or_else(|| crate::writer_properties::WriterPropertiesBuilder::default().build());
 
     let buffer = crate::writer::write_parquet(arrow_file, writer_props)?;
     copy_vec_to_uint8_array(buffer)
@@ -279,9 +275,8 @@ pub fn write_parquet_ffi(
     arrow_table: FFIArrowTable,
     writer_properties: Option<crate::writer_properties::WriterProperties>,
 ) -> WasmResult<Uint8Array> {
-    let writer_props = writer_properties.unwrap_or_else(|| {
-        crate::writer_properties::WriterPropertiesBuilder::default().build()
-    });
+    let writer_props = writer_properties
+        .unwrap_or_else(|| crate::writer_properties::WriterPropertiesBuilder::default().build());
 
     let buffer = crate::writer::write_ffi_table_to_parquet(arrow_table, writer_props)?;
     copy_vec_to_uint8_array(buffer)

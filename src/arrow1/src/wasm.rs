@@ -60,9 +60,8 @@ pub fn write_parquet(
     arrow_file: &[u8],
     writer_properties: Option<crate::writer_properties::WriterProperties>,
 ) -> WasmResult<Uint8Array> {
-    let writer_props = writer_properties.unwrap_or_else(|| {
-        crate::writer_properties::WriterPropertiesBuilder::default().build()
-    });
+    let writer_props = writer_properties
+        .unwrap_or_else(|| crate::writer_properties::WriterPropertiesBuilder::default().build());
 
     let buffer = crate::writer::write_parquet(arrow_file, writer_props)?;
     copy_vec_to_uint8_array(buffer)
