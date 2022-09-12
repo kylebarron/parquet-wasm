@@ -67,7 +67,7 @@ js-sys = "0.3.59"
 getrandom = { version = "0.2.6", features = ["js"] }
 thiserror = "1.0"
 
-arrow2 = { version = "0.13", optional = true, features = [
+arrow2 = { version = "0.14", optional = true, features = [
   "io_ipc",
   "io_parquet",
 ] }
