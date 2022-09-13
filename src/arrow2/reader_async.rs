@@ -97,7 +97,7 @@ pub async fn read_row_group(
 
     // this is IO-bounded (and issues a join, thus the reader_factory)
     let column_chunks =
-        read_columns_many_async(reader_factory, row_group_meta, fields, chunk_size).await?;
+        read_columns_many_async(reader_factory, row_group_meta, fields, chunk_size, None, None).await?;
 
     // Create IPC writer
     let mut output_file = Vec::new();
