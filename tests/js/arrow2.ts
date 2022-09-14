@@ -83,10 +83,11 @@ test("iterate over row groups", (t) => {
   const buffer = readFileSync(dataPath);
   const arr = new Uint8Array(buffer);
   const fileMetaData = wasm.readMetadata(arr);
+  const arrowSchema = fileMetaData.arrowSchema();
 
   const chunks: RecordBatch[] = [];
   for (let i = 0; i < fileMetaData.numRowGroups(); i++) {
-    let arrowIpcBuffer = wasm.readRowGroup(arr, fileMetaData, i);
+    let arrowIpcBuffer = wasm.readRowGroup(arr, arrowSchema, fileMetaData.rowGroup(i));
     chunks.push(...tableFromIPC(arrowIpcBuffer).batches);
   }
 
