@@ -4,7 +4,7 @@ use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IP
 use arrow2::io::parquet::read::{
     infer_schema, read_metadata as parquet_read_metadata, FileReader as ParquetFileReader,
 };
-use parquet2::metadata::FileMetaData;
+use parquet2::metadata::{FileMetaData, RowGroupMetaData};
 use std::io::Cursor;
 
 /// Internal function to read a buffer with Parquet data into a buffer with Arrow IPC Stream data
@@ -75,14 +75,16 @@ pub fn read_metadata(parquet_file: &[u8]) -> Result<FileMetaData> {
 }
 
 /// Read single row group
-pub fn read_row_group(parquet_file: &[u8], meta: &FileMetaData, i: usize) -> Result<Vec<u8>> {
+pub fn read_row_group(
+    parquet_file: &[u8],
+    schema: arrow2::datatypes::Schema,
+    row_group: RowGroupMetaData,
+) -> Result<Vec<u8>> {
     let input_file = Cursor::new(parquet_file);
-    let arrow_schema = infer_schema(meta)?;
-
     let file_reader = ParquetFileReader::new(
         input_file,
-        vec![meta.row_groups[i].clone()],
-        arrow_schema.clone(),
+        vec![row_group],
+        schema.clone(),
         None,
         None,
         None,
@@ -92,7 +94,7 @@ pub fn read_row_group(parquet_file: &[u8], meta: &FileMetaData, i: usize) -> Res
     let mut output_file = Vec::new();
     let options = IPCWriteOptions { compression: None };
     let mut writer = IPCStreamWriter::new(&mut output_file, options);
-    writer.start(&arrow_schema, None)?;
+    writer.start(&schema, None)?;
 
     // Iterate over reader chunks, writing each into the IPC writer
     for maybe_chunk in file_reader {

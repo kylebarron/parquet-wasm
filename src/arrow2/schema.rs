@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
 
-/// Metadata for a Parquet file.
+/// Arrow Schema representing a Parquet file.
 #[derive(Debug, Clone)]
 #[wasm_bindgen]
 pub struct ArrowSchema(arrow2::datatypes::Schema);
