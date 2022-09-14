@@ -112,12 +112,16 @@ pub fn read_metadata(parquet_file: &[u8]) -> WasmResult<crate::arrow2::metadata:
 #[cfg(feature = "reader")]
 pub fn read_row_group(
     parquet_file: &[u8],
-    meta: &crate::arrow2::metadata::FileMetaData,
-    i: usize,
+    schema: &crate::arrow2::schema::ArrowSchema,
+    meta: &crate::arrow2::metadata::RowGroupMetaData,
 ) -> WasmResult<Uint8Array> {
     assert_parquet_file_not_empty(parquet_file)?;
 
-    let buffer = crate::arrow2::reader::read_row_group(parquet_file, &meta.clone().into(), i)?;
+    let buffer = crate::arrow2::reader::read_row_group(
+        parquet_file,
+        schema.clone().into(),
+        meta.clone().into(),
+    )?;
     copy_vec_to_uint8_array(buffer)
 }
 

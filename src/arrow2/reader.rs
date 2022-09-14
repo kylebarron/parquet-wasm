@@ -2,18 +2,28 @@ use crate::arrow2::error::Result;
 use crate::arrow2::ffi::{FFIArrowChunk, FFIArrowSchema, FFIArrowTable};
 use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};
 use arrow2::io::parquet::read::{
-    infer_schema, read_columns_many, FileReader as ParquetFileReader, RowGroupDeserializer,
+    infer_schema, read_metadata as parquet_read_metadata, FileReader as ParquetFileReader,
 };
-use parquet2::metadata::FileMetaData;
+use parquet2::metadata::{FileMetaData, RowGroupMetaData};
 use std::io::Cursor;
 
 /// Internal function to read a buffer with Parquet data into a buffer with Arrow IPC Stream data
 /// using the arrow2 and parquet2 crates
 pub fn read_parquet(parquet_file: &[u8]) -> Result<Vec<u8>> {
     // Create Parquet reader
-    let input_file = Cursor::new(parquet_file);
-    let file_reader = ParquetFileReader::try_new(input_file, None, None, None, None)?;
-    let schema = file_reader.schema().clone();
+    let mut input_file = Cursor::new(parquet_file);
+
+    let metadata = parquet_read_metadata(&mut input_file)?;
+    let schema = infer_schema(&metadata)?;
+
+    let file_reader = ParquetFileReader::new(
+        input_file,
+        metadata.row_groups,
+        schema.clone(),
+        None,
+        None,
+        None,
+    );
 
     // Create IPC writer
     let mut output_file = Vec::new();
@@ -33,11 +43,20 @@ pub fn read_parquet(parquet_file: &[u8]) -> Result<Vec<u8>> {
 
 pub fn read_parquet_ffi(parquet_file: &[u8]) -> Result<FFIArrowTable> {
     // Create Parquet reader
-    let input_file = Cursor::new(parquet_file);
-    let file_reader = ParquetFileReader::try_new(input_file, None, None, None, None)?;
-    let schema = file_reader.schema();
+    let mut input_file = Cursor::new(parquet_file);
+    let metadata = parquet_read_metadata(&mut input_file)?;
+    let schema = infer_schema(&metadata)?;
 
-    let ffi_schema: FFIArrowSchema = schema.into();
+    let file_reader = ParquetFileReader::new(
+        input_file,
+        metadata.row_groups,
+        schema.clone(),
+        None,
+        None,
+        None,
+    );
+
+    let ffi_schema: FFIArrowSchema = (&schema).into();
     let mut ffi_chunks: Vec<FFIArrowChunk> = vec![];
 
     // Iterate over reader chunks, storing each in memory to be used for FFI
@@ -51,33 +70,34 @@ pub fn read_parquet_ffi(parquet_file: &[u8]) -> Result<FFIArrowTable> {
 
 /// Read metadata from parquet buffer
 pub fn read_metadata(parquet_file: &[u8]) -> Result<FileMetaData> {
-    let input_file = Cursor::new(parquet_file);
-    let file_reader = ParquetFileReader::try_new(input_file, None, None, None, None)?;
-    Ok(file_reader.metadata().clone())
+    let mut input_file = Cursor::new(parquet_file);
+    Ok(parquet_read_metadata(&mut input_file)?)
 }
 
 /// Read single row group
-pub fn read_row_group(parquet_file: &[u8], meta: &FileMetaData, i: usize) -> Result<Vec<u8>> {
-    let mut reader = Cursor::new(parquet_file);
-    let arrow_schema = infer_schema(meta)?;
-
-    let row_group_meta = &meta.row_groups[i];
-    let column_chunks = read_columns_many(
-        &mut reader,
-        row_group_meta,
-        arrow_schema.fields.clone(),
+pub fn read_row_group(
+    parquet_file: &[u8],
+    schema: arrow2::datatypes::Schema,
+    row_group: RowGroupMetaData,
+) -> Result<Vec<u8>> {
+    let input_file = Cursor::new(parquet_file);
+    let file_reader = ParquetFileReader::new(
+        input_file,
+        vec![row_group],
+        schema.clone(),
         None,
         None,
-    )?;
+        None,
+    );
 
-    let result = RowGroupDeserializer::new(column_chunks, row_group_meta.num_rows() as usize, None);
-
+    // Create IPC writer
     let mut output_file = Vec::new();
     let options = IPCWriteOptions { compression: None };
     let mut writer = IPCStreamWriter::new(&mut output_file, options);
-    writer.start(&arrow_schema, None)?;
+    writer.start(&schema, None)?;
 
-    for maybe_chunk in result {
+    // Iterate over reader chunks, writing each into the IPC writer
+    for maybe_chunk in file_reader {
         let chunk = maybe_chunk?;
         writer.write(&chunk, None)?;
     }
