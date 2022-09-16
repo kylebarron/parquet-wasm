@@ -142,7 +142,7 @@ pub fn read_row_group(
 /// ```
 ///
 /// @param url String location of remote Parquet file containing Parquet data
-/// @param content_length Number content length of file in bytes
+/// @param content_length Number | null content length of file in bytes
 /// @returns a {@linkcode FileMetaData} object containing metadata of the Parquet file.
 #[wasm_bindgen(js_name = readMetadataAsync)]
 #[cfg(all(feature = "reader", feature = "async"))]
@@ -165,11 +165,7 @@ pub async fn read_metadata_async(
 /// // Edit the `parquet-wasm` import as necessary
 /// import { readRowGroupAsync, readMetadataAsync } from "parquet-wasm";
 ///
-/// const url = "https://example.com/file.parquet";
-/// const headResp = await fetch(url, {method: 'HEAD'});
-/// const length = parseInt(headResp.headers.get('Content-Length'));
-///
-/// const parquetFileMetaData = await readMetadataAsync(url, length);
+/// const parquetFileMetaData = await readMetadataAsync(url);
 ///
 /// // Read all batches from the file in parallel
 /// const promises = [];
@@ -187,12 +183,9 @@ pub async fn read_metadata_async(
 /// Note that you can get the number of row groups in a Parquet file using {@linkcode FileMetaData.numRowGroups}
 ///
 /// @param url String location of remote Parquet file containing Parquet data
-/// @param content_length Number content length of file in bytes
-/// @param meta {@linkcode FileMetaData} from a call to {@linkcode readMetadata}
-/// @param i Number index of the row group to load
+/// @param row_group_meta {@linkcode RowGroupMetaData} the desired row group, found within {@linkcode FileMetaData} using {@linkcode FileMetaData.rowGroup} after a call to {@linkcode readMetadataAsync}.
+/// @param arrow_schema {@linkcode ArrowSchema} the Arrow Schema of the data. Call {@linkcode FileMetaData.arrowSchema} to create.
 /// @returns Uint8Array containing Arrow data in [IPC Stream format](https://arrow.apache.org/docs/format/Columnar.html#ipc-streaming-format). To parse this into an Arrow table, pass to `tableFromIPC` in the Arrow JS bindings.
-
-// TODO: update these docs!
 #[wasm_bindgen(js_name = readRowGroupAsync)]
 #[cfg(all(feature = "reader", feature = "async"))]
 pub async fn read_row_group_async(

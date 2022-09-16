@@ -60,7 +60,6 @@ fn all_elements_equal(arr: &[&Option<String>]) -> bool {
 
 pub async fn read_row_group(
     url: String,
-    // content_length: Option<usize>,
     row_group_meta: &RowGroupMetaData,
     arrow_schema: &Schema,
 ) -> Result<Vec<u8>> {
@@ -73,7 +72,7 @@ pub async fn read_row_group(
 
     if !all_elements_equal(&file_paths) {
         return Err(ParquetWasmError::InternalError(
-            "Row groups with unequal paths are not supported".to_string(),
+            "Cannot read row group split across files".to_string(),
         ));
     }
 
