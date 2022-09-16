@@ -138,11 +138,7 @@ pub fn read_row_group(
 /// // Edit the `parquet-wasm` import as necessary
 /// import { readMetadataAsync } from "parquet-wasm";
 ///
-/// const url = "https://example.com/file.parquet";
-/// const headResp = await fetch(url, {method: 'HEAD'});
-/// const length = parseInt(headResp.headers.get('Content-Length'));
-///
-/// const parquetFileMetaData = await readMetadataAsync(url, length);
+/// const parquetFileMetaData = await readMetadataAsync(url);
 /// ```
 ///
 /// @param url String location of remote Parquet file containing Parquet data
@@ -152,8 +148,7 @@ pub fn read_row_group(
 #[cfg(all(feature = "reader", feature = "async"))]
 pub async fn read_metadata_async(
     url: String,
-    // TODO: can this length be optional?
-    content_length: usize,
+    content_length: Option<usize>,
 ) -> WasmResult<crate::arrow2::metadata::FileMetaData> {
     let metadata = crate::arrow2::reader_async::read_metadata_async(url, content_length).await?;
     Ok(metadata.into())
@@ -202,14 +197,13 @@ pub async fn read_metadata_async(
 #[cfg(all(feature = "reader", feature = "async"))]
 pub async fn read_row_group_async(
     url: String,
-    // content_length: usize,
-    row_group_meta: crate::arrow2::metadata::RowGroupMetaData,
-    arrow_schema: crate::arrow2::schema::ArrowSchema,
+    row_group_meta: &crate::arrow2::metadata::RowGroupMetaData,
+    arrow_schema: &crate::arrow2::schema::ArrowSchema,
 ) -> WasmResult<Uint8Array> {
     let buffer = crate::arrow2::reader_async::read_row_group(
         url,
-        &row_group_meta.into(),
-        &arrow_schema.into(),
+        &row_group_meta.clone().into(),
+        &arrow_schema.clone().into(),
     )
     .await?;
     copy_vec_to_uint8_array(buffer)

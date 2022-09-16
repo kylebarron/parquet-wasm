@@ -34,7 +34,15 @@ fn create_reader(
     RangedAsyncReader::new(content_length, min_request_size, range_get)
 }
 
-pub async fn read_metadata_async(url: String, content_length: usize) -> Result<FileMetaData> {
+pub async fn read_metadata_async(
+    url: String,
+    content_length: Option<usize>,
+) -> Result<FileMetaData> {
+    let content_length = match content_length {
+        Some(_content_length) => _content_length,
+        None => get_content_length(url.clone()).await?,
+    };
+
     let mut reader = create_reader(url, content_length, None);
     let metadata = _read_metadata_async(&mut reader).await?;
     Ok(metadata)

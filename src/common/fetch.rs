@@ -11,7 +11,7 @@ pub async fn _get_content_length(url: String) -> Result<usize, reqwest::Error> {
     Ok(resp.content_length().unwrap().try_into().unwrap())
 }
 
-pub async fn get_content_length(url: String) -> Result<usize, JsValue> {
+pub async fn get_content_length(url: String) -> Result<usize, reqwest::Error> {
     let (sender, receiver) = oneshot::channel::<usize>();
     spawn_local(async move {
         let inner_data = _get_content_length(url).await.unwrap();
