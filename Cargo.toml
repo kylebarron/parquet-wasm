@@ -108,6 +108,14 @@ features = [
 [dev-dependencies]
 wasm-bindgen-test = "0.3.31"
 
+[package.metadata.cargo-all-features]
+
+# Features "arrow1" and "arrow2" are incompatible, so skip permutations including them
+skip_feature_sets = [["arrow1", "arrow2"]]
+
+# If your crate has a large number of optional dependencies, skip them for speed
+skip_optional_dependencies = true
+
 [[bin]]
 name = "read_parquet"
 required-features = ["debug", "arrow1"]

@@ -27,14 +27,8 @@ jobs:
       - run: wasm-pack build --dev --target nodejs
       - run: wasm-pack test --node
 
-      - run: cargo check
-      - run: cargo check --target wasm32-unknown-unknown
-      - run: cargo check --no-default-features
-      - run: cargo check --target wasm32-unknown-unknown --no-default-features
-      - run: cargo check --no-default-features --features console_error_panic_hook
-      - run: cargo check --target wasm32-unknown-unknown --no-default-features --features console_error_panic_hook
-      # - run: cargo check                                 --no-default-features --features "console_error_panic_hook wee_alloc"
-      # - run: cargo check --target wasm32-unknown-unknown --no-default-features --features "console_error_panic_hook wee_alloc"
+      - run: cargo install cargo-all-features
+      - run: cargo check-all-features --target wasm32-unknown-unknown
 
   node-test:
     runs-on: ubuntu-latest
