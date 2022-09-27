@@ -110,9 +110,9 @@ wasm-bindgen-test = "0.3.31"
 
 [package.metadata.cargo-all-features]
 
-# In practice, no one would ever use arrow1 and arrow2 together, so we don't test their
+# In practice, no one would ever use these pairs together, so we don't test their
 # intersections
-skip_feature_sets = [["arrow1", "arrow2"]]
+skip_feature_sets = [["arrow1", "arrow2"], ["arrow1", "lz4"]]
 
 # If your crate has a large number of optional dependencies, skip them for speed
 skip_optional_dependencies = true
