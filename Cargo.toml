@@ -74,7 +74,7 @@ arrow2 = { version = "0.14", optional = true, features = [
 parquet2 = { version = "0.16", default_features = false, optional = true }
 
 arrow = { version = "19.0", default-features = false, optional = true }
-parquet = { version = "19.0", default-features = false, optional = true, features = [
+parquet = { version = "23.0", default-features = false, optional = true, features = [
   "arrow",
   "base64",
 ] }
