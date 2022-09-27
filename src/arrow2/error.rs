@@ -14,6 +14,7 @@ pub enum ParquetWasmError {
     #[error("Internal error: `{0}`")]
     InternalError(String),
 
+    #[cfg(feature = "async")]
     #[error("HTTP error: `{0}`")]
     HTTPError(Box<reqwest::Error>),
 }
@@ -33,6 +34,7 @@ impl From<ParquetError> for ParquetWasmError {
     }
 }
 
+#[cfg(feature = "async")]
 impl From<reqwest::Error> for ParquetWasmError {
     fn from(err: reqwest::Error) -> Self {
         Self::HTTPError(Box::new(err))

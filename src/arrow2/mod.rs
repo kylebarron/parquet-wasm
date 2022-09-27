@@ -1,4 +1,3 @@
-#[cfg(feature = "reader")]
 pub mod ffi;
 
 #[cfg(feature = "reader")]

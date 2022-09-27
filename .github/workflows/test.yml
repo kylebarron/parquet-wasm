@@ -27,8 +27,24 @@ jobs:
       - run: wasm-pack build --dev --target nodejs
       - run: wasm-pack test --node
 
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: stable
+            profile: minimal
+            override: true
+
+      - uses: Swatinem/rust-cache@v1
+
       - run: cargo install cargo-all-features
-      - run: cargo check-all-features --target wasm32-unknown-unknown
+
+      - name: Check all combinations of features can build
+        run: cargo check-all-features --target wasm32-unknown-unknown
 
   node-test:
     runs-on: ubuntu-latest
