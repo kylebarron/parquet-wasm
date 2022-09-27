@@ -108,21 +108,33 @@ features = [
 [dev-dependencies]
 wasm-bindgen-test = "0.3.31"
 
+[package.metadata.cargo-all-features]
+
+# In practice, no one would ever use these pairs together, so we don't test their
+# intersections
+skip_feature_sets = [["arrow1", "arrow2"], ["arrow1", "lz4"]]
+
+# If your crate has a large number of optional dependencies, skip them for speed
+skip_optional_dependencies = true
+
+# Exclude certain features from the build matrix
+denylist = ["full", "all_compressions", "default"]
+
 [[bin]]
 name = "read_parquet"
-required-features = ["debug", "arrow1"]
+required-features = ["debug", "arrow1", "reader"]
 
 [[bin]]
 name = "write_parquet"
-required-features = ["debug", "arrow1"]
+required-features = ["debug", "arrow1", "writer"]
 
 [[bin]]
 name = "read_parquet2"
-required-features = ["debug", "arrow2"]
+required-features = ["debug", "arrow2", "reader"]
 
 [[bin]]
 name = "write_parquet2"
-required-features = ["debug", "arrow2"]
+required-features = ["debug", "arrow2", "writer"]
 
 [profile.release]
 # Tell `rustc` to optimize for small code size.
