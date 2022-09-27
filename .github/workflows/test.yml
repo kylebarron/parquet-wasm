@@ -39,6 +39,7 @@ jobs:
             profile: minimal
             override: true
 
+      - run: rustup target add wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v1
 
       - run: cargo install cargo-all-features
