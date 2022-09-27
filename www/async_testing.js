@@ -1,5 +1,5 @@
 import * as arrow from "@apache-arrow/es2015-cjs/Arrow.dom";
-import * as wasm from "parquet-wasm/arrow2";
+import * as wasm from "parquet-wasm/bundler/arrow2";
 
 wasm.setPanicHook();
 window.wasm = wasm;
