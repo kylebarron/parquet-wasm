@@ -106,7 +106,7 @@ features = [
 ]
 
 [dev-dependencies]
-wasm-bindgen-test = "0.3.31"
+wasm-bindgen-test = "0.3.33"
 
 [package.metadata.cargo-all-features]
 
