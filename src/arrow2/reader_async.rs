@@ -121,7 +121,7 @@ pub async fn read_row_group(
     writer.start(arrow_schema, None)?;
 
     let deserializer =
-        RowGroupDeserializer::new(column_chunks, row_group_meta.num_rows() as usize, None);
+        RowGroupDeserializer::new(column_chunks, row_group_meta.num_rows(), None);
     for maybe_chunk in deserializer {
         let chunk = maybe_chunk?;
         writer.write(&chunk, None)?;
