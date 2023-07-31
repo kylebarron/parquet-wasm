@@ -60,10 +60,14 @@ fn all_elements_equal(arr: &[&Option<String>]) -> bool {
 
 pub async fn read_row_group(
     url: String,
-    // content_length: Option<usize>,
+    content_length: Option<usize>,
     row_group_meta: &RowGroupMetaData,
     arrow_schema: &Schema,
 ) -> Result<Vec<u8>> {
+    let content_length = match content_length {
+        Some(_content_length) => _content_length,
+        None => get_content_length(url.clone()).await?,
+    };
     // Extract the file paths from each underlying column
     let file_paths: Vec<&Option<String>> = row_group_meta
         .columns()
@@ -89,7 +93,6 @@ pub async fn read_row_group(
     };
 
     // Note: for simplicity requesting the content length with a HEAD request always.
-    let content_length = get_content_length(url.clone()).await.unwrap();
 
     let reader_factory = || {
         Box::pin(futures::future::ready(Ok(create_reader(

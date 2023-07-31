@@ -3,6 +3,7 @@ use crate::arrow2::ffi::FFIArrowTable;
 use crate::utils::{assert_parquet_file_not_empty, copy_vec_to_uint8_array};
 use js_sys::Uint8Array;
 use wasm_bindgen::prelude::*;
+use js_sys::{Reflect, Symbol, Object};
 
 /// Read a Parquet file into Arrow data using the [`arrow2`](https://crates.io/crates/arrow2) and
 /// [`parquet2`](https://crates.io/crates/parquet2) Rust crates.
@@ -197,16 +198,85 @@ pub async fn read_metadata_async(
 #[cfg(all(feature = "reader", feature = "async"))]
 pub async fn read_row_group_async(
     url: String,
+    content_length: Option<usize>,
     row_group_meta: &crate::arrow2::metadata::RowGroupMetaData,
     arrow_schema: &crate::arrow2::schema::ArrowSchema,
 ) -> WasmResult<Uint8Array> {
     let buffer = crate::arrow2::reader_async::read_row_group(
         url,
+        content_length,
         &row_group_meta.clone().into(),
         &arrow_schema.clone().into(),
     )
     .await?;
     copy_vec_to_uint8_array(buffer)
+}
+
+#[wasm_bindgen(js_name = "ParquetReader")]
+#[cfg(all(feature = "reader", feature = "async"))]
+pub struct JsParquetReader {
+    url: String,
+    content_length: Option<u32>,
+    counter: u32,
+    metadata: Option<crate::arrow2::metadata::FileMetaData>,
+    current_row_group: u32
+}
+
+pub fn set_iterator(obj: &Object ) {
+    let func = js_sys::Function::new_no_args("return this");
+    let _ = Reflect::set(obj, &Symbol::async_iterator(), &func);
+}
+
+#[wasm_bindgen(js_class= "ParquetReader")]
+impl JsParquetReader {
+    async fn initialize_metadata(&mut self) {
+        let converted = usize::try_from(self.content_length.unwrap()).unwrap();
+        let metadata = crate::arrow2::reader_async::read_metadata_async(self.url.clone(), Some(converted)).await.unwrap();
+        self.metadata = Some(crate::arrow2::metadata::FileMetaData::from(metadata));
+    }
+    pub async fn next(&mut self) -> WasmResult<js_sys::IteratorNext> {
+        let response: JsValue = Object::new().into();
+        // check for the existence of metadata
+        let metadata = match &self.metadata {
+            Some(_meta) => _meta.clone(),
+            None => {
+                self.initialize_metadata().await;
+                let intermediate = self.metadata.clone().unwrap();
+                intermediate
+            },
+        };
+        // now read the row groups
+        if self.current_row_group >= metadata.num_row_groups().try_into().unwrap() {  
+            // we're done here
+            let _ = Reflect::set(&response, &JsValue::from_str("done"), &JsValue::from_bool(true));
+            return Ok(response.into());
+        } else {
+            let row_group_meta = metadata.row_group(usize::try_from(self.current_row_group).unwrap());
+            let arrow_schema = metadata.arrow_schema().unwrap_or_else(|_| {
+                let bar: Vec<arrow2::datatypes::Field> = vec![];
+                arrow2::datatypes::Schema::from(bar).into()
+            });
+            let buffer = crate::arrow2::reader_async::read_row_group(
+                self.url.clone(),
+                Some(usize::try_from(self.content_length.unwrap()).unwrap()),
+                &row_group_meta.clone().into(),
+                &arrow_schema.into(),
+            )
+            .await?;
+            let value = copy_vec_to_uint8_array(buffer)?;
+            self.current_row_group += 1;
+            let _ = Reflect::set(&response, &JsValue::from_str("value"), &value);
+            let _ = Reflect::set(&response, &JsValue::from_str("done"), &JsValue::from_bool(false));
+        }
+
+        Ok(response.into())
+    }
+    #[wasm_bindgen(constructor)]
+    pub fn new(url: String, content_length: u32) -> Self {
+        let thing = Self { url: url.clone(), counter: 0, metadata: None, content_length: None, current_row_group: 0};
+        set_iterator(&Object::get_prototype_of(&thing.into()));
+        Self { url, counter: 0, metadata: None, content_length: Some(content_length.into()), current_row_group: 0}
+    }
 }
 
 /// Write Arrow data to a Parquet file using the [`arrow2`](https://crates.io/crates/arrow2) and
