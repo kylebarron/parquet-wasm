@@ -1,5 +1,6 @@
 use crate::arrow2::error::WasmResult;
 use crate::arrow2::ffi::FFIArrowTable;
+use crate::log;
 use crate::utils::{assert_parquet_file_not_empty, copy_vec_to_uint8_array};
 use js_sys::Uint8Array;
 use wasm_bindgen::prelude::*;
@@ -211,13 +212,40 @@ pub async fn read_row_group_async(
     .await?;
     copy_vec_to_uint8_array(buffer)
 }
-
+/// Read a multiple row group parquet file out to Uint8Array chunks, presented as either
+/// an async iterator OR a stream (accessed via .stream(), similar to Blob::stream or Observable's
+/// FileAttachment::stream()).
+/// 
+/// Example:
+///
+/// ```js
+/// import { tableFromIPC } from "apache-arrow";
+/// // Edit the `parquet-wasm` import as necessary
+/// import { ParquetReader } from "parquet-wasm";
+///
+/// const url = "https://example.com/file.parquet";
+/// const headResp = await fetch(url, {method: 'HEAD'});
+/// const length = parseInt(headResp.headers.get('Content-Length'));
+/// let reader = new ParquetReader(url, length);
+/// // direct async iterator usage
+/// let tables = []
+/// for await (const buf of reader) {
+///     tables.push(tableFromIPC(buf));
+/// }
+/// let combined = tables[0].concat(tables.slice(1));
+/// // explicit stream usage
+/// reader = new ParquetReader(url, length);
+/// tables = [];
+/// for await (const buf of reader.stream()) {
+///     tables.push(tableFromIPC(buf));
+/// }
+/// combined = tables[0].concat(tables.slice(1));
 #[wasm_bindgen(js_name = "ParquetReader")]
 #[cfg(all(feature = "reader", feature = "async"))]
+#[derive(Clone)]
 pub struct JsParquetReader {
     url: String,
     content_length: Option<u32>,
-    counter: u32,
     metadata: Option<crate::arrow2::metadata::FileMetaData>,
     current_row_group: u32
 }
@@ -273,9 +301,30 @@ impl JsParquetReader {
     }
     #[wasm_bindgen(constructor)]
     pub fn new(url: String, content_length: u32) -> Self {
-        let thing = Self { url: url.clone(), counter: 0, metadata: None, content_length: None, current_row_group: 0};
-        set_iterator(&Object::get_prototype_of(&thing.into()));
-        Self { url, counter: 0, metadata: None, content_length: Some(content_length.into()), current_row_group: 0}
+        let dummy = Self { url: url.clone(), metadata: None, content_length: None, current_row_group: 0};
+        set_iterator(&Object::get_prototype_of(&dummy.into()));
+        Self { url, metadata: None, content_length: Some(content_length.into()), current_row_group: 0}
+    }
+    pub async fn start(&mut self, _controller: web_sys::ReadableStreamDefaultController) -> WasmResult<bool> {
+        log!("[start]");
+        self.initialize_metadata().await;
+        Ok(true.into())
+    }
+
+    pub async fn pull(&mut self, controller: web_sys::ReadableStreamDefaultController) -> WasmResult<bool> {
+        log!("[pull]");
+        let chunk = self.next().await?;
+        if chunk.done() {
+            let _ = controller.close();
+        } else {
+            let _ = controller.enqueue_with_chunk(&chunk.value());
+        }
+        Ok(true.into())
+    }
+    pub fn stream(&self) -> web_sys::ReadableStream {
+        let wrapper: Object = Into::<JsValue>::into(self.clone()).into();
+        let stream = web_sys::ReadableStream::new_with_underlying_source(&wrapper).unwrap();
+        stream
     }
 }
 
