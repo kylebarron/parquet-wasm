@@ -22,10 +22,10 @@ impl From<Compression> for parquet::basic::Compression {
         match x {
             Compression::UNCOMPRESSED => parquet::basic::Compression::UNCOMPRESSED,
             Compression::SNAPPY => parquet::basic::Compression::SNAPPY,
-            Compression::GZIP => parquet::basic::Compression::GZIP,
-            Compression::BROTLI => parquet::basic::Compression::BROTLI,
+            Compression::GZIP => parquet::basic::Compression::GZIP(Default::default()),
+            Compression::BROTLI => parquet::basic::Compression::BROTLI(Default::default()),
             Compression::LZ4 => parquet::basic::Compression::LZ4,
-            Compression::ZSTD => parquet::basic::Compression::ZSTD,
+            Compression::ZSTD => parquet::basic::Compression::ZSTD(Default::default()),
             // TODO: fix this. Though LZ4 isn't supported in arrow1 for wasm anyways
             Compression::LZ4_RAW => parquet::basic::Compression::LZ4,
         }

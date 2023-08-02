@@ -10,3 +10,6 @@ pub mod writer;
 pub mod writer_properties;
 
 pub mod error;
+
+#[cfg(all(feature = "reader", feature = "async"))]
+pub mod reader_async;

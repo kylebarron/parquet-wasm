@@ -67,3 +67,10 @@ pub fn write_parquet(
     let buffer = crate::arrow1::writer::write_parquet(arrow_file, writer_props)?;
     copy_vec_to_uint8_array(buffer)
 }
+
+#[wasm_bindgen(js_name = readParquetAsync)]
+#[cfg(all(feature = "reader", feature = "async"))]
+pub async fn read_parquet_async(url: String) -> WasmResult<Uint8Array> {
+    let buffer = crate::arrow1::reader_async::read_parquet(url).await?;
+    copy_vec_to_uint8_array(buffer)
+}

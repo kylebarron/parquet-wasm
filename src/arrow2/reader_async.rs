@@ -1,6 +1,6 @@
 use crate::arrow2::error::ParquetWasmError;
 use crate::arrow2::error::Result;
-use crate::common::fetch::{get_content_length, make_range_request};
+use crate::common::fetch::{create_reader, get_content_length};
 use arrow2::datatypes::Schema;
 use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};
 use arrow2::io::parquet::read::FileMetaData;
@@ -8,31 +8,6 @@ use arrow2::io::parquet::read::RowGroupMetaData;
 use arrow2::io::parquet::read::{read_columns_many_async, RowGroupDeserializer};
 use futures::future::BoxFuture;
 use parquet2::read::read_metadata_async as _read_metadata_async;
-use range_reader::{RangeOutput, RangedAsyncReader};
-
-/// Create a RangedAsyncReader
-fn create_reader(
-    url: String,
-    content_length: usize,
-    min_request_size: Option<usize>,
-) -> RangedAsyncReader {
-    // at least 4kb per s3 request. Adjust to your liking.
-    let min_request_size = min_request_size.unwrap_or(4 * 1024);
-
-    // Closure for making an individual HTTP range request to a file
-    let range_get = Box::new(move |start: u64, length: usize| {
-        let url = url.clone();
-
-        Box::pin(async move {
-            let data = make_range_request(url.clone(), start, length)
-                .await
-                .unwrap();
-            Ok(RangeOutput { start, data })
-        }) as BoxFuture<'static, std::io::Result<RangeOutput>>
-    });
-
-    RangedAsyncReader::new(content_length, min_request_size, range_get)
-}
 
 pub async fn read_metadata_async(
     url: String,
@@ -99,7 +74,11 @@ pub async fn read_row_group(
             url.clone(),
             content_length,
             None,
-        )))) as BoxFuture<'static, std::result::Result<RangedAsyncReader, std::io::Error>>
+        ))))
+            as BoxFuture<
+                'static,
+                std::result::Result<range_reader::RangedAsyncReader, std::io::Error>,
+            >
     };
 
     // no chunk size in deserializing

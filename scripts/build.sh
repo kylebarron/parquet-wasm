@@ -19,6 +19,7 @@ wasm-pack build \
   --out-dir tmp_build/node \
   --out-name arrow1 \
   --target nodejs \
+  --features async \
   $FLAGS
 
 # Build web version into tmp_build/esm
@@ -28,6 +29,7 @@ wasm-pack build \
   --out-dir tmp_build/esm \
   --out-name arrow1 \
   --target web \
+  --features async \
   $FLAGS
 
 # Build bundler version into tmp_build/bundler
@@ -37,6 +39,7 @@ wasm-pack build \
   --out-dir tmp_build/bundler \
   --out-name arrow1 \
   --target bundler \
+  --features async \
   $FLAGS
 
 ######################################

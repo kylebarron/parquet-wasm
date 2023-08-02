@@ -10,6 +10,10 @@ pub enum ParquetWasmError {
 
     #[error(transparent)]
     ParquetError(Box<ParquetError>),
+
+    #[cfg(feature = "async")]
+    #[error("HTTP error: `{0}`")]
+    HTTPError(Box<reqwest::Error>),
 }
 
 pub type Result<T> = std::result::Result<T, ParquetWasmError>;
@@ -24,5 +28,12 @@ impl From<ArrowError> for ParquetWasmError {
 impl From<ParquetError> for ParquetWasmError {
     fn from(err: ParquetError) -> Self {
         Self::ParquetError(Box::new(err))
+    }
+}
+
+#[cfg(feature = "async")]
+impl From<reqwest::Error> for ParquetWasmError {
+    fn from(err: reqwest::Error) -> Self {
+        Self::HTTPError(Box::new(err))
     }
 }
