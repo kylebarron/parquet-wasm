@@ -106,15 +106,15 @@ impl WriterPropertiesBuilder {
     }
 
     /// Sets data page size limit.
-    #[wasm_bindgen(js_name = setDataPagesizeLimit)]
-    pub fn set_data_pagesize_limit(self, value: usize) -> Self {
-        Self(self.0.set_data_pagesize_limit(value))
+    #[wasm_bindgen(js_name = setDataPageSizeLimit)]
+    pub fn set_data_page_size_limit(self, value: usize) -> Self {
+        Self(self.0.set_data_page_size_limit(value))
     }
 
     /// Sets dictionary page size limit.
-    #[wasm_bindgen(js_name = setDictionaryPagesizeLimit)]
-    pub fn set_dictionary_pagesize_limit(self, value: usize) -> Self {
-        Self(self.0.set_dictionary_pagesize_limit(value))
+    #[wasm_bindgen(js_name = setDictionaryPageSizeLimit)]
+    pub fn set_dictionary_page_size_limit(self, value: usize) -> Self {
+        Self(self.0.set_dictionary_page_size_limit(value))
     }
 
     /// Sets write batch size.

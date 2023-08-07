@@ -32,7 +32,7 @@ debug = ["console_error_panic_hook", "clap"]
 brotli = ["parquet?/brotli", "parquet2?/brotli"]
 gzip = ["parquet?/flate2", "parquet2?/gzip"]
 snappy = ["parquet?/snap", "parquet2?/snappy"]
-zstd = ["parquet?/zstd", "parquet2?/zstd"]
+zstd = ["parquet?/zstd", "parquet2?/zstd", "dep:zstd"]
 # LZ4 not yet supported on parquet crate
 lz4 = ["parquet2?/lz4_flex"]
 
@@ -68,23 +68,23 @@ js-sys = "0.3.60"
 getrandom = { version = "0.2.6", features = ["js"] }
 thiserror = "1.0"
 
-arrow2 = { version = "0.14", optional = true, features = [
+arrow2 = { version = "0.17", optional = true, features = [
   "io_ipc",
   "io_parquet",
 ] }
-parquet2 = { version = "0.16", default_features = false, optional = true }
+parquet2 = { version = "0.17", default_features = false, optional = true }
 
-arrow = { version = "44.0.0", default-features = false, optional = true, features = [
+arrow = { version = "45.0", default-features = false, optional = true, features = [
   "ipc",
-]}
-parquet = { version = "44.0.0", default-features = false, optional = true, features = [
+] }
+parquet = { version = "45.0", default-features = false, optional = true, features = [
   "arrow",
   "base64",
   "async"
 ] }
 bytes = { version = "1", optional = true }
 
-serde-wasm-bindgen = { version = "0.4.3", optional = true }
+serde-wasm-bindgen = { version = "0.5", optional = true }
 
 # 3.2 added deprecations that don't currently pass clippy
 clap = { version = ">=3.1.15, <3.3", optional = true, features = ["derive"] }
@@ -95,6 +95,8 @@ range-reader = { version = "0.2", optional = true }
 reqwest = { version = "0.11.12", optional = true, default-features = false }
 async-compat = { version = "0.2.1", optional = true}
 
+# Pass "wasm" and "thin" down to the transitive zstd dependency
+zstd = { version = "*", features = ["wasm", "thin"], default-features = false, optional = true }
 
 [dependencies.web-sys]
 version = "0.3.6"
@@ -111,13 +113,6 @@ features = [
   "ReadableStream",
   "ReadableStreamDefaultController"
 ]
-
-[dependencies.zstd]
-features = [
-  "wasm",
-  "thin"
-]
-default-features = false
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.31"
