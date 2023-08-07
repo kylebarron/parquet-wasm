@@ -9,6 +9,13 @@ use arrow2::io::parquet::read::{
 use parquet2::metadata::{FileMetaData, RowGroupMetaData};
 use std::io::Cursor;
 
+pub fn read_parquet_metadata(parquet_file: &[u8]) -> Result<FileMetaData> {
+    // Create Parquet reader
+    let mut input_file = Cursor::new(parquet_file);
+
+    Ok(parquet_read_metadata(&mut input_file)?)
+}
+
 /// Internal function to read a buffer with Parquet data into a buffer with Arrow IPC Stream data
 /// using the arrow2 and parquet2 crates
 pub fn read_parquet(
