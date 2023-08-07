@@ -153,7 +153,7 @@ impl FFIArrowSchema {
     }
 }
 
-/// Wrapper around an Arrow Table in Wasm memory (a lisjst of FFI ArrowSchema structs plus a list of
+/// Wrapper around an Arrow Table in Wasm memory (a list of FFI ArrowSchema structs plus a list of
 /// lists of ArrowArray FFI structs.)
 #[wasm_bindgen]
 pub struct FFIArrowTable {
