@@ -24,6 +24,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v1
 
+      - run: sudo apt install clang
       - run: wasm-pack build --dev --target nodejs
       - run: wasm-pack test --node
 
