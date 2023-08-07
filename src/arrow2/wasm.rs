@@ -26,7 +26,10 @@ use wasm_bindgen::prelude::*;
 #[cfg(feature = "reader")]
 pub fn read_parquet(parquet_file: &[u8]) -> WasmResult<Vec<u8>> {
     assert_parquet_file_not_empty(parquet_file)?;
-    Ok(crate::arrow2::reader::read_parquet(parquet_file)?)
+    Ok(crate::arrow2::reader::read_parquet(
+        parquet_file,
+        |chunk| chunk,
+    )?)
 }
 
 /// Read a Parquet file into Arrow data using the [`arrow2`](https://crates.io/crates/arrow2) and
@@ -52,7 +55,10 @@ pub fn read_parquet(parquet_file: &[u8]) -> WasmResult<Vec<u8>> {
 #[cfg(feature = "reader")]
 pub fn read_parquet_ffi(parquet_file: &[u8]) -> WasmResult<FFIArrowTable> {
     assert_parquet_file_not_empty(parquet_file)?;
-    Ok(crate::arrow2::reader::read_parquet_ffi(parquet_file)?)
+    Ok(crate::arrow2::reader::read_parquet_ffi(
+        parquet_file,
+        |chunk| chunk,
+    )?)
 }
 
 /// Read metadata from a Parquet file using the [`arrow2`](https://crates.io/crates/arrow2) and
@@ -119,6 +125,7 @@ pub fn read_row_group(
         parquet_file,
         schema.clone().into(),
         meta.clone().into(),
+        |chunk| chunk,
     )?;
     Ok(buffer)
 }
@@ -202,6 +209,7 @@ pub async fn read_row_group_async(
         url,
         &row_group_meta.clone().into(),
         &arrow_schema.clone().into(),
+        |chunk| chunk,
     )
     .await?;
     copy_vec_to_uint8_array(&buffer)
