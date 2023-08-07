@@ -1,5 +1,7 @@
 use crate::arrow2::error::Result;
 use crate::arrow2::ffi::{FFIArrowChunk, FFIArrowSchema, FFIArrowTable};
+use arrow2::array::Array;
+use arrow2::chunk::Chunk;
 use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};
 use arrow2::io::parquet::read::{
     infer_schema, read_metadata as parquet_read_metadata, FileReader as ParquetFileReader,
@@ -9,7 +11,10 @@ use std::io::Cursor;
 
 /// Internal function to read a buffer with Parquet data into a buffer with Arrow IPC Stream data
 /// using the arrow2 and parquet2 crates
-pub fn read_parquet(parquet_file: &[u8]) -> Result<Vec<u8>> {
+pub fn read_parquet(
+    parquet_file: &[u8],
+    chunk_fn: impl Fn(Chunk<Box<dyn Array>>) -> Chunk<Box<dyn Array>>,
+) -> Result<Vec<u8>> {
     // Create Parquet reader
     let mut input_file = Cursor::new(parquet_file);
 
@@ -33,7 +38,7 @@ pub fn read_parquet(parquet_file: &[u8]) -> Result<Vec<u8>> {
 
     // Iterate over reader chunks, writing each into the IPC writer
     for maybe_chunk in file_reader {
-        let chunk = maybe_chunk?;
+        let chunk = chunk_fn(maybe_chunk?);
         writer.write(&chunk, None)?;
     }
 
@@ -41,7 +46,10 @@ pub fn read_parquet(parquet_file: &[u8]) -> Result<Vec<u8>> {
     Ok(output_file)
 }
 
-pub fn read_parquet_ffi(parquet_file: &[u8]) -> Result<FFIArrowTable> {
+pub fn read_parquet_ffi(
+    parquet_file: &[u8],
+    chunk_fn: impl Fn(Chunk<Box<dyn Array>>) -> Chunk<Box<dyn Array>>,
+) -> Result<FFIArrowTable> {
     // Create Parquet reader
     let mut input_file = Cursor::new(parquet_file);
     let metadata = parquet_read_metadata(&mut input_file)?;
@@ -61,7 +69,7 @@ pub fn read_parquet_ffi(parquet_file: &[u8]) -> Result<FFIArrowTable> {
 
     // Iterate over reader chunks, storing each in memory to be used for FFI
     for maybe_chunk in file_reader {
-        let chunk = maybe_chunk?;
+        let chunk = chunk_fn(maybe_chunk?);
         ffi_chunks.push(chunk.into());
     }
 
@@ -79,6 +87,7 @@ pub fn read_row_group(
     parquet_file: &[u8],
     schema: arrow2::datatypes::Schema,
     row_group: RowGroupMetaData,
+    chunk_fn: impl Fn(Chunk<Box<dyn Array>>) -> Chunk<Box<dyn Array>>,
 ) -> Result<Vec<u8>> {
     let input_file = Cursor::new(parquet_file);
     let file_reader = ParquetFileReader::new(
@@ -98,7 +107,7 @@ pub fn read_row_group(
 
     // Iterate over reader chunks, writing each into the IPC writer
     for maybe_chunk in file_reader {
-        let chunk = maybe_chunk?;
+        let chunk = chunk_fn(maybe_chunk?);
         writer.write(&chunk, None)?;
     }
 
