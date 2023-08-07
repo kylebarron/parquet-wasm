@@ -2,7 +2,7 @@ import * as test from "tape";
 import * as wasm from "../../pkg/node/arrow1";
 import { readFileSync } from "fs";
 import { tableFromIPC, tableToIPC } from "apache-arrow";
-import { testArrowTablesEqual, readExpectedArrowData } from "./utils";
+import { testArrowTablesEqual, readExpectedArrowData, temporaryServer } from "./utils";
 
 // Path from repo root
 const dataDir = "tests/data";
@@ -33,6 +33,24 @@ test("read file", async (t) => {
 
   t.end();
 });
+
+test("read file async", async (t) => {
+  const server = await temporaryServer();
+  const listeningPort = server.addresses()[0].port;
+  const rootUrl = `http://localhost:${listeningPort}`;
+  
+  const expectedTable = readExpectedArrowData();
+
+  for (const testFile of testFiles) {
+    const dataPath = `${dataDir}/${testFile}`;
+    const url = `${rootUrl}/${testFile}`;
+    const table = tableFromIPC(await wasm.readParquetAsync(url));
+    testArrowTablesEqual(t, expectedTable, table);
+  }
+
+  await server.close();
+  t.end();
+})
 
 test("read-write-read round trip (with writer properties)", async (t) => {
   const dataPath = `${dataDir}/1-partition-brotli.parquet`;

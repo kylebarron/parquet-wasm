@@ -33,12 +33,12 @@ fn all_elements_equal(arr: &[&Option<String>]) -> bool {
     arr.iter().all(|&item| item == first)
 }
 
-pub async fn read_row_group(
+pub async fn _read_row_group(
     url: String,
     content_length: Option<usize>,
     row_group_meta: &RowGroupMetaData,
     arrow_schema: &Schema,
-) -> Result<Vec<u8>> {
+) -> Result<RowGroupDeserializer> {
     let content_length = match content_length {
         Some(_content_length) => _content_length,
         None => get_content_length(url.clone()).await?,
@@ -96,13 +96,27 @@ pub async fn read_row_group(
     )
     .await?;
 
+    
+    let deserializer = RowGroupDeserializer::new(column_chunks, row_group_meta.num_rows(), None);
+    Ok(deserializer)
+}
+
+pub async fn read_row_group(
+    url: String,
+    content_length: Option<usize>,
+    row_group_meta: &RowGroupMetaData,
+    arrow_schema: &Schema,
+) -> Result<Vec<u8>> {
     // Create IPC writer
     let mut output_file = Vec::new();
     let options = IPCWriteOptions { compression: None };
     let mut writer = IPCStreamWriter::new(&mut output_file, options);
     writer.start(arrow_schema, None)?;
-
-    let deserializer = RowGroupDeserializer::new(column_chunks, row_group_meta.num_rows(), None);
+    let deserializer = _read_row_group(url,
+        content_length,
+        row_group_meta,
+        arrow_schema
+    ).await?;
     for maybe_chunk in deserializer {
         let chunk = maybe_chunk?;
         writer.write(&chunk, None)?;

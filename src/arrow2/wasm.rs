@@ -1,3 +1,6 @@
+use std::borrow::BorrowMut;
+use std::sync::{Arc, Mutex};
+
 use crate::arrow2::error::WasmResult;
 use crate::arrow2::ffi::FFIArrowTable;
 use crate::log;
@@ -5,6 +8,28 @@ use crate::utils::{assert_parquet_file_not_empty, copy_vec_to_uint8_array};
 use js_sys::Uint8Array;
 use js_sys::{Object, Reflect, Symbol};
 use wasm_bindgen::prelude::*;
+use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};
+
+struct ReadableStreamDefaultController(web_sys::ReadableStreamDefaultController);
+
+impl std::io::Write for ReadableStreamDefaultController {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        let intermediate = Uint8Array::from(buf);
+        self.0.enqueue_with_chunk(&intermediate);
+        Ok(intermediate.byte_length() as usize)
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        todo!()
+    }
+}
+
+impl From<web_sys::ReadableStreamDefaultController> for ReadableStreamDefaultController {
+    fn from(value: web_sys::ReadableStreamDefaultController) -> Self {
+        Self { 0: value}
+    }
+}
+
 
 /// Read a Parquet file into Arrow data using the [`arrow2`](https://crates.io/crates/arrow2) and
 /// [`parquet2`](https://crates.io/crates/parquet2) Rust crates.
@@ -248,6 +273,7 @@ pub struct JsParquetReader {
     content_length: Option<u32>,
     metadata: Option<crate::arrow2::metadata::FileMetaData>,
     current_row_group: u32,
+    _writer: Option<Arc<Mutex<IPCStreamWriter<ReadableStreamDefaultController>>>>
 }
 
 pub fn set_iterator(obj: &Object) {
@@ -265,8 +291,7 @@ impl JsParquetReader {
                 .unwrap();
         self.metadata = Some(crate::arrow2::metadata::FileMetaData::from(metadata));
     }
-    pub async fn next(&mut self) -> WasmResult<js_sys::IteratorNext> {
-        let response: JsValue = Object::new().into();
+    pub async fn next(&mut self) -> WasmResult<Option<bool>> {
         // check for the existence of metadata
         let metadata = match &self.metadata {
             Some(_meta) => _meta.clone(),
@@ -279,12 +304,7 @@ impl JsParquetReader {
         // now read the row groups
         if self.current_row_group >= metadata.num_row_groups().try_into().unwrap() {
             // we're done here
-            let _ = Reflect::set(
-                &response,
-                &JsValue::from_str("done"),
-                &JsValue::from_bool(true),
-            );
-            return Ok(response.into());
+            return Ok(None);
         } else {
             let row_group_meta =
                 metadata.row_group(usize::try_from(self.current_row_group).unwrap());
@@ -292,47 +312,47 @@ impl JsParquetReader {
                 let bar: Vec<arrow2::datatypes::Field> = vec![];
                 arrow2::datatypes::Schema::from(bar).into()
             });
-            let buffer = crate::arrow2::reader_async::read_row_group(
+            let buffer = crate::arrow2::reader_async::_read_row_group(
                 self.url.clone(),
                 Some(usize::try_from(self.content_length.unwrap()).unwrap()),
                 &row_group_meta.clone().into(),
                 &arrow_schema.into(),
             )
             .await?;
-            let value = copy_vec_to_uint8_array(buffer)?;
+            let mut guard = self._writer.as_deref().unwrap().lock().unwrap();
+            for maybe_chunk in buffer {
+                let chunk = maybe_chunk?;
+                guard.write(&chunk, None)?;
+            }
             self.current_row_group += 1;
-            let _ = Reflect::set(&response, &JsValue::from_str("value"), &value);
-            let _ = Reflect::set(
-                &response,
-                &JsValue::from_str("done"),
-                &JsValue::from_bool(false),
-            );
+            Ok(Some(true))
         }
-
-        Ok(response.into())
     }
     #[wasm_bindgen(constructor)]
     pub fn new(url: String, content_length: u32) -> Self {
-        let dummy = Self {
-            url: url.clone(),
-            metadata: None,
-            content_length: None,
-            current_row_group: 0,
-        };
-        set_iterator(&Object::get_prototype_of(&dummy.into()));
         Self {
             url,
             metadata: None,
             content_length: Some(content_length.into()),
             current_row_group: 0,
+            _writer: None
         }
     }
+
     pub async fn start(
         &mut self,
         _controller: web_sys::ReadableStreamDefaultController,
     ) -> WasmResult<bool> {
         log!("[start]");
         self.initialize_metadata().await;
+        let options = IPCWriteOptions { compression: None };
+        let mut writer = IPCStreamWriter::new(ReadableStreamDefaultController::from(_controller), options);
+        let arrow_schema = self.metadata.clone().unwrap().arrow_schema().unwrap_or_else(|_| {
+            let bar: Vec<arrow2::datatypes::Field> = vec![];
+            arrow2::datatypes::Schema::from(bar).into()
+        }).into();
+        let _ = writer.start(&arrow_schema, None);
+        self._writer = Some(Arc::new(Mutex::new(writer)));
         Ok(true.into())
     }
 
@@ -342,10 +362,16 @@ impl JsParquetReader {
     ) -> WasmResult<bool> {
         log!("[pull]");
         let chunk = self.next().await?;
-        if chunk.done() {
-            let _ = controller.close();
-        } else {
-            let _ = controller.enqueue_with_chunk(&chunk.value());
+        match chunk {
+            Some(chunk) => {
+                // let _ = controller.enqueue_with_chunk(&chunk.into());
+            },
+            None => {
+                // yet another lengthy borrow
+                let mut guard = self._writer.as_deref().unwrap().lock().unwrap();
+                guard.finish()?;
+                let _ = controller.close();
+            }
         }
         Ok(true.into())
     }
