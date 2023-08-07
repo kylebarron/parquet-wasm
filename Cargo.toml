@@ -31,7 +31,7 @@ debug = ["console_error_panic_hook", "clap"]
 brotli = ["parquet?/brotli", "parquet2?/brotli"]
 gzip = ["parquet?/flate2", "parquet2?/gzip"]
 snappy = ["parquet?/snap", "parquet2?/snappy"]
-zstd = ["parquet?/zstd", "parquet2?/zstd"]
+zstd = ["parquet?/zstd", "parquet2?/zstd", "dep:zstd-sys"]
 # LZ4 not yet supported on parquet crate
 lz4 = ["parquet2?/lz4_flex"]
 
@@ -91,6 +91,9 @@ wasm-bindgen-futures = { version = "0.4.30", optional = true }
 futures = { version = "0.3", optional = true }
 range-reader = { version = "0.2", optional = true }
 reqwest = { version = "0.11.12", optional = true, default-features = false }
+
+# We have to pin zstd-sys because of https://github.com/gyscos/zstd-rs/issues/205
+zstd-sys = { version = "=2.0.1", optional = true, default-features = false }
 
 [dependencies.web-sys]
 version = "0.3.4"
