@@ -31,7 +31,7 @@ debug = ["console_error_panic_hook", "clap"]
 brotli = ["parquet?/brotli", "parquet2?/brotli"]
 gzip = ["parquet?/flate2", "parquet2?/gzip"]
 snappy = ["parquet?/snap", "parquet2?/snappy"]
-zstd = ["parquet?/zstd", "parquet2?/zstd"]
+zstd = ["parquet?/zstd", "parquet2?/zstd", "dep:zstd"]
 # LZ4 not yet supported on parquet crate
 lz4 = ["parquet2?/lz4_flex"]
 
@@ -93,7 +93,7 @@ range-reader = { version = "0.2", optional = true }
 reqwest = { version = "0.11.12", optional = true, default-features = false }
 
 # Pass "wasm" and "thin" down to the transitive zstd dependency
-zstd = { version = "*", features = ["wasm", "thin"], default-features = false }
+zstd = { version = "*", features = ["wasm", "thin"], default-features = false, optional = true }
 
 [dependencies.web-sys]
 version = "0.3.4"
