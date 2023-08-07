@@ -14,7 +14,7 @@ pub async fn read_metadata_async(
     content_length: Option<usize>,
 ) -> Result<FileMetaData> {
     let content_length = match content_length {
-        Some(_content_length) => _content_length,
+        Some(content_length) => content_length,
         None => get_content_length(url.clone()).await?,
     };
 
