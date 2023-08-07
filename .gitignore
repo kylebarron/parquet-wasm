@@ -9,6 +9,7 @@ www/data
 www/data/
 data/
 !tests/data/
+.yarn
 
 # Typedoc output
 docs_build/

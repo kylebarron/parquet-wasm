@@ -21,10 +21,9 @@ fn main() {
 
     // Read file to buffer
     let data = fs::read(&args.input_file).expect("Unable to read file");
-    let slice = data.as_slice();
 
     // Call read_parquet
-    let arrow_ipc = read_parquet(slice)
+    let arrow_ipc = read_parquet(data)
         .map_err(|err| {
             eprintln!("Could not read parquet file: {}", err);
             process::exit(1);

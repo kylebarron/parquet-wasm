@@ -1,4 +1,5 @@
 use crate::common::writer_properties::{Compression, Encoding, WriterVersion};
+use parquet::basic::{BrotliLevel, GzipLevel, ZstdLevel};
 use wasm_bindgen::prelude::*;
 
 impl From<Encoding> for parquet::basic::Encoding {
@@ -22,10 +23,10 @@ impl From<Compression> for parquet::basic::Compression {
         match x {
             Compression::UNCOMPRESSED => parquet::basic::Compression::UNCOMPRESSED,
             Compression::SNAPPY => parquet::basic::Compression::SNAPPY,
-            Compression::GZIP => parquet::basic::Compression::GZIP,
-            Compression::BROTLI => parquet::basic::Compression::BROTLI,
+            Compression::GZIP => parquet::basic::Compression::GZIP(GzipLevel::default()),
+            Compression::BROTLI => parquet::basic::Compression::BROTLI(BrotliLevel::default()),
             Compression::LZ4 => parquet::basic::Compression::LZ4,
-            Compression::ZSTD => parquet::basic::Compression::ZSTD,
+            Compression::ZSTD => parquet::basic::Compression::ZSTD(ZstdLevel::default()),
             // TODO: fix this. Though LZ4 isn't supported in arrow1 for wasm anyways
             Compression::LZ4_RAW => parquet::basic::Compression::LZ4,
         }
@@ -106,15 +107,15 @@ impl WriterPropertiesBuilder {
     }
 
     /// Sets data page size limit.
-    #[wasm_bindgen(js_name = setDataPagesizeLimit)]
-    pub fn set_data_pagesize_limit(self, value: usize) -> Self {
-        Self(self.0.set_data_pagesize_limit(value))
+    #[wasm_bindgen(js_name = setDataPageSizeLimit)]
+    pub fn set_data_page_size_limit(self, value: usize) -> Self {
+        Self(self.0.set_data_page_size_limit(value))
     }
 
     /// Sets dictionary page size limit.
-    #[wasm_bindgen(js_name = setDictionaryPagesizeLimit)]
-    pub fn set_dictionary_pagesize_limit(self, value: usize) -> Self {
-        Self(self.0.set_dictionary_pagesize_limit(value))
+    #[wasm_bindgen(js_name = setDictionaryPageSizeLimit)]
+    pub fn set_dictionary_page_size_limit(self, value: usize) -> Self {
+        Self(self.0.set_dictionary_page_size_limit(value))
     }
 
     /// Sets write batch size.
