@@ -87,6 +87,7 @@ impl WriterPropertiesBuilder {
             write_statistics: true,
             compression: arrow2::io::parquet::write::CompressionOptions::Snappy,
             version: arrow2::io::parquet::write::Version::V2,
+            data_pagesize_limit: None,
         };
         let encoding = arrow2::io::parquet::write::Encoding::Plain;
         Self {
@@ -111,6 +112,7 @@ impl WriterPropertiesBuilder {
             write_statistics: self.write_options.write_statistics,
             compression: self.write_options.compression,
             version: value.into(),
+            data_pagesize_limit: None,
         };
         self.write_options = write_options;
         self
@@ -140,6 +142,7 @@ impl WriterPropertiesBuilder {
             write_statistics: self.write_options.write_statistics,
             compression: value.into(),
             version: self.write_options.version,
+            data_pagesize_limit: None,
         };
         self.write_options = write_options;
         self
@@ -152,6 +155,7 @@ impl WriterPropertiesBuilder {
             write_statistics: value,
             compression: self.write_options.compression,
             version: self.write_options.version,
+            data_pagesize_limit: None,
         };
         self.write_options = write_options;
         self

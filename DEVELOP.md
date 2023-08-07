@@ -15,6 +15,15 @@ export CC=/usr/local/opt/llvm/bin/clang
 export AR=/usr/local/opt/llvm/bin/llvm-ar
 ```
 
+Note that homebrew paths are different on an Apple ARM-based Mac:
+
+```
+brew install llvm
+export PATH="/opt/homebrew/opt/llvm/bin/:$PATH"
+export CC=/opt/homebrew/opt/llvm/bin/clang
+export AR=/opt/homebrew/opt/llvm/bin/llvm-ar
+```
+
 See [this description](https://github.com/kylebarron/parquet-wasm/pull/2#issue-1159174043) and its references for more info.
 
 ## Publishing

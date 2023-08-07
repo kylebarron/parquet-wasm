@@ -34,7 +34,7 @@ macro_rules! log {
 
 /// Copy Vec<u8> to a Uint8Array
 pub fn copy_vec_to_uint8_array(buffer: Vec<u8>) -> Result<Uint8Array, JsError> {
-    let return_len = match (buffer.len() as usize).try_into() {
+    let return_len = match buffer.len().try_into() {
         Ok(return_len) => return_len,
         Err(error) => return Err(JsError::new(format!("{}", error).as_str())),
     };
