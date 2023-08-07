@@ -91,7 +91,6 @@ wasm-bindgen-futures = { version = "0.4.30", optional = true }
 futures = { version = "0.3", optional = true }
 range-reader = { version = "0.2", optional = true }
 reqwest = { version = "0.11.12", optional = true, default-features = false }
-# zstd-sys = "=2.0.1"
 
 [dependencies.web-sys]
 version = "0.3.4"
