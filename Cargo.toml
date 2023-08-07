@@ -93,7 +93,7 @@ range-reader = { version = "0.2", optional = true }
 reqwest = { version = "0.11.12", optional = true, default-features = false }
 
 # Pass "wasm" and "thin" down to the transitive zstd dependency
-zstd = { features = ["wasm", "thin"], default-features = false }
+zstd = { version = "*", features = ["wasm", "thin"], default-features = false }
 
 [dependencies.web-sys]
 version = "0.3.4"
