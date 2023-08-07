@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use arrow::array::Array;
+use arrow::array::{make_array, Array};
 use arrow::datatypes::{Field, Schema};
 use arrow::ffi::{self, from_ffi, to_ffi};
 use arrow::record_batch::RecordBatch;
@@ -130,22 +130,23 @@ impl From<RecordBatch> for FFIArrowRecordBatch {
     }
 }
 
-// impl From<FFIArrowRecordBatch> for RecordBatch {
-//     fn from(value: FFIArrowRecordBatch) -> Self {
-//         let mut columns: Vec<Arc<dyn Array>> = Vec::with_capacity(value.schema_length());
-//         for (array, schema) in value.arrays.into_iter().zip(value.schema.0.into_iter()) {
-//             let data: arrow::array::ArrayData = from_ffi(*array.0, &schema.0).unwrap();
-//             data.
-//             columns.push(Arc::new(data) as Arc<dyn Array>);
-//             // todo!()
-//         }
+impl From<FFIArrowRecordBatch> for RecordBatch {
+    fn from(value: FFIArrowRecordBatch) -> Self {
+        let mut columns = Vec::with_capacity(value.schema_length());
+        let mut fields = Vec::with_capacity(value.schema_length());
+        for (array, schema) in value.arrays.into_iter().zip(value.schema.0.into_iter()) {
+            let array = make_array(from_ffi(*array.0, &schema.0).unwrap());
 
-//         let x = RecordBatch::try_new(schema, columns);
-//         // RecordBatch::n
+            columns.push(array);
+            fields.push(Field::new(name, data_type, nullable))
+        }
 
-//         todo!()
-//     }
-// }
+        let x = RecordBatch::try_new(Arc::new(Schema::new(fields)), columns);
+        // RecordBatch::n
+
+        todo!()
+    }
+}
 
 /// Wrapper around an Arrow Table in Wasm memory (a list of FFI ArrowSchema structs plus a list of
 /// lists of ArrowArray FFI structs.)
