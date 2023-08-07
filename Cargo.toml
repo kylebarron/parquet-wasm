@@ -111,7 +111,7 @@ features = [
 ]
 
 [patch.crates-io]
-zstd-sys = {git = "https://github.com/gyscos/zstd-rs", rev = "f0d8a12f0f520095cf26a0dac35b8d0939277add"}
+zstd-sys = {git = "https://github.com/gyscos/zstd-rs", rev = "56c8b52b6d448e376e746fc062077f68febc03a3"}
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.31"

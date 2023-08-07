@@ -1991,7 +1991,7 @@ dependencies = [
 [[package]]
 name = "zstd-sys"
 version = "2.0.1+zstd.1.5.2"
-source = "git+https://github.com/gyscos/zstd-rs?rev=f0d8a12f0f520095cf26a0dac35b8d0939277add#f0d8a12f0f520095cf26a0dac35b8d0939277add"
+source = "git+https://github.com/gyscos/zstd-rs?rev=56c8b52b6d448e376e746fc062077f68febc03a3#56c8b52b6d448e376e746fc062077f68febc03a3"
 dependencies = [
  "cc",
  "libc",
