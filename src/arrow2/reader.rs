@@ -21,8 +21,7 @@ pub fn read_parquet_metadata(parquet_file: &[u8]) -> Result<FileMetaData> {
 /// using the arrow2 and parquet2 crates
 pub fn read_parquet(
     parquet_file: &[u8],
-    schema_fn: impl Fn(Schema) -> Schema,
-    chunk_fn: impl Fn(Chunk<Box<dyn Array>>) -> Chunk<Box<dyn Array>>,
+    chunk_fn: impl Fn(&Schema, Chunk<Box<dyn Array>>, bool) -> (Option<Schema>, Chunk<Box<dyn Array>>),
 ) -> Result<Vec<u8>> {
     // Create Parquet reader
     let mut input_file = Cursor::new(parquet_file);
@@ -43,11 +42,19 @@ pub fn read_parquet(
     let mut output_file = Vec::new();
     let options = IPCWriteOptions { compression: None };
     let mut writer = IPCStreamWriter::new(&mut output_file, options);
-    writer.start(&schema_fn(schema), None)?;
+
+    // Whether the writer has already had `start` called
+    let mut has_started = false;
 
     // Iterate over reader chunks, writing each into the IPC writer
     for maybe_chunk in file_reader {
-        let chunk = chunk_fn(maybe_chunk?);
+        let (new_schema, chunk) = chunk_fn(&schema, maybe_chunk?, !has_started);
+
+        if !has_started {
+            writer.start(&new_schema.unwrap(), None)?;
+            has_started = true;
+        }
+
         writer.write(&chunk, None)?;
     }
 

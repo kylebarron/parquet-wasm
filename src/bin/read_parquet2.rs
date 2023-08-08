@@ -24,12 +24,18 @@ fn main() {
     let slice = data.as_slice();
 
     // Call read_parquet
-    let arrow_ipc = read_parquet(slice, |schema| schema, |chunk| chunk)
-        .map_err(|err| {
-            eprintln!("Could not read parquet file: {}", err);
-            process::exit(1);
-        })
-        .unwrap();
+    let arrow_ipc = read_parquet(slice, |schema, chunk, should_return_schema| {
+        if should_return_schema {
+            (Some(schema.clone()), chunk)
+        } else {
+            (None, chunk)
+        }
+    })
+    .map_err(|err| {
+        eprintln!("Could not read parquet file: {}", err);
+        process::exit(1);
+    })
+    .unwrap();
 
     // Write result to file
     fs::write(&args.output_file, arrow_ipc).expect("Unable to write file");
