@@ -24,7 +24,7 @@ fn main() {
     let slice = data.as_slice();
 
     // Call read_parquet
-    let arrow_ipc = read_parquet(slice, |chunk| chunk)
+    let arrow_ipc = read_parquet(slice, |schema| schema, |chunk| chunk)
         .map_err(|err| {
             eprintln!("Could not read parquet file: {}", err);
             process::exit(1);

@@ -2,6 +2,7 @@ use crate::arrow2::error::Result;
 use crate::arrow2::ffi::{FFIArrowChunk, FFIArrowSchema, FFIArrowTable};
 use arrow2::array::Array;
 use arrow2::chunk::Chunk;
+use arrow2::datatypes::Schema;
 use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};
 use arrow2::io::parquet::read::{
     infer_schema, read_metadata as parquet_read_metadata, FileReader as ParquetFileReader,
@@ -20,6 +21,7 @@ pub fn read_parquet_metadata(parquet_file: &[u8]) -> Result<FileMetaData> {
 /// using the arrow2 and parquet2 crates
 pub fn read_parquet(
     parquet_file: &[u8],
+    schema_fn: impl Fn(Schema) -> Schema,
     chunk_fn: impl Fn(Chunk<Box<dyn Array>>) -> Chunk<Box<dyn Array>>,
 ) -> Result<Vec<u8>> {
     // Create Parquet reader
@@ -41,7 +43,7 @@ pub fn read_parquet(
     let mut output_file = Vec::new();
     let options = IPCWriteOptions { compression: None };
     let mut writer = IPCStreamWriter::new(&mut output_file, options);
-    writer.start(&schema, None)?;
+    writer.start(&schema_fn(schema), None)?;
 
     // Iterate over reader chunks, writing each into the IPC writer
     for maybe_chunk in file_reader {

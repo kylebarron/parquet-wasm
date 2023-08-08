@@ -28,6 +28,7 @@ pub fn read_parquet(parquet_file: &[u8]) -> WasmResult<Vec<u8>> {
     assert_parquet_file_not_empty(parquet_file)?;
     Ok(crate::arrow2::reader::read_parquet(
         parquet_file,
+        |schema| schema,
         |chunk| chunk,
     )?)
 }
