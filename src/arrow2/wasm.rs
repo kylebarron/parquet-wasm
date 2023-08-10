@@ -1,34 +1,14 @@
-use std::borrow::BorrowMut;
 use std::sync::{Arc, Mutex};
 
 use crate::arrow2::error::WasmResult;
 use crate::arrow2::ffi::FFIArrowTable;
 use crate::log;
 use crate::utils::{assert_parquet_file_not_empty, copy_vec_to_uint8_array};
+use crate::common::stream::ReadableStreamSink;
 use js_sys::Uint8Array;
 use js_sys::{Object, Reflect, Symbol};
 use wasm_bindgen::prelude::*;
 use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};
-
-struct ReadableStreamDefaultController(web_sys::ReadableStreamDefaultController);
-
-impl std::io::Write for ReadableStreamDefaultController {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        let intermediate = Uint8Array::from(buf);
-        self.0.enqueue_with_chunk(&intermediate);
-        Ok(intermediate.byte_length() as usize)
-    }
-
-    fn flush(&mut self) -> std::io::Result<()> {
-        todo!()
-    }
-}
-
-impl From<web_sys::ReadableStreamDefaultController> for ReadableStreamDefaultController {
-    fn from(value: web_sys::ReadableStreamDefaultController) -> Self {
-        Self { 0: value}
-    }
-}
 
 
 /// Read a Parquet file into Arrow data using the [`arrow2`](https://crates.io/crates/arrow2) and
@@ -273,7 +253,7 @@ pub struct JsParquetReader {
     content_length: Option<u32>,
     metadata: Option<crate::arrow2::metadata::FileMetaData>,
     current_row_group: u32,
-    _writer: Option<Arc<Mutex<IPCStreamWriter<ReadableStreamDefaultController>>>>
+    _writer: Option<Arc<Mutex<IPCStreamWriter<ReadableStreamSink>>>>
 }
 
 pub fn set_iterator(obj: &Object) {
@@ -346,7 +326,7 @@ impl JsParquetReader {
         log!("[start]");
         self.initialize_metadata().await;
         let options = IPCWriteOptions { compression: None };
-        let mut writer = IPCStreamWriter::new(ReadableStreamDefaultController::from(_controller), options);
+        let mut writer = IPCStreamWriter::new(ReadableStreamSink::from(_controller), options);
         let arrow_schema = self.metadata.clone().unwrap().arrow_schema().unwrap_or_else(|_| {
             let bar: Vec<arrow2::datatypes::Field> = vec![];
             arrow2::datatypes::Schema::from(bar).into()
@@ -363,7 +343,7 @@ impl JsParquetReader {
         log!("[pull]");
         let chunk = self.next().await?;
         match chunk {
-            Some(chunk) => {
+            Some(_chunk) => {
                 // let _ = controller.enqueue_with_chunk(&chunk.into());
             },
             None => {

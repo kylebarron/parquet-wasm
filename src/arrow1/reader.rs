@@ -1,6 +1,5 @@
 use crate::arrow1::error::Result;
 use arrow::ipc::writer::StreamWriter;
-use arrow::record_batch::RecordBatchReader;
 use bytes::Bytes;
 use parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder;
 
