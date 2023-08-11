@@ -26,11 +26,9 @@ use wasm_bindgen::prelude::*;
 /// @returns Uint8Array containing Arrow data in [IPC Stream format](https://arrow.apache.org/docs/format/Columnar.html#ipc-streaming-format). To parse this into an Arrow table, pass to `tableFromIPC` in the Arrow JS bindings.
 #[wasm_bindgen(js_name = readParquet)]
 #[cfg(feature = "reader")]
-pub fn read_parquet(parquet_file: Vec<u8>) -> WasmResult<Uint8Array> {
+pub fn read_parquet(parquet_file: Vec<u8>) -> WasmResult<Vec<u8>> {
     assert_parquet_file_not_empty(parquet_file.as_slice())?;
-
-    let buffer = crate::arrow1::reader::read_parquet(parquet_file)?;
-    copy_vec_to_uint8_array(buffer)
+    Ok(crate::arrow1::reader::read_parquet(parquet_file)?)
 }
 
 /// Write Arrow data to a Parquet file using the [`arrow`](https://crates.io/crates/arrow) and
@@ -62,20 +60,22 @@ pub fn read_parquet(parquet_file: Vec<u8>) -> WasmResult<Uint8Array> {
 pub fn write_parquet(
     arrow_file: &[u8],
     writer_properties: Option<crate::arrow1::writer_properties::WriterProperties>,
-) -> WasmResult<Uint8Array> {
+) -> WasmResult<Vec<u8>> {
     let writer_props = writer_properties.unwrap_or_else(|| {
         crate::arrow1::writer_properties::WriterPropertiesBuilder::default().build()
     });
 
-    let buffer = crate::arrow1::writer::write_parquet(arrow_file, writer_props)?;
-    copy_vec_to_uint8_array(buffer)
+    Ok(crate::arrow1::writer::write_parquet(
+        arrow_file,
+        writer_props,
+    )?)
 }
 
 #[wasm_bindgen(js_name = readParquetAsync)]
 #[cfg(all(feature = "reader", feature = "async"))]
 pub async fn read_parquet_async(url: String) -> WasmResult<Uint8Array> {
     let buffer = crate::arrow1::reader_async::read_parquet(url).await?;
-    copy_vec_to_uint8_array(buffer)
+    copy_vec_to_uint8_array(&buffer)
 }
 #[wasm_bindgen(js_name = "ParquetReader")]
 #[cfg(all(feature = "reader", feature = "async"))]

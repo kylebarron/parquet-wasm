@@ -1,6 +1,8 @@
 use crate::arrow2::error::ParquetWasmError;
 use crate::arrow2::error::Result;
 use crate::common::fetch::{create_reader, get_content_length};
+use arrow2::array::Array;
+use arrow2::chunk::Chunk;
 use arrow2::datatypes::Schema;
 use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};
 use arrow2::io::parquet::read::FileMetaData;
@@ -105,6 +107,7 @@ pub async fn read_row_group(
     content_length: Option<usize>,
     row_group_meta: &RowGroupMetaData,
     arrow_schema: &Schema,
+    chunk_fn: impl Fn(Chunk<Box<dyn Array>>) -> Chunk<Box<dyn Array>>,
 ) -> Result<Vec<u8>> {
     // Create IPC writer
     let mut output_file = Vec::new();
@@ -113,7 +116,7 @@ pub async fn read_row_group(
     writer.start(arrow_schema, None)?;
     let deserializer = _read_row_group(url, content_length, row_group_meta, arrow_schema).await?;
     for maybe_chunk in deserializer {
-        let chunk = maybe_chunk?;
+        let chunk = chunk_fn(maybe_chunk?);
         writer.write(&chunk, None)?;
     }
 
