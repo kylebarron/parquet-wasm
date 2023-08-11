@@ -4,10 +4,10 @@ use crate::arrow1::error::Result;
 use crate::common::fetch::{create_reader, get_content_length};
 
 use arrow::ipc::writer::StreamWriter;
-use futures::stream::StreamExt;
-use parquet::arrow::async_reader::{ParquetRecordBatchStreamBuilder, ParquetRecordBatchStream};
+use futures::stream::{Stream, StreamExt};
+use parquet::arrow::async_reader::{ParquetRecordBatchStream, ParquetRecordBatchStreamBuilder};
 
-use async_compat::{CompatExt, Compat};
+use async_compat::{Compat, CompatExt};
 use parquet::file::metadata::FileMetaData;
 use range_reader::RangedAsyncReader;
 
@@ -29,7 +29,10 @@ pub async fn _read_row_group(
     url: String,
     content_length: Option<usize>,
     row_group: usize,
-) -> Result<(ParquetRecordBatchStream<Compat<RangedAsyncReader>>, Arc<arrow::datatypes::Schema>)> {
+) -> Result<(
+    ParquetRecordBatchStream<Compat<RangedAsyncReader>>,
+    Arc<arrow::datatypes::Schema>,
+)> {
     let content_length = match content_length {
         Some(content_length) => content_length,
         None => get_content_length(url.clone()).await?,
@@ -46,7 +49,8 @@ pub async fn read_row_group(
     content_length: Option<usize>,
     row_group: usize,
 ) -> Result<Vec<u8>> {
-    let (mut parquet_reader, arrow_schema) = _read_row_group(url, content_length, row_group).await?;
+    let (mut parquet_reader, arrow_schema) =
+        _read_row_group(url, content_length, row_group).await?;
     // Create IPC Writer
     let mut output_file = Vec::new();
     {
@@ -82,4 +86,23 @@ pub async fn read_parquet(url: String) -> Result<Vec<u8>> {
     }
 
     Ok(output_file)
+}
+pub type BoxedVecStream =
+    Box<dyn Stream<Item = std::result::Result<Vec<u8>, std::io::Error>> + Unpin + Send>;
+pub async fn read_parquet_stream(url: String, content_length: usize) -> Result<BoxedVecStream> {
+    let reader = create_reader(url, content_length, None);
+    let builder = ParquetRecordBatchStreamBuilder::new(reader.compat()).await?;
+    let arrow_schema = builder.schema().clone();
+    let parquet_reader = builder.build()?;
+    // preferred flow: fetch -> parquet reader stream -> ipc writer sink -> ReadableStream sink
+    Ok(Box::new(parquet_reader.map(move |maybe_record_batch| {
+        let record_batch = maybe_record_batch.unwrap();
+        let mut intermediate_vec = Vec::new();
+        {
+            let mut writer = StreamWriter::try_new(&mut intermediate_vec, &arrow_schema).unwrap();
+            let _ = writer.write(&record_batch);
+            // writer.close();
+        }
+        Ok::<Vec<u8>, std::io::Error>(intermediate_vec)
+    })))
 }

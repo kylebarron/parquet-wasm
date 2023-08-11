@@ -18,10 +18,15 @@ impl std::io::Write for ReadableStreamSink {
         todo!()
     }
 }
+impl ReadableStreamSink {
+    pub fn close(&mut self) {
+        let _ = self.0.close();
+    }
+}
 
 impl From<web_sys::ReadableStreamDefaultController> for ReadableStreamSink {
     fn from(value: web_sys::ReadableStreamDefaultController) -> Self {
-        Self { 0: value}
+        Self(value)
     }
 }
 
@@ -53,11 +58,17 @@ impl AsyncWrite for AsyncReadableStreamSink {
         }
     }
 
-    fn poll_flush(self: std::pin::Pin<&mut Self>, _cx: &mut std::task::Context<'_>) -> Poll<std::io::Result<()>> {
+    fn poll_flush(
+        self: std::pin::Pin<&mut Self>,
+        _cx: &mut std::task::Context<'_>,
+    ) -> Poll<std::io::Result<()>> {
         todo!()
     }
 
-    fn poll_close(self: std::pin::Pin<&mut Self>, _cx: &mut std::task::Context<'_>) -> Poll<std::io::Result<()>> {
+    fn poll_close(
+        self: std::pin::Pin<&mut Self>,
+        _cx: &mut std::task::Context<'_>,
+    ) -> Poll<std::io::Result<()>> {
         let this = self.get_mut();
         let _ = this.controller.close();
         Poll::Ready(Ok(()))

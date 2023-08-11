@@ -96,7 +96,6 @@ pub async fn _read_row_group(
     )
     .await?;
 
-    
     let deserializer = RowGroupDeserializer::new(column_chunks, row_group_meta.num_rows(), None);
     Ok(deserializer)
 }
@@ -112,11 +111,7 @@ pub async fn read_row_group(
     let options = IPCWriteOptions { compression: None };
     let mut writer = IPCStreamWriter::new(&mut output_file, options);
     writer.start(arrow_schema, None)?;
-    let deserializer = _read_row_group(url,
-        content_length,
-        row_group_meta,
-        arrow_schema
-    ).await?;
+    let deserializer = _read_row_group(url, content_length, row_group_meta, arrow_schema).await?;
     for maybe_chunk in deserializer {
         let chunk = maybe_chunk?;
         writer.write(&chunk, None)?;

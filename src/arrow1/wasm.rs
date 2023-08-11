@@ -1,13 +1,9 @@
+use std::rc::Rc;
 
 use crate::arrow1::error::WasmResult;
-use crate::common::fetch::create_reader;
-use crate::common::stream::AsyncReadableStreamSink;
 use crate::utils::{assert_parquet_file_not_empty, copy_vec_to_uint8_array};
-use arrow::ipc::writer::StreamWriter;
-use async_compat::CompatExt;
-use futures::{StreamExt, AsyncWriteExt};
-use js_sys::{Uint8Array, Object};
-use parquet::arrow::ParquetRecordBatchStreamBuilder;
+use js_sys::{Object, Uint8Array};
+use std::io::Write;
 use wasm_bindgen::prelude::*;
 
 /// Read a Parquet file into Arrow data using the [`arrow`](https://crates.io/crates/arrow) and
@@ -81,63 +77,71 @@ pub async fn read_parquet_async(url: String) -> WasmResult<Uint8Array> {
     let buffer = crate::arrow1::reader_async::read_parquet(url).await?;
     copy_vec_to_uint8_array(buffer)
 }
-
-
 #[wasm_bindgen(js_name = "ParquetReader")]
 #[cfg(all(feature = "reader", feature = "async"))]
 #[derive(Clone)]
 pub struct JsParquetReader {
     url: String,
     content_length: Option<u32>,
+    _stream: Option<Rc<futures::lock::Mutex<crate::arrow1::reader_async::BoxedVecStream>>>,
 }
 
 #[wasm_bindgen(js_class = "ParquetReader")]
+#[cfg(all(feature = "reader", feature = "async"))]
 impl JsParquetReader {
-
     #[wasm_bindgen(constructor)]
     pub fn new(url: String, content_length: u32) -> Self {
-        Self { url, content_length: Some(content_length)}
-    }
-
-    pub async fn pull(&mut self, _controller: web_sys::ReadableStreamDefaultController) {
-    }
-    pub async fn start(&mut self, _controller: web_sys::ReadableStreamDefaultController) -> WasmResult<bool> {
-        let content_length = usize::try_from(self.content_length.unwrap()).unwrap();
-        let reader = create_reader(self.url.clone(), content_length, None);
-        let builder = ParquetRecordBatchStreamBuilder::new(reader.compat()).await?;
-        let arrow_schema = builder.schema().clone();
-        let parquet_reader = builder.build()?;
-        let mut sink = AsyncReadableStreamSink::from(_controller);
-        // flow: fetch -> parquet reader stream -> ipc writer sink -> ReadableStream sink
-        // let mut writer = AsyncStreamWriter::new(&sink, &arrow_schema);
-        // parquet_reader.forward(writer);
-        // writer.forward(sink);
-        let mut intermediate_stream = parquet_reader.map(|maybe_record_batch| {
-            let record_batch = maybe_record_batch.unwrap();
-            let mut intermediate_vec = Vec::new();
-            {
-                let mut writer = StreamWriter::try_new(&mut intermediate_vec, &arrow_schema.clone()).unwrap();
-                let _ = writer.write(&record_batch);
-                // writer.close();
-
-            }
-            Ok::<Vec<u8>, std::io::Error>(intermediate_vec)
-        });
-        while let Some(maybe_chunk) = intermediate_stream.next().await {
-            let chunk = maybe_chunk?;
-            sink.write(&chunk).await?;
+        Self {
+            url,
+            content_length: Some(content_length),
+            _stream: None,
         }
+    }
 
-        let _ = sink.close().await;
+    pub async fn pull(
+        &mut self,
+        controller: web_sys::ReadableStreamDefaultController,
+    ) -> WasmResult<bool> {
+        use crate::common::stream::ReadableStreamSink;
+        use futures::StreamExt;
+        // store a mutable stream ref on this struct.
+        // in theory, we could just dispense with polling at all and offload
+        // the scheduling problem on the consuming context.
+        // However, it is generally a good idea to enqueue as many items as the sink
+        // is willing to accept.
+        // Both approaches involve crossing the JS-WASM boundary, how many though?
+        // Start push with backpressure: 1 per chunk (enqueue) + 1-2 per timer.
+        // At least 1 timer per highwater mark.
+        // Pull (with restraint): 1 per enqueue (which can be equal to the highwater mark) +
+        // 1 per pull.
+        let mut unwrapped_stream = self._stream.as_deref().unwrap().lock().await;
+        let desired_count = controller.desired_size().unwrap() as u32;
+        let mut wrapped_controller = ReadableStreamSink::from(controller);
+        for _ in 0..desired_count {
+            let chunk = unwrapped_stream.next().await;
+            if let Some(Ok(chunk)) = chunk {
+                let _ = wrapped_controller.write(&chunk);
+            } else {
+                wrapped_controller.close();
+            }
+        }
         Ok(true)
     }
-    pub async fn cancel(&mut self, _controller: web_sys::ReadableStreamDefaultController) {
-
+    pub async fn start(
+        &mut self,
+        _controller: web_sys::ReadableStreamDefaultController,
+    ) -> WasmResult<bool> {
+        use crate::arrow1::reader_async::read_parquet_stream;
+        let content_length = usize::try_from(self.content_length.unwrap()).unwrap();
+        let intermediate_stream = read_parquet_stream(self.url.clone(), content_length).await?;
+        self._stream = Some(Rc::new(futures::lock::Mutex::new(intermediate_stream)));
+        Ok(true)
     }
+    pub async fn cancel(&mut self, _controller: web_sys::ReadableStreamDefaultController) {}
 
     pub fn stream(&self) -> web_sys::ReadableStream {
         let wrapper: Object = Into::<JsValue>::into(self.clone()).into();
-        let stream = web_sys::ReadableStream::new_with_underlying_source(&wrapper).unwrap();
-        stream
+
+        web_sys::ReadableStream::new_with_underlying_source(&wrapper).unwrap()
     }
 }
