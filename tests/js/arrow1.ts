@@ -1,7 +1,7 @@
 import * as test from "tape";
 import * as wasm from "../../pkg/node/arrow1";
-import { readFileSync } from "fs";
-import { tableFromIPC, tableToIPC } from "apache-arrow";
+import { readFileSync, statSync } from "fs";
+import { RecordBatchStreamReader, Table, tableFromIPC, tableToIPC } from "apache-arrow";
 import { testArrowTablesEqual, readExpectedArrowData, temporaryServer } from "./utils";
 
 // Path from repo root
@@ -95,3 +95,24 @@ test("error produced trying to read file with arrayBuffer", (t) => {
 
   t.end();
 });
+
+test("read file stream", async (t) => {
+  const server = await temporaryServer();
+  const listeningPort = server.addresses()[0].port;
+  const rootUrl = `http://localhost:${listeningPort}`;
+  
+  const expectedTable = readExpectedArrowData();
+
+  for (const testFile of testFiles) {
+    const dataPath = `${dataDir}/${testFile}`;
+    const url = `${rootUrl}/${testFile}`;
+    const contentLength = statSync(dataPath).size;
+    const instance = new wasm.ParquetReader(url, contentLength);
+    const reader = await RecordBatchStreamReader.from(instance.stream());
+    const table = new Table(await reader.readAll())
+    testArrowTablesEqual(t, expectedTable, table);
+  }
+
+  await server.close();
+  t.end();
+})
