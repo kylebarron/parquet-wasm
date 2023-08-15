@@ -1,6 +1,6 @@
 use crate::arrow2::error::ParquetWasmError;
 use crate::arrow2::error::Result;
-use arrow2::array::Array;
+use arrow2::array::{Array, StructArray};
 use arrow2::chunk::Chunk;
 use arrow2::datatypes::{DataType, Field, Schema};
 use arrow2::ffi;
@@ -67,6 +67,43 @@ impl FFIArrowField {
     #[wasm_bindgen]
     pub fn addr(&self) -> *const ffi::ArrowSchema {
         self.0.as_ref() as *const _
+    }
+}
+
+/// Wrapper an Arrow RecordBatch stored as FFI in Wasm memory.
+#[wasm_bindgen]
+pub struct FFIArrowRecordBatch {
+    field: Box<ffi::ArrowSchema>,
+    array: Box<ffi::ArrowArray>,
+}
+
+impl FFIArrowRecordBatch {
+    pub fn new(field: Box<ffi::ArrowSchema>, array: Box<ffi::ArrowArray>) -> Self {
+        Self { field, array }
+    }
+
+    pub fn from_chunk(chunk: Chunk<Box<dyn Array>>, schema: Schema) -> Self {
+        let data_type = DataType::Struct(schema.fields);
+        let struct_array = StructArray::try_new(data_type.clone(), chunk.to_vec(), None).unwrap();
+        let field = Field::new("", data_type, false).with_metadata(schema.metadata);
+
+        Self {
+            field: Box::new(ffi::export_field_to_c(&field)),
+            array: Box::new(ffi::export_array_to_c(struct_array.boxed())),
+        }
+    }
+}
+
+#[wasm_bindgen]
+impl FFIArrowRecordBatch {
+    #[wasm_bindgen]
+    pub fn array_addr(&self) -> *const ffi::ArrowArray {
+        self.array.as_ref() as *const _
+    }
+
+    #[wasm_bindgen]
+    pub fn field_addr(&self) -> *const ffi::ArrowSchema {
+        self.field.as_ref() as *const _
     }
 }
 
@@ -153,81 +190,61 @@ impl FFIArrowSchema {
     }
 }
 
-/// Wrapper around an Arrow Table in Wasm memory (a lisjst of FFI ArrowSchema structs plus a list of
-/// lists of ArrowArray FFI structs.)
+/// Wrapper around an Arrow Table in Wasm memory (a list of FFIArrowRecordBatch objects.)
 #[wasm_bindgen]
-pub struct FFIArrowTable {
-    schema: Box<FFIArrowSchema>,
-    chunks: Vec<FFIArrowChunk>,
-}
+pub struct FFIArrowTable(Vec<FFIArrowRecordBatch>);
 
-impl From<(FFIArrowSchema, Vec<FFIArrowChunk>)> for FFIArrowTable {
-    fn from((schema, chunks): (FFIArrowSchema, Vec<FFIArrowChunk>)) -> Self {
-        Self {
-            schema: Box::new(schema),
-            chunks,
-        }
+impl FFIArrowTable {
+    pub fn new(batches: Vec<FFIArrowRecordBatch>) -> Self {
+        Self(batches)
     }
 }
 
 #[wasm_bindgen]
 impl FFIArrowTable {
-    /// Get the number of Fields in the table schema
-    #[wasm_bindgen(js_name = schemaLength)]
-    pub fn schema_length(&self) -> usize {
-        self.schema.length()
+    /// Get the total number of record batches in the table
+    #[wasm_bindgen(js_name = numBatches)]
+    pub fn num_batches(&self) -> usize {
+        self.0.len()
     }
 
     /// Get the pointer to one ArrowSchema FFI struct
-    /// @param i number the index of the field in the schema to use
     #[wasm_bindgen(js_name = schemaAddr)]
-    pub fn schema_addr(&self, i: usize) -> *const ffi::ArrowSchema {
-        self.schema.addr(i)
-    }
-
-    /// Get the total number of chunks in the table
-    #[wasm_bindgen(js_name = chunksLength)]
-    pub fn chunks_length(&self) -> usize {
-        self.chunks.len()
-    }
-
-    /// Get the number of columns in a given chunk
-    #[wasm_bindgen(js_name = chunkLength)]
-    pub fn chunk_length(&self, i: usize) -> usize {
-        self.chunks[i].length()
+    pub fn schema_addr(&self) -> *const ffi::ArrowSchema {
+        // Note: this assumes that every record batch has the same schema
+        self.0[0].field_addr()
     }
 
     /// Get the pointer to one ArrowArray FFI struct for a given chunk index and column index
     /// @param chunk number The chunk index to use
-    /// @param column number The column index to use
     /// @returns number pointer to an ArrowArray FFI struct in Wasm memory
     #[wasm_bindgen(js_name = arrayAddr)]
-    pub fn array_addr(&self, chunk: usize, column: usize) -> *const ffi::ArrowArray {
-        self.chunks[chunk].addr(column)
+    pub fn array_addr(&self, chunk: usize) -> *const ffi::ArrowArray {
+        self.0[chunk].array_addr()
     }
 
     #[wasm_bindgen]
     pub fn drop(self) {
-        drop(self.schema);
-        drop(self.chunks);
+        drop(self.0);
     }
 }
 
 impl FFIArrowTable {
     pub fn import(self) -> Result<(Schema, ArrowTable)> {
-        let schema: Schema = self.schema.as_ref().try_into()?;
-        let data_types: Vec<&DataType> = schema
-            .fields
-            .iter()
-            .map(|field| field.data_type())
-            .collect();
+        todo!()
+        // let schema: Schema = self.schema.as_ref().try_into()?;
+        // let data_types: Vec<&DataType> = schema
+        //     .fields
+        //     .iter()
+        //     .map(|field| field.data_type())
+        //     .collect();
 
-        let mut chunks: Vec<Chunk<Box<dyn Array>>> = vec![];
-        for chunk in self.chunks.into_iter() {
-            let imported = chunk.import(&data_types)?;
-            chunks.push(imported);
-        }
+        // let mut chunks: Vec<Chunk<Box<dyn Array>>> = vec![];
+        // for chunk in self.chunks.into_iter() {
+        //     let imported = chunk.import(&data_types)?;
+        //     chunks.push(imported);
+        // }
 
-        Ok((schema, chunks))
+        // Ok((schema, chunks))
     }
 }
