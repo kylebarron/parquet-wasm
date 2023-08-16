@@ -71,6 +71,8 @@ impl FFIArrowField {
 }
 
 /// Wrapper an Arrow RecordBatch stored as FFI in Wasm memory.
+///
+/// Refer to {@linkcode readParquetFFI} for instructions on how to use this.
 #[wasm_bindgen]
 pub struct FFIArrowRecordBatch {
     field: Box<ffi::ArrowSchema>,
@@ -191,6 +193,8 @@ impl FFIArrowSchema {
 }
 
 /// Wrapper around an Arrow Table in Wasm memory (a list of FFIArrowRecordBatch objects.)
+///
+/// Refer to {@linkcode readParquetFFI} for instructions on how to use this.
 #[wasm_bindgen]
 pub struct FFIArrowTable(Vec<FFIArrowRecordBatch>);
 

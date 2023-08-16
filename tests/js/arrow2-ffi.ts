@@ -2,7 +2,6 @@ import * as test from "tape";
 import * as wasm from "../../pkg/node/arrow2";
 import { readFileSync } from "fs";
 import * as arrow from "apache-arrow";
-import { RecordBatch, Table, tableFromIPC, tableToIPC } from "apache-arrow";
 import { testArrowTablesEqual, readExpectedArrowData } from "./utils";
 import { parseRecordBatch } from "arrow-js-ffi";
 
@@ -31,7 +30,7 @@ test("read via FFI", async (t) => {
     batches.push(recordBatch);
   }
 
-  const initialTable = new arrow.Table(...batches);
+  const initialTable = new arrow.Table(batches);
   testArrowTablesEqual(t, expectedTable, initialTable);
   t.end();
 });

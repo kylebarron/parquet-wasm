@@ -32,21 +32,65 @@ pub fn read_parquet(parquet_file: &[u8]) -> WasmResult<Vec<u8>> {
     )?)
 }
 
-/// Read a Parquet file into Arrow data using the [`arrow2`](https://crates.io/crates/arrow2) and
-/// [`parquet2`](https://crates.io/crates/parquet2) Rust crates.
+/// Read a Parquet file into Arrow FFI structs using the
+/// [`arrow2`](https://crates.io/crates/arrow2) and [`parquet2`](https://crates.io/crates/parquet2)
+/// Rust crates.
 ///
-/// Example:
+/// This API is less well tested than the "normal" `readParquet` API, but should be faster and have
+/// **much** less memory overhead (by a factor of 2). If you hit any bugs, please create a
+/// reproducible issue at <https://github.com/kylebarron/parquet-wasm/issues/new>.
+///
+/// ## Background
+///
+/// Under the hood, `parquet-wasm` first decodes a Parquet file into Arrow _in WebAssembly memory_.
+/// But then that WebAssembly memory needs to be copied into JavaScript for use by Arrow JS. The
+/// "normal" read APIs (e.g. `readParquet`) use the [Arrow IPC
+/// format](https://arrow.apache.org/docs/python/ipc.html) to get the data back to JavaScript. But
+/// this requires another memory copy _inside WebAssembly_ to assemble the buffer to be copied back
+/// to JS.
+///
+/// Instead, this API uses Arrow's [C Data
+/// Interface](https://arrow.apache.org/docs/format/CDataInterface.html) to be able to copy or view
+/// Arrow arrays from within WebAssembly memory without any serialization.
+///
+/// ## Caveats
+///
+/// This requires you to use [`arrow-js-ffi`](https://github.com/kylebarron/arrow-js-ffi) to parse
+/// the Arrow C Data Interface definitions. This library has not yet been tested in production, so
+/// it may have bugs!
+///
+/// ## Example:
 ///
 /// ```js
-/// import { tableFromIPC } from "apache-arrow";
+/// import { Table } from "apache-arrow";
+/// import { parseRecordBatch } from "arrow-js-ffi";
 /// // Edit the `parquet-wasm` import as necessary
-/// import { _readParquetFFI } from "parquet-wasm/node2";
+/// import { readParquetFFI, __wasm } from "parquet-wasm/node2";
+///
+/// // A reference to the WebAssembly memory object. The way to access this is different for each
+/// // environment. In Node, use the __wasm export as shown below. In ESM the memory object will
+/// // be found on the returned default export.
+/// // const WASM_MEMORY = __wasm.memory;
 ///
 /// const resp = await fetch("https://example.com/file.parquet");
 /// const parquetUint8Array = new Uint8Array(await resp.arrayBuffer());
-/// const wasmArrowTable = _readParquetFFI(parquetUint8Array);
-/// // Pointer to the ArrowArray FFI struct for the first record batch and first column
-/// const arrayPtr = wasmArrowTable.array(0, 0);
+/// const wasmArrowTable = readParquetFFI(parquetUint8Array);
+///
+/// const recordBatches = [];
+/// for (let i = 0; i < wasmArrowTable.numBatches(); i++) {
+///   // Note: Unless you know what you're doing, setting `true` below is recommended to _copy_
+///   // table data from WebAssembly into JavaScript memory. This may become the default in the
+///   // future.
+///   const recordBatch = parseRecordBatch(
+///     WASM_MEMORY.buffer,
+///     wasmArrowTable.arrayAddr(i),
+///     wasmArrowTable.schemaAddr(),
+///     true
+///   );
+///   batches.push(recordBatch);
+/// }
+///
+/// const initialTable = new Table(batches);
 /// ```
 ///
 /// @param parquet_file Uint8Array containing Parquet data
