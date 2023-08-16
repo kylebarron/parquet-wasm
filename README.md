@@ -144,6 +144,10 @@ Note that this approach uses the [`arrow-js-ffi`](https://github.com/kylebarron/
 library to parse the Arrow C Data Interface definitions. This library has not yet been tested in
 production, so it may have bugs!
 
+I wrote an [interactive blog
+post](https://observablehq.com/@kylebarron/zero-copy-apache-arrow-with-webassembly) on this approach
+and the Arrow C Data Interface if you want to read more!
+
 ### Example
 
 ```js

@@ -53,6 +53,10 @@ pub fn read_parquet(parquet_file: &[u8]) -> WasmResult<Vec<u8>> {
 /// Interface](https://arrow.apache.org/docs/format/CDataInterface.html) to be able to copy or view
 /// Arrow arrays from within WebAssembly memory without any serialization.
 ///
+/// I wrote an [interactive blog
+/// post](https://observablehq.com/@kylebarron/zero-copy-apache-arrow-with-webassembly) on this
+/// approach and the Arrow C Data Interface if you want to read more!
+///
 /// ## Caveats
 ///
 /// This requires you to use [`arrow-js-ffi`](https://github.com/kylebarron/arrow-js-ffi) to parse
