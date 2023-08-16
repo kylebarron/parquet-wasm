@@ -1,5 +1,5 @@
 use crate::arrow2::error::Result;
-use crate::arrow2::ffi::{FFIArrowChunk, FFIArrowSchema, FFIArrowTable};
+use crate::arrow2::ffi::{FFIArrowRecordBatch, FFIArrowTable};
 use arrow2::array::Array;
 use arrow2::chunk::Chunk;
 use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};
@@ -55,6 +55,7 @@ pub fn read_parquet_ffi(
     let metadata = parquet_read_metadata(&mut input_file)?;
     let schema = infer_schema(&metadata)?;
 
+    let num_row_groups = metadata.row_groups.len();
     let file_reader = ParquetFileReader::new(
         input_file,
         metadata.row_groups,
@@ -64,16 +65,16 @@ pub fn read_parquet_ffi(
         None,
     );
 
-    let ffi_schema: FFIArrowSchema = (&schema).into();
-    let mut ffi_chunks: Vec<FFIArrowChunk> = vec![];
+    let mut ffi_record_batches = Vec::with_capacity(num_row_groups);
 
     // Iterate over reader chunks, storing each in memory to be used for FFI
     for maybe_chunk in file_reader {
         let chunk = chunk_fn(maybe_chunk?);
-        ffi_chunks.push(chunk.into());
+        let ffi_record_batch = FFIArrowRecordBatch::from_chunk(chunk, schema.clone());
+        ffi_record_batches.push(ffi_record_batch);
     }
 
-    Ok((ffi_schema, ffi_chunks).into())
+    Ok(FFIArrowTable::new(ffi_record_batches))
 }
 
 /// Read metadata from parquet buffer

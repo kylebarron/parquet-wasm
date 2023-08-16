@@ -52,7 +52,7 @@ test("read-write-read round trip (with writer properties)", async (t) => {
   t.end();
 });
 
-test("read-write-read round trip (no writer properties provided)", async (t) => {
+test("read-write-read round trip (no writer properties provided)", async (t) => {
   const dataPath = `${dataDir}/1-partition-brotli.parquet`;
   const buffer = readFileSync(dataPath);
   const arr = new Uint8Array(buffer);

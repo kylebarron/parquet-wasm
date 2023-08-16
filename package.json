@@ -11,7 +11,8 @@
   "devDependencies": {
     "@types/node": "^17.0.21",
     "@types/tape": "^4.13.2",
-    "apache-arrow": "^7.0.0",
+    "apache-arrow": "^12.0.0",
+    "arrow-js-ffi": "0.3.0",
     "benny": "^3.7.1",
     "gh-pages": "^3.2.3",
     "tape": "^5.5.2",
