@@ -107,17 +107,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/flatbuffers@npm:*":
-  version: 1.10.0
-  resolution: "@types/flatbuffers@npm:1.10.0"
-  checksum: f6665700a8aca5129c487650607548fb50f3ae1d2de2b0d1d71ee5275a7b250004f956a21e38f47ab3b26315b29f175a84471f82a4569a09fb6c3dc19640ef9a
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:*, @types/node@npm:^17.0.21, @types/node@npm:^17.0.8":
+"@types/node@npm:*, @types/node@npm:^17.0.21":
   version: 17.0.21
   resolution: "@types/node@npm:17.0.21"
   checksum: 89dcd2fe82f21d3634266f8384e9c865cf8af49685639fbdbd799bdd1040480fb1e8eeda2d3b9fce41edbe704d2a4be9f427118c4ae872e8d9bb7cbeb3c41a94
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:18.14.5":
+  version: 18.14.5
+  resolution: "@types/node@npm:18.14.5"
+  checksum: 415fb0edc132baa9580f1b7a381a3f10b662f5d7a7d11641917fa0961788ccede3272badc414aadc47306e9fc35c5f6c59159ac470b46d3f3a15fb0446224c8c
   languageName: node
   linkType: hard
 
@@ -187,24 +187,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"apache-arrow@npm:^7.0.0":
-  version: 7.0.0
-  resolution: "apache-arrow@npm:7.0.0"
+"apache-arrow@npm:^12.0.0":
+  version: 12.0.1
+  resolution: "apache-arrow@npm:12.0.1"
   dependencies:
     "@types/command-line-args": 5.2.0
     "@types/command-line-usage": 5.0.2
-    "@types/flatbuffers": "*"
-    "@types/node": ^17.0.8
+    "@types/node": 18.14.5
     "@types/pad-left": 2.1.1
-    command-line-args: 5.2.0
-    command-line-usage: 6.1.1
-    flatbuffers: 2.0.4
+    command-line-args: 5.2.1
+    command-line-usage: 6.1.3
+    flatbuffers: 23.3.3
     json-bignum: ^0.0.3
     pad-left: ^2.1.0
-    tslib: ^2.3.1
+    tslib: ^2.5.0
   bin:
     arrow2csv: bin/arrow2csv.js
-  checksum: b60d900c47cc4581c21713a47ed2738318e971f91f35aebe561011f10d503468f754499607c852a2c367d5a74c965b9c1ca31bf3476005dff08f76e088930da9
+  checksum: c753ccc5daeacd6c02ca51e263aa11fdffe3991a6bc9c6eb3a2d59a063c8738c48e55e3cb92cc43de588613f74d2975434a50e3f1130e01d136a406b6d282469
   languageName: node
   linkType: hard
 
@@ -222,7 +221,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"array-back@npm:^4.0.1":
+"array-back@npm:^4.0.1, array-back@npm:^4.0.2":
   version: 4.0.2
   resolution: "array-back@npm:4.0.2"
   checksum: f30603270771eeb54e5aad5f54604c62b3577a18b6db212a7272b2b6c32049121b49431f656654790ed1469411e45f387e7627c0de8fd0515995cc40df9b9294
@@ -254,6 +253,15 @@ __metadata:
     es-abstract: ^1.19.0
     is-string: ^1.0.7
   checksum: bbcc864ac1271307043a16262455a6f917d183060a7e5b99c7c710ee611d40c1065f4ec674323b50cf8b987f2d0c9ca9e9ff9cbf4bcc7740f82e731ec2a58d6f
+  languageName: node
+  linkType: hard
+
+"arrow-js-ffi@npm:0.3.0-beta.1":
+  version: 0.3.0-beta.1
+  resolution: "arrow-js-ffi@npm:0.3.0-beta.1"
+  peerDependencies:
+    apache-arrow: ^10.0.0
+  checksum: 0122d8b6c2ec6cf528da9005b780aaa4b3a9c1588f09fcb956de3be177c07f9f3a33986f2f73bc56161e2118d054b40c7dc216d58141203305fddd7c5e99a75e
   languageName: node
   linkType: hard
 
@@ -395,27 +403,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"command-line-args@npm:5.2.0":
-  version: 5.2.0
-  resolution: "command-line-args@npm:5.2.0"
+"command-line-args@npm:5.2.1":
+  version: 5.2.1
+  resolution: "command-line-args@npm:5.2.1"
   dependencies:
     array-back: ^3.1.0
     find-replace: ^3.0.0
     lodash.camelcase: ^4.3.0
     typical: ^4.0.0
-  checksum: a63dd41541fc98fcef7a5f4f63e626a6c5955fae57247b604077f1d0cfbff58c5830240880903342785a0c40952c4bbd3a977425ba3f4c7d515253296843a566
+  checksum: e759519087be3cf2e86af8b9a97d3058b4910cd11ee852495be881a067b72891f6a32718fb685ee6d41531ab76b2b7bfb6602f79f882cd4b7587ff1e827982c7
   languageName: node
   linkType: hard
 
-"command-line-usage@npm:6.1.1":
-  version: 6.1.1
-  resolution: "command-line-usage@npm:6.1.1"
+"command-line-usage@npm:6.1.3":
+  version: 6.1.3
+  resolution: "command-line-usage@npm:6.1.3"
   dependencies:
-    array-back: ^4.0.1
+    array-back: ^4.0.2
     chalk: ^2.4.2
-    table-layout: ^1.0.1
+    table-layout: ^1.0.2
     typical: ^5.2.0
-  checksum: f84268a10449323cc838cec3eeaa962b0e63b93142bbeb9202e3e5406ecbbc91fd018d235a49088430f5b757fa1e9c086c3ca141583cfc3950d3fb366b0b2fed
+  checksum: 8261d4e5536eb0bcddee0ec5e89c05bb2abd18e5760785c8078ede5020bc1c612cbe28eb6586f5ed4a3660689748e5aaad4a72f21566f4ef39393694e2fa1a0b
   languageName: node
   linkType: hard
 
@@ -656,10 +664,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"flatbuffers@npm:2.0.4":
-  version: 2.0.4
-  resolution: "flatbuffers@npm:2.0.4"
-  checksum: e51ae9a19f18a771b3188afd66c607e2d2640739f8f1a50fd23527acf0c6b98e20347756c3eb022483b1125e12abdf60c097746753c01abeb921855f03271b80
+"flatbuffers@npm:23.3.3":
+  version: 23.3.3
+  resolution: "flatbuffers@npm:23.3.3"
+  checksum: 7d8352e233cc81942e36b2ccfd7f3baf5d9a5e9614ebd83e9f4bc4accaebd43cb824788bd76334f5a61a8c2a74ddfd8f87ca7ac01cc522ad2774ae66c276dff1
   languageName: node
   linkType: hard
 
@@ -1440,7 +1448,8 @@ __metadata:
   dependencies:
     "@types/node": ^17.0.21
     "@types/tape": ^4.13.2
-    apache-arrow: ^7.0.0
+    apache-arrow: ^12.0.0
+    arrow-js-ffi: 0.3.0-beta.1
     benny: ^3.7.1
     gh-pages: ^3.2.3
     tape: ^5.5.2
@@ -1568,7 +1577,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"table-layout@npm:^1.0.1":
+"table-layout@npm:^1.0.2":
   version: 1.0.2
   resolution: "table-layout@npm:1.0.2"
   dependencies:
@@ -1665,10 +1674,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:^2.3.1":
-  version: 2.3.1
-  resolution: "tslib@npm:2.3.1"
-  checksum: de17a98d4614481f7fcb5cd53ffc1aaf8654313be0291e1bfaee4b4bb31a20494b7d218ff2e15017883e8ea9626599b3b0e0229c18383ba9dce89da2adf15cb9
+"tslib@npm:^2.5.0":
+  version: 2.6.1
+  resolution: "tslib@npm:2.6.1"
+  checksum: b0d176d176487905b66ae4d5856647df50e37beea7571c53b8d10ba9222c074b81f1410fb91da13debaf2cbc970663609068bdebafa844ea9d69b146527c38fe
   languageName: node
   linkType: hard
 

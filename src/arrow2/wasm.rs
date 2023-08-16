@@ -51,7 +51,7 @@ pub fn read_parquet(parquet_file: &[u8]) -> WasmResult<Vec<u8>> {
 ///
 /// @param parquet_file Uint8Array containing Parquet data
 /// @returns an {@linkcode FFIArrowTable} object containing the parsed Arrow table in WebAssembly memory. To read into an Arrow JS table, you'll need to use the Arrow C Data interface.
-#[wasm_bindgen(js_name = _readParquetFFI)]
+#[wasm_bindgen(js_name = readParquetFFI)]
 #[cfg(feature = "reader")]
 pub fn read_parquet_ffi(parquet_file: &[u8]) -> WasmResult<FFIArrowTable> {
     assert_parquet_file_not_empty(parquet_file)?;

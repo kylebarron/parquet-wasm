@@ -10,8 +10,20 @@ export function testArrowTablesEqual(
   table1: Table,
   table2: Table
 ): void {
-  // It seems fine to just call deepEquals directly on the schema object
-  t.deepEquals(table1.schema, table2.schema, "schemas are equal");
+  t.deepEquals(table1.schema.metadata, table2.schema.metadata);
+  t.deepEquals(table1.schema.fields.length, table2.schema.fields.length);
+
+  // Note that calling deepEquals on the schema object correctly can fail when in one schema the
+  // type is Int_ with bitWidth 32 and the other has Int32.
+  for (let i = 0; i < table1.schema.fields.length; i++) {
+    const field1 = table1.schema.fields[i];
+    const field2 = table2.schema.fields[i];
+    t.deepEquals(field1.name, field2.name);
+    t.deepEquals(field1.nullable, field2.nullable);
+    // Note that calling deepEquals on the type fails! Instead you have to check the typeId
+    // t.deepEquals(field1.type, field2.type);
+    t.deepEquals(field1.typeId, field2.typeId);
+  }
 
   // However deepEquals on the table itself can give false negatives because Arrow tables can have
   // different underlying memory for the same data representation, i.e. if one table has one record
