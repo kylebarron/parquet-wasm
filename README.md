@@ -121,6 +121,63 @@ console.log(table.schema.toString());
 - [GeoParquet on the Web (Observable)](https://observablehq.com/@kylebarron/geoparquet-on-the-web)
 - [Hello, Parquet-WASM (Observable)](https://observablehq.com/@bmschmidt/hello-parquet-wasm)
 
+## Performance considerations
+
+> Tl;dr: Try the new
+  [`readParquetFFI`](https://kylebarron.dev/parquet-wasm/modules/bundler_arrow2.html#readParquetFFI)
+  API, new in 0.4.0. This API is less well tested than the "normal" `readParquet` API, but should be
+  faster and have **much** less memory overhead (by a factor of 2). If you hit any bugs, please
+  [create a reproducible issue](https://github.com/kylebarron/parquet-wasm/issues/new).
+
+Under the hood, `parquet-wasm` first decodes a Parquet file into Arrow _in WebAssembly memory_. But
+then that WebAssembly memory needs to be copied into JavaScript for use by Arrow JS. The "normal"
+read APIs (e.g. `readParquet`) use the [Arrow IPC
+format](https://arrow.apache.org/docs/python/ipc.html) to get the data back to JavaScript. But this
+requires another memory copy _inside WebAssembly_ to assemble the various arrays into a single
+buffer to be copied back to JS.
+
+Instead, the new `readParquetFFI` API uses Arrow's [C Data
+Interface](https://arrow.apache.org/docs/format/CDataInterface.html) to be able to copy or view
+Arrow arrays from within WebAssembly memory without any serialization.
+
+Note that this approach uses the [`arrow-js-ffi`](https://github.com/kylebarron/arrow-js-ffi)
+library to parse the Arrow C Data Interface definitions. This library has not yet been tested in
+production, so it may have bugs!
+
+### Example
+
+```js
+import { Table } from "apache-arrow";
+import { parseRecordBatch } from "arrow-js-ffi";
+// Edit the `parquet-wasm` import as necessary
+import { readParquetFFI, __wasm } from "parquet-wasm/node2";
+
+// A reference to the WebAssembly memory object. The way to access this is different for each
+// environment. In Node, use the __wasm export as shown below. In ESM the memory object will
+// be found on the returned default export.
+const WASM_MEMORY = __wasm.memory;
+
+const resp = await fetch("https://example.com/file.parquet");
+const parquetUint8Array = new Uint8Array(await resp.arrayBuffer());
+const wasmArrowTable = readParquetFFI(parquetUint8Array);
+
+const recordBatches = [];
+for (let i = 0; i < wasmArrowTable.numBatches(); i++) {
+  // Note: Unless you know what you're doing, setting `true` below is recommended to _copy_
+  // table data from WebAssembly into JavaScript memory. This may become the default in the
+  // future.
+  const recordBatch = parseRecordBatch(
+    WASM_MEMORY.buffer,
+    wasmArrowTable.arrayAddr(i),
+    wasmArrowTable.schemaAddr(),
+    true
+  );
+  batches.push(recordBatch);
+}
+
+const table = new Table(batches);
+```
+
 ## Compression support
 
 The Parquet specification permits several compression codecs. This library currently supports:

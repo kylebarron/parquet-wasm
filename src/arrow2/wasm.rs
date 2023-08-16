@@ -46,8 +46,8 @@ pub fn read_parquet(parquet_file: &[u8]) -> WasmResult<Vec<u8>> {
 /// But then that WebAssembly memory needs to be copied into JavaScript for use by Arrow JS. The
 /// "normal" read APIs (e.g. `readParquet`) use the [Arrow IPC
 /// format](https://arrow.apache.org/docs/python/ipc.html) to get the data back to JavaScript. But
-/// this requires another memory copy _inside WebAssembly_ to assemble the buffer to be copied back
-/// to JS.
+/// this requires another memory copy _inside WebAssembly_ to assemble the various arrays into a
+/// single buffer to be copied back to JS.
 ///
 /// Instead, this API uses Arrow's [C Data
 /// Interface](https://arrow.apache.org/docs/format/CDataInterface.html) to be able to copy or view
@@ -70,7 +70,7 @@ pub fn read_parquet(parquet_file: &[u8]) -> WasmResult<Vec<u8>> {
 /// // A reference to the WebAssembly memory object. The way to access this is different for each
 /// // environment. In Node, use the __wasm export as shown below. In ESM the memory object will
 /// // be found on the returned default export.
-/// // const WASM_MEMORY = __wasm.memory;
+/// const WASM_MEMORY = __wasm.memory;
 ///
 /// const resp = await fetch("https://example.com/file.parquet");
 /// const parquetUint8Array = new Uint8Array(await resp.arrayBuffer());
@@ -90,7 +90,7 @@ pub fn read_parquet(parquet_file: &[u8]) -> WasmResult<Vec<u8>> {
 ///   batches.push(recordBatch);
 /// }
 ///
-/// const initialTable = new Table(batches);
+/// const table = new Table(batches);
 /// ```
 ///
 /// @param parquet_file Uint8Array containing Parquet data
