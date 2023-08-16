@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.0] - 2023-08-15
+
+## What's Changed
+
+- Async reader support in the arrow2 bindings
+- Improved memory usage via `readParquetFFI` in conjunction with `arrow-js-ffi`.
+- Remove "2" from function names in arrow2 api by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/173
+- Make arrow2 the default bundle by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/174
+- Add bindings for arrow2 metadata (without serde support) by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/153
+- Add lz4_raw and zstd compressions for parquet2 by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/114
+
+**Full Changelog**: https://github.com/kylebarron/parquet-wasm/compare/v0.3.1...v0.4.0
+
 ## [0.4.0-beta.1] - 2022-08-08
 
 ## What's Changed
