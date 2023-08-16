@@ -256,12 +256,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"arrow-js-ffi@npm:0.3.0-beta.1":
-  version: 0.3.0-beta.1
-  resolution: "arrow-js-ffi@npm:0.3.0-beta.1"
+"arrow-js-ffi@npm:0.3.0":
+  version: 0.3.0
+  resolution: "arrow-js-ffi@npm:0.3.0"
   peerDependencies:
     apache-arrow: ^10.0.0
-  checksum: 0122d8b6c2ec6cf528da9005b780aaa4b3a9c1588f09fcb956de3be177c07f9f3a33986f2f73bc56161e2118d054b40c7dc216d58141203305fddd7c5e99a75e
+  checksum: 11ad9b353204800478915f061d0cfb1cf3fc97872511773cade817c18a93126e6db2020c0755538b73026ec4093477e3a50d9c2ba68d407cca2c8403450f6a45
   languageName: node
   linkType: hard
 
@@ -1449,7 +1449,7 @@ __metadata:
     "@types/node": ^17.0.21
     "@types/tape": ^4.13.2
     apache-arrow: ^12.0.0
-    arrow-js-ffi: 0.3.0-beta.1
+    arrow-js-ffi: 0.3.0
     benny: ^3.7.1
     gh-pages: ^3.2.3
     tape: ^5.5.2
