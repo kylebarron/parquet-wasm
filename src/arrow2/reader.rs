@@ -2,6 +2,7 @@ use crate::arrow2::error::Result;
 use crate::arrow2::ffi::{FFIArrowRecordBatch, FFIArrowTable};
 use arrow2::array::Array;
 use arrow2::chunk::Chunk;
+use arrow2::datatypes::Schema;
 use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};
 use arrow2::io::parquet::read::{
     infer_schema, read_metadata as parquet_read_metadata, FileReader as ParquetFileReader,
@@ -9,11 +10,18 @@ use arrow2::io::parquet::read::{
 use parquet2::metadata::{FileMetaData, RowGroupMetaData};
 use std::io::Cursor;
 
+pub fn read_parquet_metadata(parquet_file: &[u8]) -> Result<FileMetaData> {
+    // Create Parquet reader
+    let mut input_file = Cursor::new(parquet_file);
+
+    Ok(parquet_read_metadata(&mut input_file)?)
+}
+
 /// Internal function to read a buffer with Parquet data into a buffer with Arrow IPC Stream data
 /// using the arrow2 and parquet2 crates
 pub fn read_parquet(
     parquet_file: &[u8],
-    chunk_fn: impl Fn(Chunk<Box<dyn Array>>) -> Chunk<Box<dyn Array>>,
+    chunk_fn: impl Fn(&Schema, Chunk<Box<dyn Array>>, bool) -> (Option<Schema>, Chunk<Box<dyn Array>>),
 ) -> Result<Vec<u8>> {
     // Create Parquet reader
     let mut input_file = Cursor::new(parquet_file);
@@ -34,11 +42,19 @@ pub fn read_parquet(
     let mut output_file = Vec::new();
     let options = IPCWriteOptions { compression: None };
     let mut writer = IPCStreamWriter::new(&mut output_file, options);
-    writer.start(&schema, None)?;
+
+    // Whether the writer has already had `start` called
+    let mut has_started = false;
 
     // Iterate over reader chunks, writing each into the IPC writer
     for maybe_chunk in file_reader {
-        let chunk = chunk_fn(maybe_chunk?);
+        let (new_schema, chunk) = chunk_fn(&schema, maybe_chunk?, !has_started);
+
+        if !has_started {
+            writer.start(&new_schema.unwrap(), None)?;
+            has_started = true;
+        }
+
         writer.write(&chunk, None)?;
     }
 
