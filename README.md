@@ -180,6 +180,12 @@ for (let i = 0; i < wasmArrowTable.numBatches(); i++) {
 }
 
 const table = new Table(batches);
+
+// VERY IMPORTANT! You must call `drop` on the Wasm table object when you're done using it
+// to release the Wasm memory.
+// Note that any access to the pointers in this table is undefined behavior after this call.
+// Calling any `wasmArrowTable` method will error.
+wasmArrowTable.drop();
 ```
 
 ## Compression support
