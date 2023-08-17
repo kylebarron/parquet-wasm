@@ -106,3 +106,15 @@ pub async fn read_parquet_stream(url: String, content_length: usize) -> Result<B
         Ok::<Vec<u8>, std::io::Error>(intermediate_vec)
     })))
 }
+
+pub type BoxedFFIStream = Box<dyn Stream<Item = super::ffi::FFIArrowRecordBatch> + Unpin + Send>;
+pub async fn read_ffi_stream(url: String, content_length: usize) -> Result<BoxedFFIStream> {
+    let reader = create_reader(url, content_length, None);
+    let builder = ParquetRecordBatchStreamBuilder::new(reader.compat()).await?;
+    let parquet_reader = builder.build()?;
+    let stream = parquet_reader.map(|maybe_record_batch| {
+        let record_batch = maybe_record_batch.unwrap();
+        super::ffi::FFIArrowRecordBatch::from(record_batch)
+    });
+    Ok(Box::new(stream))
+}

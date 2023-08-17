@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::arrow1::error::WasmResult;
@@ -5,6 +6,8 @@ use crate::utils::{assert_parquet_file_not_empty, copy_vec_to_uint8_array};
 use js_sys::{Object, Uint8Array};
 use std::io::Write;
 use wasm_bindgen::prelude::*;
+
+use super::ffi::FFIArrowRecordBatch;
 
 /// Read a Parquet file into Arrow data using the [`arrow`](https://crates.io/crates/arrow) and
 /// [`parquet`](https://crates.io/crates/parquet) Rust crates.
@@ -134,6 +137,61 @@ impl JsParquetReader {
         use crate::arrow1::reader_async::read_parquet_stream;
         let content_length = usize::try_from(self.content_length.unwrap()).unwrap();
         let intermediate_stream = read_parquet_stream(self.url.clone(), content_length).await?;
+        self._stream = Some(Rc::new(futures::lock::Mutex::new(intermediate_stream)));
+        Ok(true)
+    }
+    pub async fn cancel(&mut self, _controller: web_sys::ReadableStreamDefaultController) {}
+
+    pub fn stream(&self) -> web_sys::ReadableStream {
+        let wrapper: Object = Into::<JsValue>::into(self.clone()).into();
+
+        web_sys::ReadableStream::new_with_underlying_source(&wrapper).unwrap()
+    }
+}
+#[wasm_bindgen(js_name = "FFIStreamReader")]
+#[cfg(all(feature = "reader", feature = "async"))]
+#[derive(Clone)]
+pub struct JsFFIStreamReader {
+    url: String,
+    content_length: Option<u32>,
+    _stream: Option<Rc<futures::lock::Mutex<crate::arrow1::reader_async::BoxedFFIStream>>>,
+}
+#[wasm_bindgen(js_class = "FFIStreamReader")]
+#[cfg(all(feature = "reader", feature = "async"))]
+impl JsFFIStreamReader {
+    #[wasm_bindgen(constructor)]
+    pub fn new(url: String, content_length: u32) -> Self {
+        Self {
+            url,
+            content_length: Some(content_length),
+            _stream: None,
+        }
+    }
+
+    pub async fn pull(
+        &mut self,
+        controller: web_sys::ReadableStreamDefaultController,
+    ) -> WasmResult<bool> {
+        use futures::StreamExt;
+        let mut unwrapped_stream = self._stream.as_deref().unwrap().lock().await;
+        let desired_count = controller.desired_size().unwrap() as u32;
+        for _ in 0..desired_count {
+            let chunk = unwrapped_stream.next().await;
+            if let Some(chunk) = chunk {
+                let _ = controller.enqueue_with_chunk(&chunk.into());
+            } else {
+                let _ = controller.close();
+            }
+        }
+        Ok(true)
+    }
+    pub async fn start(
+        &mut self,
+        _controller: web_sys::ReadableStreamDefaultController,
+    ) -> WasmResult<bool> {
+        use crate::arrow1::reader_async::read_ffi_stream;
+        let content_length = usize::try_from(self.content_length.unwrap()).unwrap();
+        let intermediate_stream = read_ffi_stream(self.url.clone(), content_length).await?;
         self._stream = Some(Rc::new(futures::lock::Mutex::new(intermediate_stream)));
         Ok(true)
     }
