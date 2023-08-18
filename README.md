@@ -176,10 +176,10 @@ for (let i = 0; i < wasmArrowTable.numBatches(); i++) {
     wasmArrowTable.schemaAddr(),
     true
   );
-  batches.push(recordBatch);
+  recordBatches.push(recordBatch);
 }
 
-const table = new Table(batches);
+const table = new Table(recordBatches);
 
 // VERY IMPORTANT! You must call `drop` on the Wasm table object when you're done using it
 // to release the Wasm memory.

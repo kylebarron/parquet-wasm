@@ -91,10 +91,16 @@ pub fn read_parquet(parquet_file: &[u8]) -> WasmResult<Vec<u8>> {
 ///     wasmArrowTable.schemaAddr(),
 ///     true
 ///   );
-///   batches.push(recordBatch);
+///   recordBatches.push(recordBatch);
 /// }
 ///
-/// const table = new Table(batches);
+/// const table = new Table(recordBatches);
+///
+/// // VERY IMPORTANT! You must call `drop` on the Wasm table object when you're done using it
+/// // to release the Wasm memory.
+/// // Note that any access to the pointers in this table is undefined behavior after this call.
+/// // Calling any `wasmArrowTable` method will error.
+/// wasmArrowTable.drop();
 /// ```
 ///
 /// @param parquet_file Uint8Array containing Parquet data
