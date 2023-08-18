@@ -87,10 +87,16 @@ pub fn read_parquet(parquet_file: &[u8]) -> WasmResult<Table> {
 // ///     wasmArrowTable.schemaAddr(),
 // ///     true
 // ///   );
-// ///   batches.push(recordBatch);
+// ///   recordBatches.push(recordBatch);
 // /// }
 // ///
-// /// const table = new Table(batches);
+// /// const table = new Table(recordBatches);
+// ///
+// /// // VERY IMPORTANT! You must call `drop` on the Wasm table object when you're done using it
+// /// // to release the Wasm memory.
+// /// // Note that any access to the pointers in this table is undefined behavior after this call.
+// /// // Calling any `wasmArrowTable` method will error.
+// /// wasmArrowTable.drop();
 // /// ```
 // ///
 // /// @param parquet_file Uint8Array containing Parquet data
@@ -99,7 +105,10 @@ pub fn read_parquet(parquet_file: &[u8]) -> WasmResult<Table> {
 // #[cfg(feature = "reader")]
 // pub fn read_parquet_ffi(parquet_file: &[u8]) -> WasmResult<FFIArrowTable> {
 //     assert_parquet_file_not_empty(parquet_file)?;
-//     Ok(crate::arrow2::reader::read_parquet(parquet_file)?)
+//     Ok(crate::arrow2::reader::read_parquet_ffi(
+//         parquet_file,
+//         |chunk| chunk,
+//     )?)
 // }
 
 /// Read metadata from a Parquet file using the [`arrow2`](https://crates.io/crates/arrow2) and
