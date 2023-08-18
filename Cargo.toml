@@ -17,7 +17,12 @@ crate-type = ["cdylib", "rlib"]
 [features]
 default = ["arrow1", "all_compressions", "reader", "writer"]
 arrow1 = ["dep:arrow", "dep:parquet", "dep:bytes"]
-arrow2 = ["dep:arrow2", "dep:parquet2", "dep:serde-wasm-bindgen"]
+arrow2 = [
+  "dep:arrow2",
+  "dep:parquet2",
+  "dep:serde-wasm-bindgen",
+  "dep:arrow-wasm",
+]
 reader = []
 writer = []
 async = [
@@ -67,6 +72,9 @@ js-sys = "0.3.60"
 getrandom = { version = "0.2.6", features = ["js"] }
 thiserror = "1.0"
 
+arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "b4829de024daf54b94386d06ba6e8153f11bb194", optional = true }
+# arrow-wasm = { path = "/Users/kyle/github/rust/arrow-wasm", optional = true }
+
 arrow2 = { version = "0.17", optional = true, features = [
   "io_ipc",
   "io_parquet",
@@ -93,7 +101,10 @@ range-reader = { version = "0.2", optional = true }
 reqwest = { version = "0.11.12", optional = true, default-features = false }
 
 # Pass "wasm" and "thin" down to the transitive zstd dependency
-zstd = { version = "*", features = ["wasm", "thin"], default-features = false, optional = true }
+zstd = { version = "*", features = [
+  "wasm",
+  "thin",
+], default-features = false, optional = true }
 
 [dependencies.web-sys]
 version = "0.3.4"

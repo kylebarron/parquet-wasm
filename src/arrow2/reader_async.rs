@@ -1,13 +1,11 @@
 use crate::arrow2::error::ParquetWasmError;
 use crate::arrow2::error::Result;
 use crate::common::fetch::{get_content_length, make_range_request};
-use arrow2::array::Array;
-use arrow2::chunk::Chunk;
 use arrow2::datatypes::Schema;
-use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};
 use arrow2::io::parquet::read::FileMetaData;
 use arrow2::io::parquet::read::RowGroupMetaData;
 use arrow2::io::parquet::read::{read_columns_many_async, RowGroupDeserializer};
+use arrow_wasm::arrow2::RecordBatch;
 use futures::future::BoxFuture;
 use parquet2::read::read_metadata_async as _read_metadata_async;
 use range_reader::{RangeOutput, RangedAsyncReader};
@@ -65,8 +63,7 @@ pub async fn read_row_group(
     // content_length: Option<usize>,
     row_group_meta: &RowGroupMetaData,
     arrow_schema: &Schema,
-    chunk_fn: impl Fn(Chunk<Box<dyn Array>>) -> Chunk<Box<dyn Array>>,
-) -> Result<Vec<u8>> {
+) -> Result<RecordBatch> {
     // Extract the file paths from each underlying column
     let file_paths: Vec<&Option<String>> = row_group_meta
         .columns()
@@ -117,18 +114,20 @@ pub async fn read_row_group(
     )
     .await?;
 
-    // Create IPC writer
-    let mut output_file = Vec::new();
-    let options = IPCWriteOptions { compression: None };
-    let mut writer = IPCStreamWriter::new(&mut output_file, options);
-    writer.start(arrow_schema, None)?;
-
     let deserializer = RowGroupDeserializer::new(column_chunks, row_group_meta.num_rows(), None);
-    for maybe_chunk in deserializer {
-        let chunk = chunk_fn(maybe_chunk?);
-        writer.write(&chunk, None)?;
-    }
 
-    writer.finish()?;
-    Ok(output_file)
+    let chunk = {
+        let mut chunks = Vec::with_capacity(1);
+
+        // Iterate over reader chunks, writing each into the IPC writer
+        for maybe_chunk in deserializer {
+            chunks.push(maybe_chunk?);
+        }
+
+        // Should be 1 because only reading one row group
+        assert_eq!(chunks.len(), 1);
+        chunks.pop().unwrap()
+    };
+
+    Ok(RecordBatch::new(arrow_schema.clone(), chunk))
 }
