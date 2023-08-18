@@ -17,7 +17,7 @@ const EXPECTED_META_GEOARROW = `\
 test("test geo-arrow-spec (wkb) metadata passed through", async (t) => {
   const dataPath = `${dataDir}/${NATURALEARTH_CITIES_WKB}`;
   const arr = new Uint8Array(readFileSync(dataPath));
-  const table = tableFromIPC(parquet.readParquet(arr));
+  const table = tableFromIPC(parquet.readParquet(arr).intoIPC());
   t.equals(
     table.schema.metadata.get("geo"),
     EXPECTED_META_WKB,
@@ -30,7 +30,7 @@ test("test geo-arrow-spec (wkb) metadata passed through", async (t) => {
 test("test geo-arrow-spec (geoarrow encoding) metadata passed through", async (t) => {
   const dataPath = `${dataDir}/${NATURALEARTH_CITIES_GEOARROW}`;
   const arr = new Uint8Array(readFileSync(dataPath));
-  const table = tableFromIPC(parquet.readParquet(arr));
+  const table = tableFromIPC(parquet.readParquet(arr).intoIPC());
 
   t.equals(
     table.schema.metadata.get("geo"),

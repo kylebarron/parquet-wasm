@@ -17,7 +17,7 @@ test("read via FFI", async (t) => {
   const dataPath = `${dataDir}/1-partition-brotli.parquet`;
   const buffer = readFileSync(dataPath);
   const arr = new Uint8Array(buffer);
-  const ffiTable = wasm.readParquetFFI(arr);
+  const ffiTable = wasm.readParquet(arr).intoFFI();
 
   const batches: arrow.RecordBatch[] = [];
   for (let i = 0; i < ffiTable.numBatches(); i++) {

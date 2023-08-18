@@ -1,5 +1,6 @@
 import * as test from "tape";
 import * as wasm from "../../pkg/node/arrow2";
+import * as arrow from "apache-arrow";
 import { readFileSync } from "fs";
 import { RecordBatch, Table, tableFromIPC, tableToIPC } from "apache-arrow";
 import { testArrowTablesEqual, readExpectedArrowData } from "./utils";
@@ -27,7 +28,7 @@ test("read file", async (t) => {
   for (const testFile of testFiles) {
     const dataPath = `${dataDir}/${testFile}`;
     const arr = new Uint8Array(readFileSync(dataPath));
-    const table = tableFromIPC(wasm.readParquet(arr));
+    const table = tableFromIPC(wasm.readParquet(arr).intoIPC());
     testArrowTablesEqual(t, expectedTable, table);
   }
 
@@ -38,15 +39,15 @@ test("read-write-read round trip (with writer properties)", async (t) => {
   const dataPath = `${dataDir}/1-partition-brotli.parquet`;
   const buffer = readFileSync(dataPath);
   const arr = new Uint8Array(buffer);
-  const initialTable = tableFromIPC(wasm.readParquet(arr));
+  const initialTable = tableFromIPC(wasm.readParquet(arr).intoIPC());
 
   const writerProperties = new wasm.WriterPropertiesBuilder().build();
 
   const parquetBuffer = wasm.writeParquet(
-    tableToIPC(initialTable, "file"),
+    wasm.Table.fromIPC(tableToIPC(initialTable, "file")),
     writerProperties
   );
-  const table = tableFromIPC(wasm.readParquet(parquetBuffer));
+  const table = tableFromIPC(wasm.readParquet(parquetBuffer).intoIPC());
 
   testArrowTablesEqual(t, initialTable, table);
   t.end();
@@ -56,10 +57,10 @@ test("read-write-read round trip (no writer properties provided)", async (t) => 
   const dataPath = `${dataDir}/1-partition-brotli.parquet`;
   const buffer = readFileSync(dataPath);
   const arr = new Uint8Array(buffer);
-  const initialTable = tableFromIPC(wasm.readParquet(arr));
+  const initialTable = tableFromIPC(wasm.readParquet(arr).intoIPC());
 
-  const parquetBuffer = wasm.writeParquet(tableToIPC(initialTable, "file"));
-  const table = tableFromIPC(wasm.readParquet(parquetBuffer));
+  const parquetBuffer = wasm.writeParquet(wasm.Table.fromIPC(tableToIPC(initialTable, "file")));
+  const table = tableFromIPC(wasm.readParquet(parquetBuffer).intoIPC());
 
   testArrowTablesEqual(t, initialTable, table);
   t.end();
@@ -87,7 +88,7 @@ test("iterate over row groups", (t) => {
 
   const chunks: RecordBatch[] = [];
   for (let i = 0; i < fileMetaData.numRowGroups(); i++) {
-    let arrowIpcBuffer = wasm.readRowGroup(arr, arrowSchema, fileMetaData.rowGroup(i));
+    let arrowIpcBuffer = wasm.readRowGroup(arr, arrowSchema, fileMetaData.rowGroup(i)).intoIPC();
     chunks.push(...tableFromIPC(arrowIpcBuffer).batches);
   }
 

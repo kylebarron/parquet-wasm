@@ -257,7 +257,7 @@ dependencies = [
 [[package]]
 name = "arrow-wasm"
 version = "0.1.0"
-source = "git+https://github.com/kylebarron/arrow-wasm?rev=b4829de024daf54b94386d06ba6e8153f11bb194#b4829de024daf54b94386d06ba6e8153f11bb194"
+source = "git+https://github.com/kylebarron/arrow-wasm?rev=3c7e408978b947db04aa614f66b0b873b09583a8#3c7e408978b947db04aa614f66b0b873b09583a8"
 dependencies = [
  "arrow2",
  "getrandom",
