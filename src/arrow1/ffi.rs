@@ -1,7 +1,7 @@
-use std::sync::Arc;
 
-use arrow::array::{make_array, Array, StructArray};
-use arrow::datatypes::{DataType, Field, Schema};
+
+use arrow::array::{Array, StructArray};
+use arrow::datatypes::{Field, Schema};
 use arrow::ffi::{self, from_ffi, to_ffi};
 use arrow::record_batch::RecordBatch;
 use wasm_bindgen::prelude::*;
@@ -43,7 +43,7 @@ impl FFIArrowField {
 }
 
 impl From<&Field> for FFIArrowField {
-    fn from(value: &Field) -> Self {
+    fn from(_value: &Field) -> Self {
         todo!()
     }
 }
@@ -68,7 +68,7 @@ impl FFIArrowSchema {
 
 impl From<&Schema> for FFIArrowSchema {
     fn from(value: &Schema) -> Self {
-        for field in value.fields.into_iter() {}
+        for _field in value.fields.into_iter() {}
         todo!()
     }
 }
@@ -114,8 +114,8 @@ impl From<FFIArrowRecordBatch> for RecordBatch {
     fn from(value: FFIArrowRecordBatch) -> Self {
         let array_data = from_ffi(*value.array, &value.field).unwrap();
         let intermediate = StructArray::from(array_data);
-        let batch = RecordBatch::from(intermediate);
-        batch
+        
+        RecordBatch::from(intermediate)
     }
 }
 

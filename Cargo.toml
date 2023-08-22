@@ -26,6 +26,7 @@ async = [
   "dep:range-reader",
   "dep:reqwest",
   "dep:wasm-streams",
+  "dep:async-compat",
   "parquet?/async",
 ]
 debug = ["console_error_panic_hook", "clap"]
