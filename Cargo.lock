@@ -284,6 +284,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-compat"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b48b4ff0c2026db683dea961cd8ea874737f56cffca86fa84415eaddc51c00d"
+dependencies = [
+ "futures-core",
+ "futures-io",
+ "once_cell",
+ "pin-project-lite",
+ "tokio",
+]
+
+[[package]]
 name = "async-stream"
 version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1176,6 +1189,7 @@ dependencies = [
  "bytes",
  "chrono",
  "flate2",
+ "futures",
  "hashbrown 0.14.0",
  "num",
  "num-bigint",
@@ -1183,6 +1197,7 @@ dependencies = [
  "seq-macro",
  "snap",
  "thrift",
+ "tokio",
  "twox-hash",
  "zstd",
 ]
@@ -1203,6 +1218,7 @@ version = "0.4.0"
 dependencies = [
  "arrow",
  "arrow2",
+ "async-compat",
  "bytes",
  "clap",
  "console_error_panic_hook",
@@ -1649,7 +1665,19 @@ dependencies = [
  "mio",
  "pin-project-lite",
  "socket2",
+ "tokio-macros",
  "windows-sys",
+]
+
+[[package]]
+name = "tokio-macros"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "630bdcf245f78637c13ec01ffae6187cca34625e8c63150d424b59e55af2675e"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.28",
 ]
 
 [[package]]

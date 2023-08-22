@@ -25,6 +25,7 @@ async = [
   "dep:futures",
   "dep:range-reader",
   "dep:reqwest",
+  "parquet?/async"
 ]
 debug = ["console_error_panic_hook", "clap"]
 
@@ -95,6 +96,7 @@ reqwest = { version = "0.11.19", optional = true, default-features = false }
 
 # Pass "wasm" and "thin" down to the transitive zstd dependency
 zstd = { version = "*", features = ["wasm", "thin"], default-features = false, optional = true }
+async-compat = { version = "0.2.1", optional = true }
 
 [dependencies.web-sys]
 version = "0.3.4"
