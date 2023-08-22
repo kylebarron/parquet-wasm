@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use arrow::array::{make_array, Array};
+use arrow::array::{make_array, Array, StructArray};
 use arrow::datatypes::{DataType, Field, Schema};
 use arrow::ffi::{self, from_ffi, to_ffi};
 use arrow::record_batch::RecordBatch;
@@ -77,76 +77,45 @@ impl From<&Schema> for FFIArrowSchema {
 /// structs
 #[wasm_bindgen]
 pub struct FFIArrowRecordBatch {
-    arrays: Vec<FFIArrowArray>,
-    schema: FFIArrowSchema,
+    array: Box<ffi::FFI_ArrowArray>,
+    field: Box<ffi::FFI_ArrowSchema>,
 }
 
 #[wasm_bindgen]
 impl FFIArrowRecordBatch {
-    /// The number of columns in this record batch.
-    #[wasm_bindgen(js_name = numColumns)]
-    pub fn num_columns(&self) -> usize {
-        self.arrays.len()
-    }
-
-    /// Get the number of Fields in the table schema
-    #[wasm_bindgen(js_name = schemaLength)]
-    pub fn schema_length(&self) -> usize {
-        self.schema.length()
-    }
-
     /// Get the pointer to one ArrowSchema FFI struct
     /// @param i number the index of the field in the schema to use
     #[wasm_bindgen(js_name = schemaAddr)]
-    pub fn schema_addr(&self, i: usize) -> *const ffi::FFI_ArrowSchema {
-        self.schema.addr(i)
+    pub fn field_addr(&self) -> *const ffi::FFI_ArrowSchema {
+        self.field.as_ref() as *const _
     }
 
     /// Get the pointer to one ArrowArray FFI struct for a given chunk index and column index
     /// @param column number The column index to use
     /// @returns number pointer to an ArrowArray FFI struct in Wasm memory
     #[wasm_bindgen(js_name = arrayAddr)]
-    pub fn array_addr(&self, column: usize) -> *const ffi::FFI_ArrowArray {
-        self.arrays[column].addr()
+    pub fn array_addr(&self) -> *const ffi::FFI_ArrowArray {
+        self.array.as_ref() as *const _
     }
 }
 
 impl From<RecordBatch> for FFIArrowRecordBatch {
     fn from(value: RecordBatch) -> Self {
-        let mut arrays = Vec::with_capacity(value.num_columns());
-        let mut fields = Vec::with_capacity(value.num_columns());
-
-        for column in value.columns() {
-            let data = column.to_data();
-            let (out_array, out_schema) = to_ffi(&data).unwrap();
-            arrays.push(FFIArrowArray(Box::new(out_array)));
-            fields.push(FFIArrowField(Box::new(out_schema)));
-        }
-
+        let intermediate = StructArray::from(value).into_data();
+        let (out_array, out_schema) = to_ffi(&intermediate).unwrap();
         Self {
-            arrays,
-            schema: FFIArrowSchema(fields),
+            array: Box::new(out_array),
+            field: Box::new(out_schema),
         }
     }
 }
 
 impl From<FFIArrowRecordBatch> for RecordBatch {
     fn from(value: FFIArrowRecordBatch) -> Self {
-        let mut columns = Vec::with_capacity(value.schema_length());
-        let mut fields = Vec::with_capacity(value.schema_length());
-        for (array, schema) in value.arrays.into_iter().zip(value.schema.0.into_iter()) {
-            let array = make_array(from_ffi(*array.0, &schema.0).unwrap());
-            let name = schema.0.name();
-            let data_type = DataType::try_from(schema.0.as_ref()).unwrap();
-            let nullable = schema.0.nullable();
-            columns.push(array);
-            fields.push(Field::new(name, data_type, nullable))
-        }
-
-        let x = RecordBatch::try_new(Arc::new(Schema::new(fields)), columns);
-        // RecordBatch::n
-
-        todo!()
+        let array_data = from_ffi(*value.array, &value.field).unwrap();
+        let intermediate = StructArray::from(array_data);
+        let batch = RecordBatch::from(intermediate);
+        batch
     }
 }
 
@@ -167,7 +136,24 @@ impl From<Vec<RecordBatch>> for FFIArrowTable {
 
 #[wasm_bindgen]
 impl FFIArrowTable {
-    // TODO: access to
+    #[wasm_bindgen(js_name = numBatches)]
+    pub fn num_batches(&self) -> usize {
+        self.0.len()
+    }
+
+    /// Get the pointer to one ArrowSchema FFI struct
+    #[wasm_bindgen(js_name = schemaAddr)]
+    pub fn schema_addr(&self) -> *const ffi::FFI_ArrowSchema {
+        self.0[0].field_addr()
+    }
+
+    /// Get the pointer to one ArrowArray FFI struct for a given chunk index and column index
+    /// @param chunk number The chunk index to use
+    /// @returns number pointer to an ArrowArray FFI struct in Wasm memory
+    #[wasm_bindgen(js_name = arrayAddr)]
+    pub fn array_addr(&self, chunk: usize) -> *const ffi::FFI_ArrowArray {
+        self.0[chunk].array_addr()
+    }
 }
 
 impl From<Vec<FFIArrowRecordBatch>> for FFIArrowTable {
