@@ -71,7 +71,6 @@ pub async fn read_record_batch_stream(
         Some(_content_length) => _content_length,
         None => get_content_length(url.clone()).await?,
     };
-    let content_length = usize::try_from(content_length).unwrap();
     let reader = crate::common::fetch::create_reader(url, content_length, None);
 
     let builder = ParquetRecordBatchStreamBuilder::new(reader.compat()).await?;

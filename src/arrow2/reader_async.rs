@@ -116,19 +116,21 @@ pub async fn read_row_group(
     Ok(output_file)
 }
 
-pub async fn read_record_batch_stream(url: String) -> Result<impl futures::Stream<Item = super::ffi::FFIArrowRecordBatch>> {
+pub async fn read_record_batch_stream(
+    url: String,
+) -> Result<impl futures::Stream<Item = super::ffi::FFIArrowRecordBatch>> {
     use async_stream::stream;
     let inner_stream = stream! {
         let metadata = read_metadata_async(url.clone(), None).await.unwrap();
         let compat_meta = crate::arrow2::metadata::FileMetaData::from(metadata.clone());
-    
+
         let arrow_schema = compat_meta.arrow_schema().unwrap_or_else(|_| {
             let bar: Vec<arrow2::datatypes::Field> = vec![];
             arrow2::datatypes::Schema::from(bar).into()
         });
         for row_group_meta in metadata.row_groups {
-            let foo = arrow_schema.clone().into();
-            let deserializer = _read_row_group(url.clone(), &row_group_meta, &foo).await.unwrap();
+            let schema = arrow_schema.clone().into();
+            let deserializer = _read_row_group(url.clone(), &row_group_meta, &schema).await.unwrap();
             for maybe_chunk in deserializer {
                 let chunk = maybe_chunk.unwrap();
                 yield super::ffi::FFIArrowRecordBatch::from_chunk(chunk, arrow_schema.clone().into());

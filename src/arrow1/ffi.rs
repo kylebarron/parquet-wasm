@@ -1,5 +1,3 @@
-
-
 use arrow::array::{Array, StructArray};
 use arrow::datatypes::{Field, Schema};
 use arrow::ffi::{self, from_ffi, to_ffi};
@@ -114,7 +112,7 @@ impl From<FFIArrowRecordBatch> for RecordBatch {
     fn from(value: FFIArrowRecordBatch) -> Self {
         let array_data = from_ffi(*value.array, &value.field).unwrap();
         let intermediate = StructArray::from(array_data);
-        
+
         RecordBatch::from(intermediate)
     }
 }

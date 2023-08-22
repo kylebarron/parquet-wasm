@@ -1,5 +1,5 @@
 use crate::arrow1::error::WasmResult;
-use crate::arrow1::ffi::{FFIArrowRecordBatch, FFIArrowTable};
+use crate::arrow1::ffi::FFIArrowTable;
 use crate::utils::assert_parquet_file_not_empty;
 use wasm_bindgen::prelude::*;
 
@@ -81,6 +81,7 @@ pub async fn read_ffi_stream(
     url: String,
     content_length: Option<usize>,
 ) -> WasmResult<wasm_streams::readable::sys::ReadableStream> {
+    use crate::arrow1::ffi::FFIArrowRecordBatch;
     use futures::StreamExt;
     let parquet_stream =
         crate::arrow1::reader_async::read_record_batch_stream(url, content_length).await?;

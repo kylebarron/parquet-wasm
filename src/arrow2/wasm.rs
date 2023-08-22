@@ -355,7 +355,8 @@ pub async fn read_ffi_stream(
     url: String,
 ) -> WasmResult<wasm_streams::readable::sys::ReadableStream> {
     use futures::StreamExt;
-    let stream = super::reader_async::read_record_batch_stream(url).await?.map(|batch| Ok(batch.into()));
+    let stream = super::reader_async::read_record_batch_stream(url)
+        .await?
+        .map(|batch| Ok(batch.into()));
     Ok(wasm_streams::ReadableStream::from_stream(stream).into_raw())
-
 }
