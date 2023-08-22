@@ -1,10 +1,10 @@
 use std::convert::TryInto;
 
 use futures::channel::oneshot;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen_futures::spawn_local;
 use futures::future::BoxFuture;
 use range_reader::{RangeOutput, RangedAsyncReader};
+use wasm_bindgen::prelude::*;
+use wasm_bindgen_futures::spawn_local;
 
 /// Get content-length of file
 pub async fn _get_content_length(url: String) -> Result<usize, reqwest::Error> {

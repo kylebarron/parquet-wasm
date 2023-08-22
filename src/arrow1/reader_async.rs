@@ -4,7 +4,7 @@ use crate::arrow1::error::Result;
 use crate::common::fetch::{create_reader, get_content_length};
 
 use arrow::ipc::writer::StreamWriter;
-use futures::stream::StreamExt;
+use futures::StreamExt;
 use parquet::arrow::async_reader::{ParquetRecordBatchStream, ParquetRecordBatchStreamBuilder};
 
 use async_compat::{Compat, CompatExt};
@@ -47,10 +47,9 @@ pub async fn _read_row_group(
 pub async fn read_row_group(
     url: String,
     row_group: usize,
-    chunk_fn: impl Fn(arrow::record_batch::RecordBatch) -> arrow::record_batch::RecordBatch
+    chunk_fn: impl Fn(arrow::record_batch::RecordBatch) -> arrow::record_batch::RecordBatch,
 ) -> Result<Vec<u8>> {
-    let (mut parquet_reader, arrow_schema) =
-        _read_row_group(url, None, row_group).await?;
+    let (mut parquet_reader, arrow_schema) = _read_row_group(url, None, row_group).await?;
     // Create IPC Writer
     let mut output_file = Vec::new();
     {
@@ -62,4 +61,20 @@ pub async fn read_row_group(
         writer.finish()?;
     }
     Ok(output_file)
+}
+
+pub async fn read_record_batch_stream(
+    url: String,
+    content_length: Option<usize>,
+) -> Result<ParquetRecordBatchStream<Compat<RangedAsyncReader>>> {
+    let content_length = match content_length {
+        Some(_content_length) => _content_length,
+        None => get_content_length(url.clone()).await?,
+    };
+    let content_length = usize::try_from(content_length).unwrap();
+    let reader = crate::common::fetch::create_reader(url, content_length, None);
+
+    let builder = ParquetRecordBatchStreamBuilder::new(reader.compat()).await?;
+    let parquet_reader = builder.build()?;
+    Ok(parquet_reader)
 }

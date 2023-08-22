@@ -1,6 +1,6 @@
 use crate::arrow2::error::ParquetWasmError;
 use crate::arrow2::error::Result;
-use crate::common::fetch::{get_content_length, create_reader};
+use crate::common::fetch::{create_reader, get_content_length};
 use arrow2::array::Array;
 use arrow2::chunk::Chunk;
 use arrow2::datatypes::Schema;

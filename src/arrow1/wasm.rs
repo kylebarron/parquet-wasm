@@ -66,3 +66,19 @@ pub fn write_parquet(
         writer_props,
     )?)
 }
+
+#[wasm_bindgen(js_name = readFFIStream)]
+#[cfg(all(feature = "reader", feature = "async"))]
+pub async fn read_ffi_stream(
+    url: String,
+    content_length: Option<usize>,
+) -> WasmResult<wasm_streams::readable::sys::ReadableStream> {
+    use futures::StreamExt;
+    let parquet_stream =
+        crate::arrow1::reader_async::read_record_batch_stream(url, content_length).await?;
+    let stream = parquet_stream.map(|maybe_record_batch| {
+        let record_batch = maybe_record_batch.unwrap();
+        Ok(super::ffi::FFIArrowRecordBatch::from(record_batch).into())
+    });
+    Ok(wasm_streams::ReadableStream::from_stream(stream).into_raw())
+}
