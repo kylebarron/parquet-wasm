@@ -3,6 +3,8 @@ use std::convert::TryInto;
 use futures::channel::oneshot;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
+use futures::future::BoxFuture;
+use range_reader::{RangeOutput, RangedAsyncReader};
 
 /// Get content-length of file
 pub async fn _get_content_length(url: String) -> Result<usize, reqwest::Error> {
@@ -64,4 +66,28 @@ pub async fn make_range_request(
     });
     let data = receiver.await.unwrap();
     Ok(data)
+}
+
+/// Create a RangedAsyncReader
+pub fn create_reader(
+    url: String,
+    content_length: usize,
+    min_request_size: Option<usize>,
+) -> RangedAsyncReader {
+    // at least 4kb per s3 request. Adjust to your liking.
+    let min_request_size = min_request_size.unwrap_or(4 * 1024);
+
+    // Closure for making an individual HTTP range request to a file
+    let range_get = Box::new(move |start: u64, length: usize| {
+        let url = url.clone();
+
+        Box::pin(async move {
+            let data = make_range_request(url.clone(), start, length)
+                .await
+                .unwrap();
+            Ok(RangeOutput { start, data })
+        }) as BoxFuture<'static, std::io::Result<RangeOutput>>
+    });
+
+    RangedAsyncReader::new(content_length, min_request_size, range_get)
 }

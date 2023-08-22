@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use arrow::array::{make_array, Array};
-use arrow::datatypes::{Field, Schema};
+use arrow::datatypes::{DataType, Field, Schema};
 use arrow::ffi::{self, from_ffi, to_ffi};
 use arrow::record_batch::RecordBatch;
 use wasm_bindgen::prelude::*;
@@ -136,7 +136,9 @@ impl From<FFIArrowRecordBatch> for RecordBatch {
         let mut fields = Vec::with_capacity(value.schema_length());
         for (array, schema) in value.arrays.into_iter().zip(value.schema.0.into_iter()) {
             let array = make_array(from_ffi(*array.0, &schema.0).unwrap());
-
+            let name = schema.0.name();
+            let data_type = DataType::try_from(schema.0.as_ref()).unwrap();
+            let nullable = schema.0.nullable();
             columns.push(array);
             fields.push(Field::new(name, data_type, nullable))
         }
@@ -166,6 +168,12 @@ impl From<Vec<RecordBatch>> for FFIArrowTable {
 #[wasm_bindgen]
 impl FFIArrowTable {
     // TODO: access to
+}
+
+impl From<Vec<FFIArrowRecordBatch>> for FFIArrowTable {
+    fn from(batches: Vec<FFIArrowRecordBatch>) -> Self {
+        Self(batches)
+    }
 }
 
 impl FFIArrowTable {
