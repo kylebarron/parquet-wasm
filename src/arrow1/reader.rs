@@ -1,4 +1,5 @@
 use crate::arrow1::error::Result;
+use crate::arrow1::ffi::FFIArrowTable;
 use arrow::ipc::writer::StreamWriter;
 use bytes::Bytes;
 use parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder;
@@ -31,4 +32,15 @@ pub fn read_parquet(parquet_file: Vec<u8>) -> Result<Vec<u8>> {
     // Note that this returns output_file directly instead of using writer.into_inner().to_vec() as
     // the latter seems likely to incur an extra copy of the vec
     Ok(output_file)
+}
+
+pub fn read_parquet_ffi(parquet_file: Vec<u8>) -> Result<FFIArrowTable> {
+    // Create Parquet reader
+    let cursor: Bytes = parquet_file.into();
+    let builder = ParquetRecordBatchReaderBuilder::try_new(cursor).unwrap();
+
+    // Create Arrow reader
+    let reader = builder.build().unwrap();
+
+    FFIArrowTable::try_from_iterator(reader)
 }
