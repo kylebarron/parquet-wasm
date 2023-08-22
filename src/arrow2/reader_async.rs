@@ -36,13 +36,12 @@ fn all_elements_equal(arr: &[&Option<String>]) -> bool {
     arr.iter().all(|&item| item == first)
 }
 
-pub async fn read_row_group(
+pub async fn _read_row_group(
     url: String,
     // content_length: Option<usize>,
     row_group_meta: &RowGroupMetaData,
     arrow_schema: &Schema,
-    chunk_fn: impl Fn(Chunk<Box<dyn Array>>) -> Chunk<Box<dyn Array>>,
-) -> Result<Vec<u8>> {
+) -> Result<RowGroupDeserializer> {
     // Extract the file paths from each underlying column
     let file_paths: Vec<&Option<String>> = row_group_meta
         .columns()
@@ -93,18 +92,48 @@ pub async fn read_row_group(
     )
     .await?;
 
+    let deserializer = RowGroupDeserializer::new(column_chunks, row_group_meta.num_rows(), None);
+    Ok(deserializer)
+}
+
+pub async fn read_row_group(
+    url: String,
+    // content_length: Option<usize>,
+    row_group_meta: &RowGroupMetaData,
+    arrow_schema: &Schema,
+    chunk_fn: impl Fn(Chunk<Box<dyn Array>>) -> Chunk<Box<dyn Array>>,
+) -> Result<Vec<u8>> {
+    let deserializer = _read_row_group(url, row_group_meta, arrow_schema).await?;
     // Create IPC writer
     let mut output_file = Vec::new();
     let options = IPCWriteOptions { compression: None };
     let mut writer = IPCStreamWriter::new(&mut output_file, options);
     writer.start(arrow_schema, None)?;
-
-    let deserializer = RowGroupDeserializer::new(column_chunks, row_group_meta.num_rows(), None);
     for maybe_chunk in deserializer {
         let chunk = chunk_fn(maybe_chunk?);
         writer.write(&chunk, None)?;
     }
-
-    writer.finish()?;
     Ok(output_file)
+}
+
+pub async fn read_record_batch_stream(url: String) -> Result<impl futures::Stream<Item = super::ffi::FFIArrowRecordBatch>> {
+    use async_stream::stream;
+    let inner_stream = stream! {
+        let metadata = read_metadata_async(url.clone(), None).await.unwrap();
+        let compat_meta = crate::arrow2::metadata::FileMetaData::from(metadata.clone());
+    
+        let arrow_schema = compat_meta.arrow_schema().unwrap_or_else(|_| {
+            let bar: Vec<arrow2::datatypes::Field> = vec![];
+            arrow2::datatypes::Schema::from(bar).into()
+        });
+        for row_group_meta in metadata.row_groups {
+            let foo = arrow_schema.clone().into();
+            let deserializer = _read_row_group(url.clone(), &row_group_meta, &foo).await.unwrap();
+            for maybe_chunk in deserializer {
+                let chunk = maybe_chunk.unwrap();
+                yield super::ffi::FFIArrowRecordBatch::from_chunk(chunk, arrow_schema.clone().into());
+            }
+        }
+    };
+    Ok(inner_stream)
 }

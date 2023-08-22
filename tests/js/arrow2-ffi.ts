@@ -2,7 +2,7 @@ import * as test from "tape";
 import * as wasm from "../../pkg/node/arrow2";
 import { readFileSync } from "fs";
 import * as arrow from "apache-arrow";
-import { testArrowTablesEqual, readExpectedArrowData } from "./utils";
+import { testArrowTablesEqual, readExpectedArrowData, temporaryServer } from "./utils";
 import { parseRecordBatch } from "arrow-js-ffi";
 
 // Path from repo root
@@ -34,3 +34,28 @@ test("read via FFI", async (t) => {
   testArrowTablesEqual(t, expectedTable, initialTable);
   t.end();
 });
+
+test("read file stream", async (t) => {
+  const server = await temporaryServer();
+  const listeningPort = server.addresses()[0].port;
+  const rootUrl = `http://localhost:${listeningPort}`;
+
+  const expectedTable = readExpectedArrowData();
+
+  const url = `${rootUrl}/1-partition-brotli.parquet`;
+  const stream = await wasm.readFFIStream(url) as unknown as wasm.FFIArrowRecordBatch[];
+  const batches = []
+  for await (const ffiTable of stream) {
+    const recordBatch = parseRecordBatch(
+      WASM_MEMORY.buffer,
+      ffiTable.arrayAddr(),
+      ffiTable.schemaAddr(),
+      true
+    );
+    batches.push(recordBatch);
+  }
+  const initialTable = new arrow.Table(batches);
+  testArrowTablesEqual(t, expectedTable, initialTable);
+  await server.close();
+
+})

@@ -1219,6 +1219,7 @@ dependencies = [
  "arrow",
  "arrow2",
  "async-compat",
+ "async-stream",
  "bytes",
  "clap",
  "console_error_panic_hook",
