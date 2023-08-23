@@ -21,6 +21,7 @@ wasm-pack build \
   --target nodejs \
   --features async \
   $FLAGS &
+[ -n "$CI" ] && wait;
 
 # Build web version into tmp_build/esm
 echo "Building arrow-rs esm"
@@ -31,6 +32,7 @@ wasm-pack build \
   --target web \
   --features async \
   $FLAGS &
+[ -n "$CI" ] && wait;
 
 # Build bundler version into tmp_build/bundler
 echo "Building arrow-rs bundler"
