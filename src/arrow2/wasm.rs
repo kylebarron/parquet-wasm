@@ -350,7 +350,7 @@ pub fn write_parquet_ffi(
 }
 
 #[wasm_bindgen(js_name = readFFIStream)]
-#[cfg(feature = "async")]
+#[cfg(all(feature = "reader", feature = "async"))]
 pub async fn read_ffi_stream(
     url: String,
 ) -> WasmResult<wasm_streams::readable::sys::ReadableStream> {
