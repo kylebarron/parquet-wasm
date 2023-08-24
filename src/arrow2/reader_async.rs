@@ -1,6 +1,6 @@
 use crate::arrow2::error::ParquetWasmError;
 use crate::arrow2::error::Result;
-use crate::common::fetch::{get_content_length, make_range_request};
+use crate::common::fetch::{create_reader, get_content_length};
 use arrow2::array::Array;
 use arrow2::chunk::Chunk;
 use arrow2::datatypes::Schema;
@@ -10,31 +10,7 @@ use arrow2::io::parquet::read::RowGroupMetaData;
 use arrow2::io::parquet::read::{read_columns_many_async, RowGroupDeserializer};
 use futures::future::BoxFuture;
 use parquet2::read::read_metadata_async as _read_metadata_async;
-use range_reader::{RangeOutput, RangedAsyncReader};
-
-/// Create a RangedAsyncReader
-fn create_reader(
-    url: String,
-    content_length: usize,
-    min_request_size: Option<usize>,
-) -> RangedAsyncReader {
-    // at least 4kb per s3 request. Adjust to your liking.
-    let min_request_size = min_request_size.unwrap_or(4 * 1024);
-
-    // Closure for making an individual HTTP range request to a file
-    let range_get = Box::new(move |start: u64, length: usize| {
-        let url = url.clone();
-
-        Box::pin(async move {
-            let data = make_range_request(url.clone(), start, length)
-                .await
-                .unwrap();
-            Ok(RangeOutput { start, data })
-        }) as BoxFuture<'static, std::io::Result<RangeOutput>>
-    });
-
-    RangedAsyncReader::new(content_length, min_request_size, range_get)
-}
+use range_reader::RangedAsyncReader;
 
 pub async fn read_metadata_async(
     url: String,
@@ -60,13 +36,12 @@ fn all_elements_equal(arr: &[&Option<String>]) -> bool {
     arr.iter().all(|&item| item == first)
 }
 
-pub async fn read_row_group(
+pub async fn _read_row_group(
     url: String,
     // content_length: Option<usize>,
     row_group_meta: &RowGroupMetaData,
     arrow_schema: &Schema,
-    chunk_fn: impl Fn(Chunk<Box<dyn Array>>) -> Chunk<Box<dyn Array>>,
-) -> Result<Vec<u8>> {
+) -> Result<RowGroupDeserializer> {
     // Extract the file paths from each underlying column
     let file_paths: Vec<&Option<String>> = row_group_meta
         .columns()
@@ -117,18 +92,50 @@ pub async fn read_row_group(
     )
     .await?;
 
+    let deserializer = RowGroupDeserializer::new(column_chunks, row_group_meta.num_rows(), None);
+    Ok(deserializer)
+}
+
+pub async fn read_row_group(
+    url: String,
+    // content_length: Option<usize>,
+    row_group_meta: &RowGroupMetaData,
+    arrow_schema: &Schema,
+    chunk_fn: impl Fn(Chunk<Box<dyn Array>>) -> Chunk<Box<dyn Array>>,
+) -> Result<Vec<u8>> {
+    let deserializer = _read_row_group(url, row_group_meta, arrow_schema).await?;
     // Create IPC writer
     let mut output_file = Vec::new();
     let options = IPCWriteOptions { compression: None };
     let mut writer = IPCStreamWriter::new(&mut output_file, options);
     writer.start(arrow_schema, None)?;
-
-    let deserializer = RowGroupDeserializer::new(column_chunks, row_group_meta.num_rows(), None);
     for maybe_chunk in deserializer {
         let chunk = chunk_fn(maybe_chunk?);
         writer.write(&chunk, None)?;
     }
-
-    writer.finish()?;
     Ok(output_file)
+}
+
+pub async fn read_record_batch_stream(
+    url: String,
+) -> Result<impl futures::Stream<Item = super::ffi::FFIArrowRecordBatch>> {
+    use async_stream::stream;
+    let inner_stream = stream! {
+        let metadata = read_metadata_async(url.clone(), None).await.unwrap();
+        let compat_meta = crate::arrow2::metadata::FileMetaData::from(metadata.clone());
+
+        let arrow_schema = compat_meta.arrow_schema().unwrap_or_else(|_| {
+            let bar: Vec<arrow2::datatypes::Field> = vec![];
+            arrow2::datatypes::Schema::from(bar).into()
+        });
+        for row_group_meta in metadata.row_groups {
+            let schema = arrow_schema.clone().into();
+            let deserializer = _read_row_group(url.clone(), &row_group_meta, &schema).await.unwrap();
+            for maybe_chunk in deserializer {
+                let chunk = maybe_chunk.unwrap();
+                yield super::ffi::FFIArrowRecordBatch::from_chunk(chunk, arrow_schema.clone().into());
+            }
+        }
+    };
+    Ok(inner_stream)
 }

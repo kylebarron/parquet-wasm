@@ -1,7 +1,9 @@
 import { Test } from "tape";
 import { readFileSync } from "fs";
 import { tableFromIPC, Table } from "apache-arrow";
-
+import fastify, { FastifyInstance } from 'fastify';
+import fastifyStatic from "@fastify/static";
+import {join} from 'path';
 const dataDir = "tests/data";
 
 /** Test that two Arrow tables are equal */
@@ -64,4 +66,16 @@ export function readExpectedArrowData(): Table {
   const expectedArrowPath = `${dataDir}/data.arrow`;
   const buffer = readFileSync(expectedArrowPath);
   return tableFromIPC(buffer);
+}
+
+export async function temporaryServer() {
+  const server = fastify().register(fastifyStatic, {
+    root: join(__dirname, '../data')
+  });
+  await server.listen({
+    port: 0,
+    host: 'localhost'
+  });
+  return server as FastifyInstance;
+
 }

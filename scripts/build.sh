@@ -19,7 +19,9 @@ wasm-pack build \
   --out-dir tmp_build/node \
   --out-name arrow1 \
   --target nodejs \
-  $FLAGS
+  --features async \
+  $FLAGS &
+[ -n "$CI" ] && wait;
 
 # Build web version into tmp_build/esm
 echo "Building arrow-rs esm"
@@ -28,7 +30,9 @@ wasm-pack build \
   --out-dir tmp_build/esm \
   --out-name arrow1 \
   --target web \
-  $FLAGS
+  --features async \
+  $FLAGS &
+[ -n "$CI" ] && wait;
 
 # Build bundler version into tmp_build/bundler
 echo "Building arrow-rs bundler"
@@ -37,7 +41,9 @@ wasm-pack build \
   --out-dir tmp_build/bundler \
   --out-name arrow1 \
   --target bundler \
-  $FLAGS
+  --features async \
+  $FLAGS &
+wait
 
 ######################################
 # ARROW 2 turn on the feature manually

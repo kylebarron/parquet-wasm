@@ -25,6 +25,10 @@ async = [
   "dep:futures",
   "dep:range-reader",
   "dep:reqwest",
+  "dep:wasm-streams",
+  "dep:async-compat",
+  "dep:async-stream",
+  "parquet?/async",
 ]
 debug = ["console_error_panic_hook", "clap"]
 
@@ -75,6 +79,7 @@ parquet2 = { version = "0.17", default_features = false, optional = true }
 
 arrow = { version = "45.0", default-features = false, optional = true, features = [
   "ipc",
+  "ffi",
 ] }
 parquet = { version = "45.0", default-features = false, optional = true, features = [
   "arrow",
@@ -94,6 +99,9 @@ reqwest = { version = "0.11.19", optional = true, default-features = false }
 
 # Pass "wasm" and "thin" down to the transitive zstd dependency
 zstd = { version = "*", features = ["wasm", "thin"], default-features = false, optional = true }
+async-compat = { version = "0.2.1", optional = true }
+async-stream = { version = "0.3.5", optional = true }
+wasm-streams = { version = "0.3.0", optional = true }
 
 [dependencies.web-sys]
 version = "0.3.4"
