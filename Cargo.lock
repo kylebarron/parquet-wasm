@@ -259,6 +259,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "arrow-wasm"
+version = "0.1.0"
+source = "git+https://github.com/kylebarron/arrow-wasm?rev=1c48ba24e98c756fd593418180c3833fc6e3a795#1c48ba24e98c756fd593418180c3833fc6e3a795"
+dependencies = [
+ "arrow2",
+ "getrandom",
+ "js-sys",
+ "thiserror",
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
 name = "arrow2"
 version = "0.17.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1218,6 +1231,7 @@ name = "parquet-wasm"
 version = "0.4.0"
 dependencies = [
  "arrow",
+ "arrow-wasm",
  "arrow2",
  "async-compat",
  "async-stream",

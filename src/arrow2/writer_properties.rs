@@ -69,6 +69,12 @@ impl WriterProperties {
     }
 }
 
+impl Default for WriterProperties {
+    fn default() -> Self {
+        WriterPropertiesBuilder::default().build()
+    }
+}
+
 /// Builder to create a writing configuration for `writeParquet2`
 ///
 /// Call {@linkcode build} on the finished builder to create an immputable {@linkcode WriterProperties} to pass to `writeParquet2`
