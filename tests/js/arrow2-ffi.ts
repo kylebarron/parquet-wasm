@@ -17,7 +17,7 @@ test("read via FFI", async (t) => {
   const dataPath = `${dataDir}/1-partition-brotli.parquet`;
   const buffer = readFileSync(dataPath);
   const arr = new Uint8Array(buffer);
-  const ffiTable = wasm.readParquetFFI(arr);
+  const ffiTable = wasm.readParquet(arr).intoFFI();
 
   const batches: arrow.RecordBatch[] = [];
   for (let i = 0; i < ffiTable.numBatches(); i++) {
@@ -43,13 +43,14 @@ test("read file stream", async (t) => {
   const expectedTable = readExpectedArrowData();
 
   const url = `${rootUrl}/1-partition-brotli.parquet`;
-  const stream = await wasm.readFFIStream(url) as unknown as wasm.FFIArrowRecordBatch[];
+  const stream = await wasm.readParquetStream(url) as unknown as wasm.RecordBatch[];
   const batches = []
-  for await (const ffiTable of stream) {
+  for await (const batch of stream) {
+    let ffiBatch = batch.intoFFI();
     const recordBatch = parseRecordBatch(
       WASM_MEMORY.buffer,
-      ffiTable.arrayAddr(),
-      ffiTable.schemaAddr(),
+      ffiBatch.arrayAddr(),
+      ffiBatch.schemaAddr(),
       true
     );
     batches.push(recordBatch);

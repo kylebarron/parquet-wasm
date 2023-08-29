@@ -1,13 +1,11 @@
 use crate::arrow2::error::ParquetWasmError;
 use crate::arrow2::error::Result;
 use crate::common::fetch::{create_reader, get_content_length};
-use arrow2::array::Array;
-use arrow2::chunk::Chunk;
 use arrow2::datatypes::Schema;
-use arrow2::io::ipc::write::{StreamWriter as IPCStreamWriter, WriteOptions as IPCWriteOptions};
 use arrow2::io::parquet::read::FileMetaData;
 use arrow2::io::parquet::read::RowGroupMetaData;
 use arrow2::io::parquet::read::{read_columns_many_async, RowGroupDeserializer};
+use arrow_wasm::arrow2::RecordBatch;
 use futures::future::BoxFuture;
 use parquet2::read::read_metadata_async as _read_metadata_async;
 use range_reader::RangedAsyncReader;
@@ -101,24 +99,27 @@ pub async fn read_row_group(
     // content_length: Option<usize>,
     row_group_meta: &RowGroupMetaData,
     arrow_schema: &Schema,
-    chunk_fn: impl Fn(Chunk<Box<dyn Array>>) -> Chunk<Box<dyn Array>>,
-) -> Result<Vec<u8>> {
+) -> Result<RecordBatch> {
     let deserializer = _read_row_group(url, row_group_meta, arrow_schema).await?;
-    // Create IPC writer
-    let mut output_file = Vec::new();
-    let options = IPCWriteOptions { compression: None };
-    let mut writer = IPCStreamWriter::new(&mut output_file, options);
-    writer.start(arrow_schema, None)?;
-    for maybe_chunk in deserializer {
-        let chunk = chunk_fn(maybe_chunk?);
-        writer.write(&chunk, None)?;
-    }
-    Ok(output_file)
+
+    let chunk = {
+        let mut chunks = Vec::with_capacity(1);
+
+        for maybe_chunk in deserializer {
+            chunks.push(maybe_chunk?);
+        }
+
+        // Should be 1 because only reading one row group
+        assert_eq!(chunks.len(), 1);
+        chunks.pop().unwrap()
+    };
+
+    Ok(RecordBatch::new(arrow_schema.clone(), chunk))
 }
 
 pub async fn read_record_batch_stream(
     url: String,
-) -> Result<impl futures::Stream<Item = super::ffi::FFIArrowRecordBatch>> {
+) -> Result<impl futures::Stream<Item = RecordBatch>> {
     use async_stream::stream;
     let inner_stream = stream! {
         let metadata = read_metadata_async(url.clone(), None).await.unwrap();
@@ -133,7 +134,7 @@ pub async fn read_record_batch_stream(
             let deserializer = _read_row_group(url.clone(), &row_group_meta, &schema).await.unwrap();
             for maybe_chunk in deserializer {
                 let chunk = maybe_chunk.unwrap();
-                yield super::ffi::FFIArrowRecordBatch::from_chunk(chunk, arrow_schema.clone().into());
+                yield RecordBatch::new(arrow_schema.clone().into(), chunk);
             }
         }
     };
