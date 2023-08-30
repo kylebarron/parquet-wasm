@@ -27,7 +27,7 @@ test("read file", async (t) => {
   for (const testFile of testFiles) {
     const dataPath = `${dataDir}/${testFile}`;
     const arr = new Uint8Array(readFileSync(dataPath));
-    const table = tableFromIPC(wasm.readParquet(arr));
+    const table = tableFromIPC(wasm.readParquet(arr).intoIPC());
     testArrowTablesEqual(t, expectedTable, table);
   }
 
@@ -38,28 +38,30 @@ test("read-write-read round trip (with writer properties)", async (t) => {
   const dataPath = `${dataDir}/1-partition-brotli.parquet`;
   const buffer = readFileSync(dataPath);
   const arr = new Uint8Array(buffer);
-  const initialTable = tableFromIPC(wasm.readParquet(arr));
+  const initialTable = tableFromIPC(wasm.readParquet(arr).intoIPC());
 
   const writerProperties = new wasm.WriterPropertiesBuilder().build();
 
   const parquetBuffer = wasm.writeParquet(
-    tableToIPC(initialTable, "stream"),
+    wasm.Table.fromIPC(tableToIPC(initialTable, "stream")),
     writerProperties
   );
-  const table = tableFromIPC(wasm.readParquet(parquetBuffer));
+  const table = tableFromIPC(wasm.readParquet(parquetBuffer).intoIPC());
 
   testArrowTablesEqual(t, initialTable, table);
   t.end();
 });
 
-test("read-write-read round trip (no writer properties provided)", async (t) => {
+test("read-write-read round trip (no writer properties provided)", async (t) => {
   const dataPath = `${dataDir}/1-partition-brotli.parquet`;
   const buffer = readFileSync(dataPath);
   const arr = new Uint8Array(buffer);
-  const initialTable = tableFromIPC(wasm.readParquet(arr));
+  const initialTable = tableFromIPC(wasm.readParquet(arr).intoIPC());
 
-  const parquetBuffer = wasm.writeParquet(tableToIPC(initialTable, "stream"));
-  const table = tableFromIPC(wasm.readParquet(parquetBuffer));
+  const parquetBuffer = wasm.writeParquet(
+    wasm.Table.fromIPC(tableToIPC(initialTable, "stream"))
+  );
+  const table = tableFromIPC(wasm.readParquet(parquetBuffer).intoIPC());
 
   testArrowTablesEqual(t, initialTable, table);
   t.end();
@@ -72,7 +74,11 @@ test("error produced trying to read file with arrayBuffer", (t) => {
     wasm.readParquet(arrayBuffer);
   } catch (err) {
     t.ok(err instanceof Error, "err expected to be an Error");
-    t.equals(err.message, "Empty input provided or not a Uint8Array.", "Expected error message");
+    t.equals(
+      err.message,
+      "Empty input provided or not a Uint8Array.",
+      "Expected error message"
+    );
   }
 
   t.end();

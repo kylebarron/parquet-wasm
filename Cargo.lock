@@ -261,8 +261,10 @@ dependencies = [
 [[package]]
 name = "arrow-wasm"
 version = "0.1.0"
-source = "git+https://github.com/kylebarron/arrow-wasm?rev=1c48ba24e98c756fd593418180c3833fc6e3a795#1c48ba24e98c756fd593418180c3833fc6e3a795"
+source = "git+https://github.com/kylebarron/arrow-wasm?rev=ab0455c7dd8df31f3d4b97988f08bc34e62f2dc9#ab0455c7dd8df31f3d4b97988f08bc34e62f2dc9"
 dependencies = [
+ "arrow",
+ "arrow-schema",
  "arrow2",
  "getrandom",
  "js-sys",

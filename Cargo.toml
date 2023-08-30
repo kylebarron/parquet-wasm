@@ -16,12 +16,12 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 default = ["arrow1", "all_compressions", "reader", "writer"]
-arrow1 = ["dep:arrow", "dep:parquet", "dep:bytes"]
+arrow1 = ["dep:arrow", "dep:parquet", "dep:bytes", "arrow-wasm/arrow1"]
 arrow2 = [
   "dep:arrow2",
   "dep:parquet2",
   "dep:serde-wasm-bindgen",
-  "dep:arrow-wasm",
+  "arrow-wasm/arrow2",
 ]
 reader = []
 writer = []
@@ -76,8 +76,8 @@ js-sys = "0.3.60"
 getrandom = { version = "0.2.6", features = ["js"] }
 thiserror = "1.0"
 
-arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "1c48ba24e98c756fd593418180c3833fc6e3a795", optional = true }
-# arrow-wasm = { path = "/Users/kyle/github/rust/arrow-wasm", optional = true }
+arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "ab0455c7dd8df31f3d4b97988f08bc34e62f2dc9" }
+# arrow-wasm = { path = "/Users/kyle/github/rust/arrow-wasm" }
 
 arrow2 = { version = "0.17", optional = true, features = [
   "io_ipc",
