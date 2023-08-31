@@ -236,10 +236,13 @@ pub fn write_parquet_stream(
     table: Table,
     writer_properties: Option<crate::arrow2::writer_properties::WriterProperties>,
 ) -> WasmResult<wasm_streams::readable::sys::ReadableStream> {
+    use futures::StreamExt;
     let (schema, chunks) = table.into_inner();
-    let output_stream = super::writer_async::write_record_batches_to_stream(
-        chunks.into_iter(),
-        schema,
+    let batches = futures::stream::iter(chunks.into_iter()).map(move |chunk| {
+        arrow_wasm::arrow2::RecordBatch::new(schema.clone(), chunk)
+    });
+    let output_stream = super::writer_async::transform_parquet_stream(
+        batches,
         writer_properties.unwrap_or_default(),
     );
     Ok(output_stream?)
