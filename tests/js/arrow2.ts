@@ -106,3 +106,17 @@ test("iterate over row groups", (t) => {
 
   t.end();
 });
+
+test("read-write stream-read round trip (no writer properties provided)", async (t) => {
+  const expectedTable = readExpectedArrowData();
+
+  const dataPath = `${dataDir}/1-partition-brotli.parquet`;
+  const buffer = readFileSync(dataPath);
+  const arr = new Uint8Array(buffer);
+  const table = wasm.readParquet(arr);
+  const stream = await wasm.writeParquetStream(table);
+  const accumulatedBuffer = new Uint8Array(await new Response(stream).arrayBuffer());
+  const roundtripTable = tableFromIPC(wasm.readParquet(accumulatedBuffer).intoIPC());
+
+  testArrowTablesEqual(t, expectedTable, roundtripTable);
+})

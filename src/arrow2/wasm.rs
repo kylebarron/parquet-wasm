@@ -229,3 +229,18 @@ pub async fn read_parquet_stream(
         .map(|batch| Ok(batch.into()));
     Ok(wasm_streams::ReadableStream::from_stream(stream).into_raw())
 }
+
+#[wasm_bindgen(js_name = "writeParquetStream")]
+#[cfg(all(feature = "writer", feature = "async"))]
+pub fn write_parquet_stream(
+    table: Table,
+    writer_properties: Option<crate::arrow2::writer_properties::WriterProperties>,
+) -> WasmResult<wasm_streams::readable::sys::ReadableStream> {
+    let (schema, chunks) = table.into_inner();
+    let output_stream = super::writer_async::write_record_batches_to_stream(
+        chunks.into_iter(),
+        schema,
+        writer_properties.unwrap_or_default(),
+    );
+    Ok(output_stream?)
+}
