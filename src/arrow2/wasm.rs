@@ -230,23 +230,6 @@ pub async fn read_parquet_stream(
     Ok(wasm_streams::ReadableStream::from_stream(stream).into_raw())
 }
 
-#[wasm_bindgen(js_name = "writeParquetStream")]
-#[cfg(all(feature = "writer", feature = "async"))]
-pub fn write_parquet_stream(
-    table: Table,
-    writer_properties: Option<crate::arrow2::writer_properties::WriterProperties>,
-) -> WasmResult<wasm_streams::readable::sys::ReadableStream> {
-    use futures::StreamExt;
-    let (schema, chunks) = table.into_inner();
-    let batches = futures::stream::iter(chunks.into_iter())
-        .map(move |chunk| arrow_wasm::arrow2::RecordBatch::new(schema.clone(), chunk));
-    let output_stream = super::writer_async::transform_parquet_stream(
-        batches,
-        writer_properties.unwrap_or_default(),
-    );
-    Ok(output_stream?)
-}
-
 #[wasm_bindgen(js_name = "transformParquetStream")]
 #[cfg(all(feature = "writer", feature = "async"))]
 pub fn transform_parquet_stream(
