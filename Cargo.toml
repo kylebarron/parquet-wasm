@@ -166,3 +166,6 @@ required-features = ["debug", "arrow2", "writer"]
 # https://github.com/kylebarron/parquet-wasm/pull/48
 opt-level = "s"
 lto = true
+
+[patch.crates-io]
+wasm-bindgen = { git = "https://github.com/Liamolucko/wasm-bindgen", rev = "85167263f43825d519cd9dc18ace9ee47348ab47" }
