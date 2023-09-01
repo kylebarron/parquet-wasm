@@ -238,9 +238,8 @@ pub fn write_parquet_stream(
 ) -> WasmResult<wasm_streams::readable::sys::ReadableStream> {
     use futures::StreamExt;
     let (schema, chunks) = table.into_inner();
-    let batches = futures::stream::iter(chunks.into_iter()).map(move |chunk| {
-        arrow_wasm::arrow2::RecordBatch::new(schema.clone(), chunk)
-    });
+    let batches = futures::stream::iter(chunks.into_iter())
+        .map(move |chunk| arrow_wasm::arrow2::RecordBatch::new(schema.clone(), chunk));
     let output_stream = super::writer_async::transform_parquet_stream(
         batches,
         writer_properties.unwrap_or_default(),
@@ -252,16 +251,19 @@ pub fn write_parquet_stream(
 #[cfg(all(feature = "writer", feature = "async"))]
 pub fn transform_parquet_stream(
     stream: wasm_streams::readable::sys::ReadableStream,
-    writer_properties: Option<crate::arrow2::writer_properties::WriterProperties>
+    writer_properties: Option<crate::arrow2::writer_properties::WriterProperties>,
 ) -> WasmResult<wasm_streams::readable::sys::ReadableStream> {
     use futures::StreamExt;
-    let batches = wasm_streams::ReadableStream::from_raw(stream).into_stream().map(|maybe_chunk| {
-        let chunk = maybe_chunk.unwrap();
-        let transformed: arrow_wasm::arrow2::RecordBatch = chunk.try_into().unwrap();
-        transformed
-    });
+    let batches = wasm_streams::ReadableStream::from_raw(stream)
+        .into_stream()
+        .map(|maybe_chunk| {
+            let chunk = maybe_chunk.unwrap();
+            let transformed: arrow_wasm::arrow2::RecordBatch = chunk.try_into().unwrap();
+            transformed
+        });
     let output_stream = super::writer_async::transform_parquet_stream(
-        batches, writer_properties.unwrap_or_default()
+        batches,
+        writer_properties.unwrap_or_default(),
     );
     Ok(output_stream.unwrap())
 }

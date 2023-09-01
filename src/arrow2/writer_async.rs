@@ -39,7 +39,7 @@ pub fn transform_parquet_stream(
 ) -> Result<wasm_streams::readable::sys::ReadableStream> {
     let options = writer_properties.get_write_options();
     let encoding = writer_properties.get_encoding();
-    
+
     let (writable_stream, output_stream) = {
         let raw_stream = wasm_streams::transform::sys::TransformStream::new();
         let raw_writable = raw_stream.writable();
@@ -49,7 +49,7 @@ pub fn transform_parquet_stream(
         };
         (writable_stream, raw_stream.readable())
     };
-    
+
     spawn_local::<_>(async move {
         let mut adapted_stream = batches.peekable();
         let mut pinned_stream = std::pin::pin!(adapted_stream);
