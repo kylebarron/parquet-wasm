@@ -1,6 +1,6 @@
 use crate::arrow1::error::WasmResult;
-use crate::arrow1::ffi::FFIArrowTable;
 use crate::utils::assert_parquet_file_not_empty;
+use arrow_wasm::arrow1::{RecordBatch, Table};
 use wasm_bindgen::prelude::*;
 
 /// Read a Parquet file into Arrow data using the [`arrow`](https://crates.io/crates/arrow) and
@@ -23,16 +23,9 @@ use wasm_bindgen::prelude::*;
 /// @returns Uint8Array containing Arrow data in [IPC Stream format](https://arrow.apache.org/docs/format/Columnar.html#ipc-streaming-format). To parse this into an Arrow table, pass to `tableFromIPC` in the Arrow JS bindings.
 #[wasm_bindgen(js_name = readParquet)]
 #[cfg(feature = "reader")]
-pub fn read_parquet(parquet_file: Vec<u8>) -> WasmResult<Vec<u8>> {
+pub fn read_parquet(parquet_file: Vec<u8>) -> WasmResult<Table> {
     assert_parquet_file_not_empty(parquet_file.as_slice())?;
     Ok(crate::arrow1::reader::read_parquet(parquet_file)?)
-}
-
-#[wasm_bindgen(js_name = readParquetFFI)]
-#[cfg(feature = "reader")]
-pub fn read_parquet_ffi(parquet_file: Vec<u8>) -> WasmResult<FFIArrowTable> {
-    assert_parquet_file_not_empty(&parquet_file)?;
-    Ok(crate::arrow1::reader::read_parquet_ffi(parquet_file)?)
 }
 
 /// Write Arrow data to a Parquet file using the [`arrow`](https://crates.io/crates/arrow) and
@@ -62,32 +55,30 @@ pub fn read_parquet_ffi(parquet_file: Vec<u8>) -> WasmResult<FFIArrowTable> {
 #[wasm_bindgen(js_name = writeParquet)]
 #[cfg(feature = "writer")]
 pub fn write_parquet(
-    arrow_file: &[u8],
+    table: Table,
     writer_properties: Option<crate::arrow1::writer_properties::WriterProperties>,
 ) -> WasmResult<Vec<u8>> {
-    let writer_props = writer_properties.unwrap_or_else(|| {
-        crate::arrow1::writer_properties::WriterPropertiesBuilder::default().build()
-    });
-
+    let schema = table.schema().into_inner();
+    let batches = table.into_inner();
     Ok(crate::arrow1::writer::write_parquet(
-        arrow_file,
-        writer_props,
+        batches.into_iter(),
+        schema,
+        writer_properties.unwrap_or_default(),
     )?)
 }
 
-#[wasm_bindgen(js_name = readFFIStream)]
+#[wasm_bindgen(js_name = readParquetStream)]
 #[cfg(all(feature = "reader", feature = "async"))]
-pub async fn read_ffi_stream(
+pub async fn read_parquet_stream(
     url: String,
     content_length: Option<usize>,
 ) -> WasmResult<wasm_streams::readable::sys::ReadableStream> {
-    use crate::arrow1::ffi::FFIArrowRecordBatch;
     use futures::StreamExt;
     let parquet_stream =
         crate::arrow1::reader_async::read_record_batch_stream(url, content_length).await?;
     let stream = parquet_stream.map(|maybe_record_batch| {
         let record_batch = maybe_record_batch.unwrap();
-        Ok(FFIArrowRecordBatch::from(record_batch).into())
+        Ok(RecordBatch::new(record_batch).into())
     });
     Ok(wasm_streams::ReadableStream::from_stream(stream).into_raw())
 }

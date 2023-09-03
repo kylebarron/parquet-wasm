@@ -77,6 +77,12 @@ impl From<WriterProperties> for parquet::file::properties::WriterProperties {
     }
 }
 
+impl Default for WriterProperties {
+    fn default() -> Self {
+        WriterPropertiesBuilder::default().build()
+    }
+}
+
 /// Builder to create a writing configuration for `writeParquet`
 ///
 /// Call {@linkcode build} on the finished builder to create an immputable {@linkcode WriterProperties} to pass to `writeParquet`
