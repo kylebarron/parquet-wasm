@@ -1,11 +1,15 @@
 use std::sync::Arc;
 
+use object_store::ObjectStore;
 use crate::arrow1::error::Result;
 use crate::common::fetch::{create_reader, get_content_length};
 
 use arrow::ipc::writer::StreamWriter;
 use futures::StreamExt;
-use parquet::arrow::async_reader::{ParquetRecordBatchStream, ParquetRecordBatchStreamBuilder};
+use object_store::http::HttpBuilder;
+use parquet::arrow::async_reader::{
+    ParquetObjectReader, ParquetRecordBatchStream, ParquetRecordBatchStreamBuilder,
+};
 
 use async_compat::{Compat, CompatExt};
 use parquet::file::metadata::FileMetaData;
@@ -67,11 +71,19 @@ pub async fn read_record_batch_stream(
     url: String,
     content_length: Option<usize>,
 ) -> Result<ParquetRecordBatchStream<Compat<RangedAsyncReader>>> {
+    let object_store: Arc<dyn ObjectStore> = Arc::new(HttpBuilder::new().with_url(&url).build().unwrap());
+
     let content_length = match content_length {
         Some(_content_length) => _content_length,
         None => get_content_length(url.clone()).await?,
     };
     let reader = crate::common::fetch::create_reader(url, content_length, None);
+
+    // object_store::DynObjectStore
+
+    // object_store::
+    // ParquetObjectReader::new(store, meta)
+    // ParquetObjectReader::
 
     let builder = ParquetRecordBatchStreamBuilder::new(reader.compat()).await?;
     let parquet_reader = builder.build()?;
