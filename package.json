@@ -6,21 +6,19 @@
     "docs:publish": "gh-pages -d docs_build",
     "docs:serve": "cd docs_build && python -m http.server 8081",
     "docs:watch": "typedoc --watch",
-    "test": "ts-node node_modules/tape/bin/tape ./tests/js/index.ts"
+    "test": "vitest run ./tests/js/index.test.ts"
   },
   "devDependencies": {
     "@fastify/static": "^6.10.2",
-    "@types/node": "^17.0.21",
-    "@types/tape": "^4.13.2",
+    "@types/node": "^18",
     "apache-arrow": "^12.0.0",
     "arrow-js-ffi": "0.3.0",
     "benny": "^3.7.1",
     "fastify": "^4.21.0",
     "gh-pages": "^3.2.3",
-    "tape": "^5.5.2",
-    "ts-node": "^10.7.0",
     "typedoc": "^0.22.13",
-    "typescript": "^4.6.2"
+    "typescript": "^4.6.2",
+    "vitest": "^0.33.0"
   },
   "volta": {
     "node": "18.17.0",

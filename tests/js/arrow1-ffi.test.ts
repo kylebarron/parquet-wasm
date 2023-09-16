@@ -1,4 +1,3 @@
-import * as test from "tape";
 import * as wasm from "../../pkg/node/arrow1";
 import { readFileSync } from "fs";
 import * as arrow from "apache-arrow";
@@ -8,6 +7,7 @@ import {
   temporaryServer,
 } from "./utils";
 import { parseRecordBatch } from "arrow-js-ffi";
+import { it } from "vitest";
 
 // Path from repo root
 const dataDir = "tests/data";
@@ -15,7 +15,7 @@ const dataDir = "tests/data";
 // @ts-expect-error
 const WASM_MEMORY: WebAssembly.Memory = wasm.__wasm.memory;
 
-test("read via FFI", async (t) => {
+it("read via FFI", async (t) => {
   const expectedTable = readExpectedArrowData();
 
   const dataPath = `${dataDir}/1-partition-brotli.parquet`;
@@ -35,11 +35,10 @@ test("read via FFI", async (t) => {
   }
 
   const initialTable = new arrow.Table(batches);
-  testArrowTablesEqual(t, expectedTable, initialTable);
-  t.end();
+  testArrowTablesEqual(expectedTable, initialTable);
 });
 
-test("read file stream", async (t) => {
+it("read file stream", async (t) => {
   const server = await temporaryServer();
   const listeningPort = server.addresses()[0].port;
   const rootUrl = `http://localhost:${listeningPort}`;
@@ -62,6 +61,6 @@ test("read file stream", async (t) => {
     batches.push(recordBatch);
   }
   const initialTable = new arrow.Table(batches);
-  testArrowTablesEqual(t, expectedTable, initialTable);
+  testArrowTablesEqual(expectedTable, initialTable);
   await server.close();
 });
