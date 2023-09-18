@@ -22,7 +22,7 @@ jobs:
       - name: Install
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
 
       - run: wasm-pack build --dev --target nodejs
       - run: wasm-pack test --node
@@ -40,7 +40,7 @@ jobs:
             override: true
 
       - run: rustup target add wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
 
       - run: cargo install cargo-all-features
 
@@ -62,7 +62,7 @@ jobs:
       - name: Install
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
 
       - uses: actions/setup-node@v3
         with:
@@ -91,7 +91,7 @@ jobs:
             override: true
             components: rustfmt
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
 
       - name: Run
         run: cargo fmt --all -- --check
@@ -110,7 +110,7 @@ jobs:
             override: true
             components: clippy
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
 
       - name: "clippy --all"
         run: cargo clippy --all --features=full --tests -- -D warnings
