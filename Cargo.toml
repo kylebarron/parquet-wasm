@@ -35,7 +35,7 @@ async = [
   "dep:async-stream",
   "parquet?/async",
 ]
-debug = ["console_error_panic_hook", "clap"]
+debug = ["console_error_panic_hook"]
 
 brotli = ["parquet?/brotli", "parquet2?/brotli"]
 gzip = ["parquet?/flate2", "parquet2?/gzip"]
@@ -97,9 +97,6 @@ bytes = { version = "1", optional = true }
 
 serde-wasm-bindgen = { version = "0.6", optional = true }
 
-# 3.2 added deprecations that don't currently pass clippy
-clap = { version = ">=3.1.15, <3.3", optional = true, features = ["derive"] }
-
 wasm-bindgen-futures = { version = "0.4.30", optional = true }
 futures = { version = "0.3", optional = true }
 range-reader = { version = "0.2", optional = true }
@@ -142,22 +139,6 @@ skip_optional_dependencies = true
 
 # Exclude certain features from the build matrix
 denylist = ["full", "all_compressions", "default"]
-
-[[bin]]
-name = "read_parquet"
-required-features = ["debug", "arrow1", "reader"]
-
-[[bin]]
-name = "write_parquet"
-required-features = ["debug", "arrow1", "writer"]
-
-[[bin]]
-name = "read_parquet2"
-required-features = ["debug", "arrow2", "reader"]
-
-[[bin]]
-name = "write_parquet2"
-required-features = ["debug", "arrow2", "writer"]
 
 [profile.release]
 # Tell `rustc` to optimize for small code size.

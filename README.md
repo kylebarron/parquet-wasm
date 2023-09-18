@@ -259,7 +259,7 @@ By default, `arrow`, `all_compressions`, `reader`, and `writer` features are ena
 - `snappy`: Activate Snappy compression.
 - `zstd`: Activate ZSTD compression.
 - `lz4`: Activate LZ4_RAW compression (only applies to the `arrow2` endpoints).
-- `debug`: Expose the `setPanicHook` function for better error messages for Rust panics. Additionally compiles CLI debug functions.
+- `debug`: Expose the `setPanicHook` function for better error messages for Rust panics.
 
 ## Node <20
 
