@@ -10,7 +10,7 @@
   },
   "devDependencies": {
     "@fastify/static": "^6.10.2",
-    "@types/node": "^18",
+    "@types/node": "^20",
     "apache-arrow": "^13.0.0",
     "arrow-js-ffi": "0.3.0",
     "benny": "^3.7.1",
@@ -21,7 +21,7 @@
     "vitest": "^0.34.0"
   },
   "volta": {
-    "node": "18.17.0",
+    "node": "20.7.0",
     "yarn": "1.22.19"
   }
 }
