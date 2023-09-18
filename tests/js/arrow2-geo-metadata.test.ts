@@ -17,24 +17,22 @@ const EXPECTED_META_GEOARROW = `\
 it("test geo-arrow-spec (wkb) metadata passed through", (t) => {
   const dataPath = `${dataDir}/${NATURALEARTH_CITIES_WKB}`;
   const arr = new Uint8Array(readFileSync(dataPath));
-  const table = tableFromIPC(wasm.readParquet(arr).intoIPC());
+  const table = tableFromIPC(wasm.readParquet(arr).intoIPCStream());
   expect(
     table.schema.metadata.get("geo"),
-    "arrow table metadata should match expected").toStrictEqual(
-    EXPECTED_META_WKB,
-  );
+    "arrow table metadata should match expected"
+  ).toStrictEqual(EXPECTED_META_WKB);
 });
 
 it("test geo-arrow-spec (geoarrow encoding) metadata passed through", (t) => {
   const dataPath = `${dataDir}/${NATURALEARTH_CITIES_GEOARROW}`;
   const arr = new Uint8Array(readFileSync(dataPath));
-  const table = tableFromIPC(wasm.readParquet(arr).intoIPC());
+  const table = tableFromIPC(wasm.readParquet(arr).intoIPCStream());
 
   expect(
     table.schema.metadata.get("geo"),
-    "arrow table metadata should match expected").toStrictEqual(
-    EXPECTED_META_GEOARROW,
-  );
+    "arrow table metadata should match expected"
+  ).toStrictEqual(EXPECTED_META_GEOARROW);
 
   const firstCoord = table.getChild("geometry").get(0).toArray();
   expect(
