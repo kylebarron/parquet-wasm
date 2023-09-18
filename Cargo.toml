@@ -79,7 +79,7 @@ thiserror = "1.0"
 arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "ab0455c7dd8df31f3d4b97988f08bc34e62f2dc9" }
 # arrow-wasm = { path = "/Users/kyle/github/rust/arrow-wasm" }
 
-arrow2 = { version = "0.17", optional = true, features = [
+arrow2 = { version = "0.18", optional = true, features = [
   "io_ipc",
   "io_parquet",
 ] }

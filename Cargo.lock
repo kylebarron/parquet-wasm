@@ -265,7 +265,7 @@ source = "git+https://github.com/kylebarron/arrow-wasm?rev=ab0455c7dd8df31f3d4b9
 dependencies = [
  "arrow",
  "arrow-schema",
- "arrow2",
+ "arrow2 0.17.4",
  "getrandom",
  "js-sys",
  "thiserror",
@@ -281,6 +281,27 @@ checksum = "59c468daea140b747d781a1da9f7db5f0a8e6636d4af20cc539e43d05b0604fa"
 dependencies = [
  "ahash",
  "arrow-format",
+ "bytemuck",
+ "chrono",
+ "dyn-clone",
+ "either",
+ "ethnum",
+ "foreign_vec",
+ "getrandom",
+ "hash_hasher",
+ "num-traits",
+ "rustc_version",
+ "simdutf8",
+]
+
+[[package]]
+name = "arrow2"
+version = "0.18.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "963fef509b757bcbbf9e5ffa23bcb345614d99f4f6f531f97417b27b8604d389"
+dependencies = [
+ "ahash",
+ "arrow-format",
  "base64",
  "bytemuck",
  "chrono",
@@ -292,6 +313,7 @@ dependencies = [
  "futures",
  "getrandom",
  "hash_hasher",
+ "hashbrown 0.14.0",
  "num-traits",
  "parquet2",
  "rustc_version",
@@ -803,6 +825,9 @@ name = "hashbrown"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2c6201b9ff9fd90a5a3bac2e56a830d0caa509576f0e503818ee82c181b3437a"
+dependencies = [
+ "ahash",
+]
 
 [[package]]
 name = "heck"
@@ -1234,7 +1259,7 @@ version = "0.5.0-alpha.1"
 dependencies = [
  "arrow",
  "arrow-wasm",
- "arrow2",
+ "arrow2 0.18.0",
  "async-compat",
  "async-stream",
  "bytes",
