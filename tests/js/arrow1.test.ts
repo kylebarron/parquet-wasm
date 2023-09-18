@@ -43,7 +43,7 @@ it("read-write-read round trip (with writer properties)", async (t) => {
   const writerProperties = new wasm.WriterPropertiesBuilder().build();
 
   const parquetBuffer = wasm.writeParquet(
-    wasm.Table.fromIPC(tableToIPC(initialTable, "stream")),
+    wasm.Table.fromIPCStream(tableToIPC(initialTable, "stream")),
     writerProperties
   );
   const table = tableFromIPC(wasm.readParquet(parquetBuffer).intoIPCStream());
@@ -58,7 +58,7 @@ it("read-write-read round trip (no writer properties provided)", async (t) => {
   const initialTable = tableFromIPC(wasm.readParquet(arr).intoIPCStream());
 
   const parquetBuffer = wasm.writeParquet(
-    wasm.Table.fromIPC(tableToIPC(initialTable, "stream"))
+    wasm.Table.fromIPCStream(tableToIPC(initialTable, "stream"))
   );
   const table = tableFromIPC(wasm.readParquet(parquetBuffer).intoIPCStream());
 
