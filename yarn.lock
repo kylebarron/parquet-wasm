@@ -196,10 +196,10 @@
     http-errors "2.0.0"
     mime "^3.0.0"
 
-"@fastify/static@^6.10.2":
-  version "6.10.2"
-  resolved "https://registry.yarnpkg.com/@fastify/static/-/static-6.10.2.tgz#dfaaccfa191a4ba85ea8e3926853c9e6d979e67f"
-  integrity sha512-UoaMvIHSBLCZBYOVZwFRYqX2ufUhd7FFMYGDeSf0Z+D8jhYtwljjmuQGuanUP8kS4y/ZEV1a8mfLha3zNwsnnQ==
+"@fastify/static@^6.11.2":
+  version "6.11.2"
+  resolved "https://registry.yarnpkg.com/@fastify/static/-/static-6.11.2.tgz#1fe40c40daf055a28d29db807b459fcff431d9b6"
+  integrity sha512-EH7mh7q4MfNdT7N07ZVlwsX/ObngMvQ7KBP0FXAuPov99Fjn80KSJMdxQhhYKAKWW1jXiFdrk8X7d6uGWdZFxg==
   dependencies:
     "@fastify/accept-negotiator" "^1.0.0"
     "@fastify/send" "^2.0.0"
@@ -207,7 +207,6 @@
     fastify-plugin "^4.0.0"
     glob "^8.0.1"
     p-limit "^3.1.0"
-    readable-stream "^4.0.0"
 
 "@jest/schemas@^29.6.3":
   version "29.6.3"
@@ -263,10 +262,10 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-20.3.0.tgz#719498898d5defab83c3560f45d8498f58d11938"
   integrity sha512-cumHmIAf6On83X7yP+LrsEyUOf/YlociZelmpRYaGFydoaPdxdt80MAbu6vWerQT2COCp2nPvHdsbD7tHn/YlQ==
 
-"@types/node@^18":
-  version "18.17.16"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.17.16.tgz#ee7b103d102787fb1530bfc6d4a1e15014f10938"
-  integrity sha512-e0zgs7qe1XH/X3KEPnldfkD07LH9O1B9T31U8qoO7lqGSjj3/IrBuvqMeJ1aYejXRK3KOphIUDw6pLIplEW17A==
+"@types/node@^20":
+  version "20.6.2"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.6.2.tgz#a065925409f59657022e9063275cd0b9bd7e1b12"
+  integrity sha512-Y+/1vGBHV/cYk6OI1Na/LHzwnlNCAfU3ZNGrc1LdRe/LAIbdDPTTv/HU3M7yXN448aTVDq3eKRm2cg7iKLb8gw==
 
 "@types/pad-left@2.1.1":
   version "2.1.1"
