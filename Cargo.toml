@@ -89,7 +89,7 @@ arrow = { version = "46.0", default-features = false, optional = true, features 
   "ipc",
   "ffi",
 ] }
-parquet = { version = "46.0", default-features = false, optional = true, features = [
+parquet = { version = "47.0", default-features = false, optional = true, features = [
   "arrow",
   "base64",
 ] }
