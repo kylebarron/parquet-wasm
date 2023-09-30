@@ -1,5 +1,3 @@
-pub mod ffi;
-
 #[cfg(feature = "reader")]
 pub mod reader;
 
