@@ -76,12 +76,8 @@ js-sys = "0.3.60"
 getrandom = { version = "0.2.6", features = ["js"] }
 thiserror = "1.0"
 
-arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "84bcf954212306c5b25a5361fe2ae285e9859a48", features = [
-  "arrow2",
-] }
-# arrow-wasm = { path = "/Users/kyle/github/rust/arrow-wasm", features = [
-#   "arrow2",
-# ] }
+arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "84bcf954212306c5b25a5361fe2ae285e9859a48" }
+# arrow-wasm = { path = "/Users/kyle/github/rust/arrow-wasm" }
 
 arrow2 = { version = "0.18", optional = true, features = [
   "io_ipc",
