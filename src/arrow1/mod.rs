@@ -1,8 +1,6 @@
 #[cfg(feature = "reader")]
 pub mod reader;
 
-pub mod ffi;
-
 pub mod wasm;
 
 #[cfg(feature = "writer")]
