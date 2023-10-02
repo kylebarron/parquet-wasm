@@ -100,7 +100,7 @@ serde-wasm-bindgen = { version = "0.6", optional = true }
 wasm-bindgen-futures = { version = "0.4.30", optional = true }
 futures = { version = "0.3", optional = true }
 range-reader = { version = "0.2", optional = true }
-reqwest = { version = "0.11.20", optional = true, default-features = false }
+reqwest = { version = "0.11.21", optional = true, default-features = false }
 
 # Pass "wasm" and "thin" down to the transitive zstd dependency
 zstd = { version = "*", features = [
