@@ -1,6 +1,6 @@
 [package]
 name = "parquet-wasm"
-version = "0.5.0-alpha.1"
+version = "0.5.0"
 authors = ["Kyle Barron <kylebarron2@gmail.com>"]
 edition = "2021"
 description = "WebAssembly Parquet reader and writer."
