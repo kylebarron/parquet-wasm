@@ -6,21 +6,29 @@ use wasm_bindgen::prelude::*;
 /// Read a Parquet file into Arrow data using the [`arrow`](https://crates.io/crates/arrow) and
 /// [`parquet`](https://crates.io/crates/parquet) Rust crates.
 ///
+/// This returns an Arrow table in WebAssembly memory. To transfer the Arrow table to JavaScript
+/// memory you have two options:
+///
+/// - (Easier): Call {@linkcode Table.intoIPCStream} to construct a buffer that can be parsed with
+///   Arrow JS's `tableFromIPC` function.
+/// - (More performant but bleeding edge): Call {@linkcode Table.intoFFI} to construct a data
+///   representation that can be parsed zero-copy from WebAssembly with
+///   [arrow-js-ffi](https://github.com/kylebarron/arrow-js-ffi).
+///
 /// Example:
 ///
 /// ```js
 /// import { tableFromIPC } from "apache-arrow";
 /// // Edit the `parquet-wasm` import as necessary
-/// import { readParquet } from "parquet-wasm/node";
+/// import { readParquet } from "parquet-wasm/node/arrow1";
 ///
 /// const resp = await fetch("https://example.com/file.parquet");
 /// const parquetUint8Array = new Uint8Array(await resp.arrayBuffer());
-/// const arrowUint8Array = readParquet(parquetUint8Array);
-/// const arrowTable = tableFromIPC(arrowUint8Array);
+/// const arrowWasmTable = readParquet(parquetUint8Array);
+/// const arrowTable = tableFromIPC(arrowWasmTable.intoIPCStream());
 /// ```
 ///
 /// @param parquet_file Uint8Array containing Parquet data
-/// @returns Uint8Array containing Arrow data in [IPC Stream format](https://arrow.apache.org/docs/format/Columnar.html#ipc-streaming-format). To parse this into an Arrow table, pass to `tableFromIPC` in the Arrow JS bindings.
 #[wasm_bindgen(js_name = readParquet)]
 #[cfg(feature = "reader")]
 pub fn read_parquet(parquet_file: Vec<u8>) -> WasmResult<Table> {
@@ -36,21 +44,28 @@ pub fn read_parquet(parquet_file: Vec<u8>) -> WasmResult<Table> {
 /// ```js
 /// import { tableToIPC } from "apache-arrow";
 /// // Edit the `parquet-wasm` import as necessary
-/// import { WriterPropertiesBuilder, Compression, writeParquet } from "parquet-wasm/node";
+/// import {
+///   Table,
+///   WriterPropertiesBuilder,
+///   Compression,
+///   writeParquet,
+/// } from "parquet-wasm/node/arrow1";
 ///
-/// // Given an existing arrow table under `table`
-/// const arrowUint8Array = tableToIPC(table, "file");
+/// // Given an existing arrow JS table under `table`
+/// const wasmTable = Table.fromIPCStream(tableToIPC(table, "stream"));
 /// const writerProperties = new WriterPropertiesBuilder()
 ///   .setCompression(Compression.SNAPPY)
 ///   .build();
-/// const parquetUint8Array = writeParquet(arrowUint8Array, writerProperties);
+/// const parquetUint8Array = writeParquet(wasmTable, writerProperties);
 /// ```
 ///
 /// If `writerProperties` is not provided or is `null`, the default writer properties will be used.
 /// This is equivalent to `new WriterPropertiesBuilder().build()`.
 ///
-/// @param arrow_file Uint8Array containing Arrow data in [IPC Stream format](https://arrow.apache.org/docs/format/Columnar.html#ipc-streaming-format). If you have an Arrow table in JS, call `tableToIPC(table)` in the JS bindings and pass the result here.
-/// @param writer_properties Configuration for writing to Parquet. Use the {@linkcode WriterPropertiesBuilder} to build a writing configuration, then call `.build()` to create an immutable writer properties to pass in here.
+/// @param table A {@linkcode Table} representation in WebAssembly memory.
+/// @param writer_properties (optional) Configuration for writing to Parquet. Use the {@linkcode
+/// WriterPropertiesBuilder} to build a writing configuration, then call `.build()` to create an
+/// immutable writer properties to pass in here.
 /// @returns Uint8Array containing written Parquet data.
 #[wasm_bindgen(js_name = writeParquet)]
 #[cfg(feature = "writer")]
