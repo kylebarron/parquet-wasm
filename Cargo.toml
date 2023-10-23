@@ -85,7 +85,7 @@ arrow2 = { version = "0.18", optional = true, features = [
 ] }
 parquet2 = { version = "0.17", default_features = false, optional = true }
 
-arrow = { version = "47.0", default-features = false, optional = true, features = [
+arrow = { version = "48.0", default-features = false, optional = true, features = [
   "ipc",
   "ffi",
 ] }
