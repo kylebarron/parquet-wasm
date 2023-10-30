@@ -76,7 +76,7 @@ js-sys = "0.3.60"
 getrandom = { version = "0.2.6", features = ["js"] }
 thiserror = "1.0"
 
-arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "84bcf954212306c5b25a5361fe2ae285e9859a48" }
+arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "40363b64fc8bbb8c4a2fb8a30156f8811182dada" }
 # arrow-wasm = { path = "/Users/kyle/github/rust/arrow-wasm" }
 
 arrow2 = { version = "0.18", optional = true, features = [
@@ -85,11 +85,11 @@ arrow2 = { version = "0.18", optional = true, features = [
 ] }
 parquet2 = { version = "0.17", default_features = false, optional = true }
 
-arrow = { version = "47.0", default-features = false, optional = true, features = [
+arrow = { version = "48.0", default-features = false, optional = true, features = [
   "ipc",
   "ffi",
 ] }
-parquet = { version = "47.0", default-features = false, optional = true, features = [
+parquet = { version = "48.0", default-features = false, optional = true, features = [
   "arrow",
   "base64",
 ] }
