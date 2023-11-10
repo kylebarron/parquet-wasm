@@ -54,6 +54,21 @@
         "require": "./node/arrow2.js",
         "import": "./node/arrow2.js"
       }
+    },
+    ".": {
+      "import": {
+        "types": "./esm/arrow1.d.ts",
+        "import": "./esm/arrow1.js"
+      },
+      "browser": {
+        "types": "./esm/arrow1.d.ts",
+        "import": "./esm/arrow1.js"
+      },
+      "node": {
+        "types": "./node/arrow1.d.ts",
+        "require": "./node/arrow1.js",
+        "import": "./node/arrow1.js"
+      }
     }
   }
 }
