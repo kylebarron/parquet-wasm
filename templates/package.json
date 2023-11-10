@@ -4,7 +4,6 @@
     "Kyle Barron <kylebarron2@gmail.com>"
   ],
   "description": "WebAssembly Parquet reader and writer.",
-  "version": "0.5.0",
   "license": "MIT OR Apache-2.0",
   "repository": {
     "type": "git",
