@@ -73,7 +73,7 @@ console_error_panic_hook = { version = "0.1.6", optional = true }
 # wee_alloc = "0.4.5"
 
 js-sys = "0.3.60"
-getrandom = { version = "0.2.6", features = ["js"] }
+getrandom = { version = "0.2.11", features = ["js"] }
 thiserror = "1.0"
 
 arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "40363b64fc8bbb8c4a2fb8a30156f8811182dada" }
