@@ -1,30 +1,28 @@
-import { Test } from "tape";
+import { expect } from "vitest";
 import { readFileSync } from "fs";
 import { tableFromIPC, Table } from "apache-arrow";
-import fastify, { FastifyInstance } from 'fastify';
+import fastify, { FastifyInstance } from "fastify";
 import fastifyStatic from "@fastify/static";
-import {join} from 'path';
+import { join } from "path";
 const dataDir = "tests/data";
 
 /** Test that two Arrow tables are equal */
-export function testArrowTablesEqual(
-  t: Test,
-  table1: Table,
-  table2: Table
-): void {
-  t.deepEquals(table1.schema.metadata, table2.schema.metadata);
-  t.deepEquals(table1.schema.fields.length, table2.schema.fields.length);
+export function testArrowTablesEqual(table1: Table, table2: Table): void {
+  expect(table1.schema.metadata).toStrictEqual(table2.schema.metadata);
+  expect(table1.schema.fields.length).toStrictEqual(
+    table2.schema.fields.length
+  );
 
   // Note that calling deepEquals on the schema object correctly can fail when in one schema the
   // type is Int_ with bitWidth 32 and the other has Int32.
   for (let i = 0; i < table1.schema.fields.length; i++) {
     const field1 = table1.schema.fields[i];
     const field2 = table2.schema.fields[i];
-    t.deepEquals(field1.name, field2.name);
-    t.deepEquals(field1.nullable, field2.nullable);
+    expect(field1.name).toStrictEqual(field2.name);
+    expect(field1.nullable).toStrictEqual(field2.nullable);
     // Note that calling deepEquals on the type fails! Instead you have to check the typeId
     // t.deepEquals(field1.type, field2.type);
-    t.deepEquals(field1.typeId, field2.typeId);
+    expect(field1.typeId).toStrictEqual(field2.typeId);
   }
 
   // However deepEquals on the table itself can give false negatives because Arrow tables can have
@@ -53,11 +51,10 @@ export function testArrowTablesEqual(
     //         at /Users/kyle/github/rust/parquet-wasm/tests/js/arrow1.ts:8:71
     //         at new Promise (<anonymous>)
     // ...
-    t.deepEquals(
+    expect(
       vector1.toJSON(),
-      vector2.toJSON(),
       `data arrays should be equal for column ${fieldName}`
-    );
+    ).toStrictEqual(vector2.toJSON());
   }
 }
 
@@ -70,12 +67,11 @@ export function readExpectedArrowData(): Table {
 
 export async function temporaryServer() {
   const server = fastify().register(fastifyStatic, {
-    root: join(__dirname, '../data')
+    root: join(__dirname, "../data"),
   });
   await server.listen({
     port: 0,
-    host: 'localhost'
+    host: "localhost",
   });
   return server as FastifyInstance;
-
 }

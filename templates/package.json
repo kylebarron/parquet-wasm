@@ -1,0 +1,73 @@
+{
+  "name": "parquet-wasm",
+  "collaborators": [
+    "Kyle Barron <kylebarron2@gmail.com>"
+  ],
+  "description": "WebAssembly Parquet reader and writer.",
+  "license": "MIT OR Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kylebarron/parquet-wasm"
+  },
+  "files": [
+    "*"
+  ],
+  "module": "bundler/arrow2.js",
+  "types": "bundler/arrow2.d.ts",
+  "sideEffects": [
+    "./arrow1.js",
+    "./snippets/*"
+  ],
+  "keywords": [
+    "parquet",
+    "webassembly",
+    "arrow"
+  ],
+  "exports": {
+    "./arrow1": {
+      "import": {
+        "types": "./esm/arrow1.d.ts",
+        "import": "./esm/arrow1.js"
+      },
+      "browser": {
+        "types": "./esm/arrow1.d.ts",
+        "import": "./esm/arrow1.js"
+      },
+      "node": {
+        "types": "./node/arrow1.d.ts",
+        "require": "./node/arrow1.js",
+        "import": "./node/arrow1.js"
+      }
+    },
+    "./arrow2": {
+      "import": {
+        "types": "./esm/arrow2.d.ts",
+        "import": "./esm/arrow2.js"
+      },
+      "browser": {
+        "types": "./esm/arrow2.d.ts",
+        "import": "./esm/arrow2.js"
+      },
+      "node": {
+        "types": "./node/arrow2.d.ts",
+        "require": "./node/arrow2.js",
+        "import": "./node/arrow2.js"
+      }
+    },
+    ".": {
+      "import": {
+        "types": "./esm/arrow1.d.ts",
+        "import": "./esm/arrow1.js"
+      },
+      "browser": {
+        "types": "./esm/arrow1.d.ts",
+        "import": "./esm/arrow1.js"
+      },
+      "node": {
+        "types": "./node/arrow1.d.ts",
+        "require": "./node/arrow1.js",
+        "import": "./node/arrow1.js"
+      }
+    }
+  }
+}

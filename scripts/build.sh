@@ -99,7 +99,12 @@ cp tmp_build/{bundler,bundler2}/arrow* pkg/bundler/
 cp tmp_build/{esm,esm2}/arrow* pkg/esm
 cp tmp_build/{node,node2}/arrow* pkg/node
 
-cp tmp_build/bundler/{package.json,LICENSE_APACHE,LICENSE_MIT,README.md} pkg/
+cp tmp_build/bundler/{LICENSE_APACHE,LICENSE_MIT,README.md} pkg/
+
+# Copy in combined package.json from template
+# https://stackoverflow.com/a/24904276
+# Note that keys from the second file will overwrite keys from the first.
+jq -s '.[0] * .[1]' templates/package.json tmp_build/bundler/package.json > pkg/package.json
 
 # Create minimal package.json in esm/ folder with type: module
 echo '{"type": "module"}' > pkg/esm/package.json

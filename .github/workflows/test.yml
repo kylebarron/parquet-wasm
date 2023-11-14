@@ -10,7 +10,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -22,7 +22,7 @@ jobs:
       - name: Install
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
 
       - run: cargo install --git https://github.com/rustwasm/wasm-bindgen --rev 4d4851d45200d0d1aeaa07108072dfa0f1f185f7 wasm-bindgen-cli
       - run: wasm-pack build --dev --target nodejs
@@ -31,7 +31,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -41,7 +41,7 @@ jobs:
             override: true
 
       - run: rustup target add wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
 
       - run: cargo install cargo-all-features
 
@@ -51,7 +51,7 @@ jobs:
   node-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -63,11 +63,11 @@ jobs:
       - name: Install
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
 
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "20"
 
       - run: cargo install --git https://github.com/rustwasm/wasm-bindgen --rev 4d4851d45200d0d1aeaa07108072dfa0f1f185f7 wasm-bindgen-cli
       
@@ -84,7 +84,7 @@ jobs:
     name: fmt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -94,7 +94,7 @@ jobs:
             override: true
             components: rustfmt
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
 
       - name: Run
         run: cargo fmt --all -- --check
@@ -103,7 +103,7 @@ jobs:
     name: Clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -113,7 +113,7 @@ jobs:
             override: true
             components: clippy
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
 
       - name: "clippy --all"
         run: cargo clippy --all --features=full --tests -- -D warnings

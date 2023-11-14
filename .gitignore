@@ -1,3 +1,5 @@
+*.fgb
+.DS_Store
 *.parquet
 node_modules
 /target

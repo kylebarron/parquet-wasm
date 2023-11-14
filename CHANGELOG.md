@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.0] - 2023-10-21
+
+## What's Changed
+
+- Switch to an API based on table abstractions from [arrow-wasm](https://github.com/kylebarron/arrow-wasm).
+- Update docs
+- Initial implementation of reading to a stream of Arrow batches. By @H-Plus-Time in https://github.com/kylebarron/parquet-wasm/pull/296
+
+## New Contributors
+
+- @H-Plus-Time made their first contribution in https://github.com/kylebarron/parquet-wasm/pull/296
+
+**Full Changelog**: https://github.com/kylebarron/parquet-wasm/compare/v0.4.0...v0.5.0
+
 ## [0.4.0] - 2023-08-15
 
 ## What's Changed

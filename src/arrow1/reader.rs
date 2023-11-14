@@ -1,5 +1,4 @@
 use crate::arrow1::error::Result;
-use crate::arrow1::ffi::FFIArrowTable;
 use arrow_wasm::arrow1::Table;
 use bytes::Bytes;
 use parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder;
@@ -21,15 +20,4 @@ pub fn read_parquet(parquet_file: Vec<u8>) -> Result<Table> {
     }
 
     Ok(Table::new(batches))
-}
-
-pub fn read_parquet_ffi(parquet_file: Vec<u8>) -> Result<FFIArrowTable> {
-    // Create Parquet reader
-    let cursor: Bytes = parquet_file.into();
-    let builder = ParquetRecordBatchReaderBuilder::try_new(cursor).unwrap();
-
-    // Create Arrow reader
-    let reader = builder.build().unwrap();
-
-    FFIArrowTable::try_from_iterator(reader)
 }

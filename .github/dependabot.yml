@@ -1,7 +1,34 @@
 version: 2
 updates:
-- package-ecosystem: cargo
-  directory: "/"
-  schedule:
-    interval: weekly
-  open-pull-requests-limit: 10
+  - package-ecosystem: cargo
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      arrow-rs:
+        patterns:
+          - "arrow"
+          - "parquet"
+      arrow2:
+        patterns:
+          - "arrow2"
+          - "parquet2"
+      other:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "arrow"
+          - "parquet"
+          - "arrow2"
+          - "parquet2"
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
