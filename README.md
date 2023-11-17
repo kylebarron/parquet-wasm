@@ -20,6 +20,8 @@ npm install parquet-wasm
 
 ### Two APIs?
 
+**Important Note!**: the maintainer of arrow2 and parquet2 has stepped back, and therefore I plan to deprecate the parquet2-based API in the future. See issue [#308](https://github.com/kylebarron/parquet-wasm/issues/308).
+
 These bindings expose _two_ APIs to users because there are _two separate implementations_ of Parquet and Arrow in Rust.
 
 - [`parquet`](https://crates.io/crates/parquet) and [`arrow`](https://crates.io/crates/arrow): These are the "official" Rust implementations of Arrow and Parquet. These projects started earlier and may be more feature complete.
@@ -77,13 +79,8 @@ The WASM bundle must be compiled with the `console_error_panic_hook` for this fu
 ## Example
 
 ```js
-import { tableFromArrays, tableFromIPC, tableToIPC } from "apache-arrow";
-import {
-  readParquet,
-  writeParquet,
-  Compression,
-  WriterPropertiesBuilder,
-} from "parquet-wasm";
+import * as arrow from "apache-arrow";
+import * as parquet from "parquet-wasm";
 
 // Create Arrow Table in JS
 const LENGTH = 2000;
@@ -96,47 +93,53 @@ const rainDates = Array.from(
   (_, i) => new Date(Date.now() - 1000 * 60 * 60 * 24 * i)
 );
 
-const rainfall = tableFromArrays({
+const rainfall = arrow.tableFromArrays({
   precipitation: rainAmounts,
   date: rainDates,
 });
 
 // Write Arrow Table to Parquet
-const writerProperties = new WriterPropertiesBuilder()
-  .setCompression(Compression.ZSTD)
+
+// wasmTable is an Arrow table in WebAssembly memory
+const wasmTable = parquet.Table.fromIPCStream(arrow.tableToIPC(rainfall, "stream"));
+const writerProperties = new parquet.WriterPropertiesBuilder()
+  .setCompression(parquet.Compression.ZSTD)
   .build();
-const parquetBuffer = writeParquet(
-  tableToIPC(rainfall, "stream"),
-  writerProperties
-);
+const parquetUint8Array = parquet.writeParquet(wasmTable, writerProperties);
 
 // Read Parquet buffer back to Arrow Table
-const table = tableFromIPC(readParquet(parquetBuffer));
+// arrowWasmTable is an Arrow table in WebAssembly memory
+const arrowWasmTable = parquet.readParquet(parquetUint8Array);
+
+// table is now an Arrow table in JS memory
+const table = arrow.tableFromIPC(arrowWasmTable.intoIPCStream());
 console.log(table.schema.toString());
 // Schema<{ 0: precipitation: Float32, 1: date: Date64<MILLISECOND> }>
 ```
 
 ### Published examples
 
+(These may use older versions of the library with a different API).
+
 - [GeoParquet on the Web (Observable)](https://observablehq.com/@kylebarron/geoparquet-on-the-web)
 - [Hello, Parquet-WASM (Observable)](https://observablehq.com/@bmschmidt/hello-parquet-wasm)
 
 ## Performance considerations
 
-> Tl;dr: Try the new
-  [`readParquetFFI`](https://kylebarron.dev/parquet-wasm/modules/bundler_arrow2.html#readParquetFFI)
-  API, new in 0.4.0. This API is less well tested than the "normal" `readParquet` API, but should be
+> Tl;dr: When you have a `Table` object (resulting from `readParquet`), try the new
+  [`Table.intoFFI`](https://kylebarron.dev/parquet-wasm/classes/bundler_arrow2.Table.html#intoFFI)
+  API to move it to JavaScript memory. This API is less well tested than the [`Table.intoIPCStream`](https://kylebarron.dev/parquet-wasm/classes/bundler_arrow2.Table.html#intoIPCStream) API, but should be
   faster and have **much** less memory overhead (by a factor of 2). If you hit any bugs, please
   [create a reproducible issue](https://github.com/kylebarron/parquet-wasm/issues/new).
 
 Under the hood, `parquet-wasm` first decodes a Parquet file into Arrow _in WebAssembly memory_. But
 then that WebAssembly memory needs to be copied into JavaScript for use by Arrow JS. The "normal"
-read APIs (e.g. `readParquet`) use the [Arrow IPC
+conversion APIs (e.g. `Table.intoIPCStream`) use the [Arrow IPC
 format](https://arrow.apache.org/docs/python/ipc.html) to get the data back to JavaScript. But this
 requires another memory copy _inside WebAssembly_ to assemble the various arrays into a single
 buffer to be copied back to JS.
 
-Instead, the new `readParquetFFI` API uses Arrow's [C Data
+Instead, the new `Table.intoFFI` API uses Arrow's [C Data
 Interface](https://arrow.apache.org/docs/format/CDataInterface.html) to be able to copy or view
 Arrow arrays from within WebAssembly memory without any serialization.
 
@@ -151,21 +154,19 @@ and the Arrow C Data Interface if you want to read more!
 ### Example
 
 ```js
-import { Table } from "apache-arrow";
+import * as arrow from "apache-arrow";
 import { parseRecordBatch } from "arrow-js-ffi";
 // Edit the `parquet-wasm` import as necessary
-import { readParquetFFI, __wasm } from "parquet-wasm/node2";
+import { readParquet, wasmMemory } from "parquet-wasm/node2";
 
-// A reference to the WebAssembly memory object. The way to access this is different for each
-// environment. In Node, use the __wasm export as shown below. In ESM the memory object will
-// be found on the returned default export.
-const WASM_MEMORY = __wasm.memory;
+// A reference to the WebAssembly memory object.
+const WASM_MEMORY = wasmMemory();
 
 const resp = await fetch("https://example.com/file.parquet");
 const parquetUint8Array = new Uint8Array(await resp.arrayBuffer());
-const wasmArrowTable = readParquetFFI(parquetUint8Array);
+const wasmArrowTable = readParquet(parquetUint8Array).intoFFI();
 
-const recordBatches = [];
+const recordBatches: arrow.RecordBatch[] = [];
 for (let i = 0; i < wasmArrowTable.numBatches(); i++) {
   // Note: Unless you know what you're doing, setting `true` below is recommended to _copy_
   // table data from WebAssembly into JavaScript memory. This may become the default in the
@@ -179,7 +180,7 @@ for (let i = 0; i < wasmArrowTable.numBatches(); i++) {
   recordBatches.push(recordBatch);
 }
 
-const table = new Table(recordBatches);
+const table = new arrow.Table(recordBatches);
 
 // VERY IMPORTANT! You must call `drop` on the Wasm table object when you're done using it
 // to release the Wasm memory.
