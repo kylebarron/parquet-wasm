@@ -21,7 +21,6 @@ use parquet::arrow::async_reader::{
 };
 
 use async_compat::{Compat, CompatExt};
-use async_trait::async_trait;
 use parquet::file::footer::{decode_footer, decode_metadata};
 use parquet::file::metadata::{FileMetaData, ParquetMetaData};
 use range_reader::RangedAsyncReader;
@@ -82,7 +81,6 @@ impl HTTPFileReader {
     }
 }
 
-#[async_trait]
 impl AsyncFileReader for HTTPFileReader {
     fn get_bytes(&mut self, range: Range<usize>) -> BoxFuture<'_, parquet::errors::Result<Bytes>> {
         async move {
