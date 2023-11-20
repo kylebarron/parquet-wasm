@@ -62,6 +62,29 @@ impl AsyncParquetFile {
         // Ok(RecordBatch::new(results.pop().unwrap()))
         Ok(Table::new(results))
     }
+
+    #[wasm_bindgen]
+    pub async fn stream(&self, concurrency: Option<usize>) -> WasmResult<wasm_streams::readable::sys::ReadableStream> {
+        use futures::StreamExt;
+        let concurrency = concurrency.unwrap_or_else(|| 1);
+        let meta = self.meta.clone();
+        let reader = self.reader.clone();
+        let num_row_groups = self.meta.metadata().num_row_groups();
+        let outer_stream = (0..num_row_groups).map(move |i| {
+            let builder = ParquetRecordBatchStreamBuilder::new_with_metadata(
+                reader.clone(),
+                meta.clone(),
+            );
+            builder.with_row_groups(vec![i]).build().unwrap().try_collect::<Vec<_>>()
+        });
+        let buffered = stream::iter(outer_stream).buffered(concurrency);
+        let out_stream = buffered.flat_map(|maybe_record_batches| {
+            stream::iter(maybe_record_batches.unwrap()).map(|record_batch| {
+                Ok(RecordBatch::new(record_batch).into())
+            })
+        });
+        Ok(wasm_streams::ReadableStream::from_stream(out_stream).into_raw())
+    }
 }
 
 #[derive(Debug, Clone)]
