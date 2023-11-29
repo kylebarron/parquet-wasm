@@ -16,7 +16,7 @@ crate-type = ["cdylib", "rlib"]
 
 [features]
 default = ["arrow1", "all_compressions", "reader", "writer"]
-arrow1 = ["dep:arrow", "dep:parquet", "dep:bytes", "arrow-wasm/arrow1"]
+arrow1 = ["dep:arrow", "dep:parquet", "dep:bytes", "arrow-wasm/arrow1", "dep:serde-wasm-bindgen"]
 arrow2 = [
   "dep:arrow2",
   "dep:parquet2",

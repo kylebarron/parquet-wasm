@@ -1,7 +1,9 @@
 use futures::channel::oneshot;
 use futures::future::BoxFuture;
 use object_store::ObjectStore;
+use parquet::arrow::ProjectionMask;
 use url::Url;
+use std::collections::HashMap;
 use std::ops::Range;
 use std::sync::Arc;
 use wasm_bindgen::prelude::*;
@@ -37,6 +39,7 @@ pub struct AsyncParquetFile {
     reader: HTTPFileReader,
     alt_reader: ParquetObjectReader,
     meta: ArrowReaderMetadata,
+    projection_mask: Option<ProjectionMask>
 }
 
 #[wasm_bindgen]
@@ -53,12 +56,49 @@ impl AsyncParquetFile {
         log!("{:?}", location);
         let file_meta = storage_container.head(&location).await.unwrap();
         let alt_reader = ParquetObjectReader::new(storage_container, file_meta).with_preload_column_index(true).with_preload_offset_index(true);
-        Ok(Self { reader, meta, alt_reader })
+        Ok(Self { reader, meta, alt_reader, projection_mask: None })
     }
 
     #[wasm_bindgen]
     pub fn metadata(&self) -> WasmResult<crate::arrow1::metadata::ParquetMetaData> {
         Ok(self.meta.metadata().as_ref().to_owned().into())
+    }
+    #[wasm_bindgen]
+    pub fn schema(&self) -> WasmResult<arrow_wasm::arrow1::Schema> {
+        Ok(self.meta.schema().as_ref().to_owned().into())
+    }
+
+    #[wasm_bindgen]
+    pub fn inspect_schema(&self) -> JsValue {
+        // all_fields flattens the keys, but fortunately all the values retain their nested types -
+        // visual inspection should still work well enough for users/devs to plug in displayed column names
+        let schema = self.meta.schema().as_ref().to_owned();
+        let fields = schema.all_fields();
+        let thing = fields.iter().map(|field| {
+            (field.name(), field.data_type().to_string())
+        }).collect::<HashMap<_, _>>();
+        serde_wasm_bindgen::to_value(&thing).unwrap()
+    }
+    
+    #[wasm_bindgen]
+    pub fn select_columns(&self, columns: Vec<String>) -> Self {
+        let schema = self.meta.schema().as_ref().to_owned();
+        
+        let indices: Vec<usize> = columns.iter().filter_map(|col| {
+            let field_idx = schema.index_of(col);
+            if let Ok(field) = field_idx {
+                Some(field)
+            } else {
+                None
+            }
+        }).collect();
+        let projection_mask = Some(ProjectionMask::roots(self.meta.parquet_schema(), indices));
+        Self {
+            meta: self.meta.to_owned(),
+            reader: self.reader.to_owned(),
+            alt_reader: self.alt_reader.to_owned(),
+            projection_mask
+        }
     }
 
     #[wasm_bindgen]
@@ -85,11 +125,12 @@ impl AsyncParquetFile {
         let reader = self.alt_reader.clone();
         
         let num_row_groups = self.meta.metadata().num_row_groups();
+        let projection_mask = self.projection_mask.as_ref().unwrap_or(&ProjectionMask::all()).clone();
         let outer_stream = (0..num_row_groups).map(move |i| {
             let builder = ParquetRecordBatchStreamBuilder::new_with_metadata(
                 reader.clone(),
                 meta.clone(),
-            );
+            ).with_projection(projection_mask.clone());
             builder.with_row_groups(vec![i]).build().unwrap().try_collect::<Vec<_>>()
         });
         let buffered = stream::iter(outer_stream).buffered(concurrency);
