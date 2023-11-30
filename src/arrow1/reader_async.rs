@@ -74,10 +74,10 @@ impl AsyncParquetFile {
         // visual inspection should still work well enough for users/devs to plug in displayed column names
         let schema = self.meta.schema().as_ref().to_owned();
         let fields = schema.all_fields();
-        let thing = fields.iter().map(|field| {
+        let field_map = fields.iter().map(|field| {
             (field.name(), field.data_type().to_string())
         }).collect::<HashMap<_, _>>();
-        serde_wasm_bindgen::to_value(&thing).unwrap()
+        serde_wasm_bindgen::to_value(&field_map).unwrap()
     }
     
     #[wasm_bindgen]

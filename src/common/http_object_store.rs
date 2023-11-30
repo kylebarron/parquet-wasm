@@ -1,15 +1,13 @@
 use std::fmt::Formatter;
-use std::ops::{Range, Deref};
-use std::time::{Duration, Instant};
-use std::{sync::Arc, fmt::Display};
+use std::ops::Range;
+use std::fmt::Display;
 
 use bytes::Bytes;
 use chrono::{DateTime, Utc, TimeZone};
+use futures::TryFutureExt;
 use futures::stream::BoxStream;
-use futures::{TryStreamExt, StreamExt, FutureExt, TryFutureExt};
 use futures::channel::oneshot;
 use wasm_bindgen_futures::spawn_local;
-use futures::future::BoxFuture;
 use object_store::{path::Path, ObjectMeta};
 use url::Url;
 use object_store::{
@@ -21,9 +19,11 @@ use backon::Retryable;
 
 
 use async_trait::async_trait;
-use reqwest::{Client, Method, StatusCode, Response, RequestBuilder, header::{LAST_MODIFIED, CONTENT_LENGTH, HeaderMap, ETAG}};
+use reqwest::{Client, Method, StatusCode, Response, RequestBuilder, header::{
+    LAST_MODIFIED, CONTENT_LENGTH, HeaderMap, ETAG
+}};
 use snafu::{OptionExt, ResultExt, Snafu, Error as SnafuError};
-use crate::log;
+
 #[derive(Debug, Copy, Clone)]
 /// Configuration for header extraction
 struct HeaderConfig {
@@ -267,34 +267,34 @@ impl InhouseObjectStore {
 impl ObjectStore for InhouseObjectStore {
     async fn abort_multipart(
         &self,
-        location: &object_store::path::Path,
+        location: &Path,
         multipart_id: &object_store::MultipartId,
     ) -> object_store::Result<()> {
         todo!()
     }
     async fn copy(
         &self,
-        from: &object_store::path::Path,
-        to: &object_store::path::Path,
+        from: &Path,
+        to: &Path,
     ) -> object_store::Result<()> {
         todo!()
     }
     async fn copy_if_not_exists(
         &self,
-        _from: &object_store::path::Path,
-        _to: &object_store::path::Path,
+        _from: &Path,
+        _to: &Path,
     ) -> object_store::Result<()> {
         Err(object_store::Error::NotSupported {
             source: todo!(),
         })
     }
-    async fn delete(&self, location: &object_store::path::Path) -> object_store::Result<()> {
+    async fn delete(&self, location: &Path) -> object_store::Result<()> {
         todo!()
     }
 
     async fn get_opts(
         &self,
-        location: &object_store::path::Path,
+        location: &Path,
         options: object_store::GetOptions,
     ) -> object_store::Result<object_store::GetResult> {
         let (sender, receiver) = oneshot::channel();
@@ -316,24 +316,24 @@ impl ObjectStore for InhouseObjectStore {
     }
     async fn put_opts(
         &self,
-        location: &object_store::path::Path,
+        location: &Path,
         bytes: Bytes,
         options: object_store::PutOptions,
     ) -> object_store::Result<object_store::PutResult> {
         todo!()
     }
-    fn list(&self, prefix: Option<&object_store::path::Path>) -> futures::stream::BoxStream<'_, object_store::Result<object_store::ObjectMeta>> {
+    fn list(&self, prefix: Option<&Path>) -> BoxStream<'_, object_store::Result<ObjectMeta>> {
         todo!()
     }
     async fn list_with_delimiter(
         &self,
-        prefix: Option<&object_store::path::Path>,
+        prefix: Option<&Path>,
     ) -> object_store::Result<object_store::ListResult> {
         todo!()
     }
     async fn put_multipart(
         &self,
-        location: &object_store::path::Path,
+        location: &Path,
     ) -> object_store::Result<(
         object_store::MultipartId,
         Box<dyn tokio::io::AsyncWrite + Unpin + Send>,
