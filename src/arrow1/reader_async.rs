@@ -32,7 +32,7 @@ use parquet::file::footer::{decode_footer, decode_metadata};
 use parquet::file::metadata::{FileMetaData, ParquetMetaData};
 use range_reader::RangedAsyncReader;
 use reqwest::Client;
-use wasm_bindgen::prelude::*;
+
 
 #[wasm_bindgen]
 pub struct AsyncParquetFile {
@@ -108,7 +108,7 @@ impl AsyncParquetFile {
             self.meta.clone(),
         );
         let stream = builder.with_row_groups(vec![i]).build()?;
-        let mut results = stream.try_collect::<Vec<_>>().await.unwrap();
+        let results = stream.try_collect::<Vec<_>>().await.unwrap();
 
         // NOTE: This is not only one batch by default due to arrow-rs's default rechunking.
         // assert_eq!(results.len(), 1, "Expected one record batch");
@@ -119,7 +119,7 @@ impl AsyncParquetFile {
     #[wasm_bindgen]
     pub async fn stream(&self, concurrency: Option<usize>) -> WasmResult<wasm_streams::readable::sys::ReadableStream> {
         use futures::StreamExt;
-        let concurrency = concurrency.unwrap_or_else(|| 1);
+        let concurrency = concurrency.unwrap_or(1);
         let meta = self.meta.clone();
         // let reader = self.reader.clone();
         let reader = self.alt_reader.clone();

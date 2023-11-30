@@ -22,7 +22,7 @@ use async_trait::async_trait;
 use reqwest::{Client, Method, StatusCode, Response, RequestBuilder, header::{
     LAST_MODIFIED, CONTENT_LENGTH, HeaderMap, ETAG
 }};
-use snafu::{OptionExt, ResultExt, Snafu, Error as SnafuError};
+use snafu::{OptionExt, ResultExt, Snafu};
 
 #[derive(Debug, Copy, Clone)]
 /// Configuration for header extraction
@@ -197,9 +197,9 @@ impl InnerClient {
         };
         let builder = self.client.request(method, url).with_get_options(options);
         let res_func = || async {
-            let res = builder.try_clone().unwrap()
-            .send().await;
-            res
+            
+            builder.try_clone().unwrap()
+            .send().await
         };
         let res = res_func.retry(&ExponentialBuilder::default())
         .await
@@ -211,7 +211,7 @@ impl InnerClient {
                     path: path.to_string(),
                 }
             }
-            _ => Error::Generic { store: InnerClient::STORE, source: Box::new(source) }.into(),
+            _ => Error::Generic { store: InnerClient::STORE, source: Box::new(source) },
         })?;
 
         // We expect a 206 Partial Content response if a range was requested
@@ -267,15 +267,15 @@ impl InhouseObjectStore {
 impl ObjectStore for InhouseObjectStore {
     async fn abort_multipart(
         &self,
-        location: &Path,
-        multipart_id: &object_store::MultipartId,
+        _location: &Path,
+        _multipart_id: &object_store::MultipartId,
     ) -> object_store::Result<()> {
         todo!()
     }
     async fn copy(
         &self,
-        from: &Path,
-        to: &Path,
+        _from: &Path,
+        _to: &Path,
     ) -> object_store::Result<()> {
         todo!()
     }
@@ -288,7 +288,7 @@ impl ObjectStore for InhouseObjectStore {
             source: todo!(),
         })
     }
-    async fn delete(&self, location: &Path) -> object_store::Result<()> {
+    async fn delete(&self, _location: &Path) -> object_store::Result<()> {
         todo!()
     }
 
@@ -307,33 +307,33 @@ impl ObjectStore for InhouseObjectStore {
         
         let data = receiver.await.unwrap();
         let wrapped_stream = futures::stream::once(futures::future::ready(data.payload));
-        let out = Ok(GetResult {
+        
+        Ok(GetResult {
             range: data.range,
             payload: GetResultPayload::Stream(Box::pin(wrapped_stream)),
             meta: data.meta
-        });
-        out
+        })
     }
     async fn put_opts(
         &self,
-        location: &Path,
-        bytes: Bytes,
-        options: object_store::PutOptions,
+        _location: &Path,
+        _bytes: Bytes,
+        _options: object_store::PutOptions,
     ) -> object_store::Result<object_store::PutResult> {
         todo!()
     }
-    fn list(&self, prefix: Option<&Path>) -> BoxStream<'_, object_store::Result<ObjectMeta>> {
+    fn list(&self, _prefix: Option<&Path>) -> BoxStream<'_, object_store::Result<ObjectMeta>> {
         todo!()
     }
     async fn list_with_delimiter(
         &self,
-        prefix: Option<&Path>,
+        _prefix: Option<&Path>,
     ) -> object_store::Result<object_store::ListResult> {
         todo!()
     }
     async fn put_multipart(
         &self,
-        location: &Path,
+        _location: &Path,
     ) -> object_store::Result<(
         object_store::MultipartId,
         Box<dyn tokio::io::AsyncWrite + Unpin + Send>,

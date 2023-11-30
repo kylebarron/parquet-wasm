@@ -1,4 +1,4 @@
-use crate::arrow1::error::WasmResult;
+
 use wasm_bindgen::prelude::*;
 
 /// Global Parquet metadata.
