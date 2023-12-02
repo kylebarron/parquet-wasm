@@ -116,21 +116,18 @@ jobs:
           node-version: "20"
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: brotli pv
+          packages: brotli pv parallel
           version: 1.0
 
       - name: Build bundle
         run: yarn build
       - name: Size Reporting
         run: |
-          ARROW1_SIZE=$(cat pkg/esm/arrow1_bg.wasm | pv -f -b 2>&1 >/dev/null | tr -d '\n\r')
-          brotli -Z pkg/esm/arrow1_bg.wasm
-          ARROW1_BR_SIZE=$(cat pkg/esm/arrow1_bg.wasm.br | pv -f -b 2>&1 >/dev/null | tr -d '\n\r')
-          echo $ARROW1_SIZE
-          echo $ARROW1_BR_SIZE
-          echo "| Asset  | Size |" >> $GITHUB_STEP_SUMMARY
-          echo "| ------ | ---- |" >> $GITHUB_STEP_SUMMARY
-          echo "| pkg/esm/arrow1_bg.wasm | $ARROW1_SIZE |" >> $GITHUB_STEP_SUMMARY
-          echo "| pkg/esm/arrow1_bg.wasm.br | $ARROW1_BR_SIZE |" >> $GITHUB_STEP_SUMMARY
-          cat $GITHUB_STEP_SUMMARY
-        # TODO: matrix equivalent of this / and/or use the @actions/core npm package
+          ls pkg/*/*.wasm | parallel brotli -f -Z {}
+          echo "| Asset  | Size | Compressed Size |" >> $GITHUB_STEP_SUMMARY
+          echo "| ------ | ---- | --------------- |" >> $GITHUB_STEP_SUMMARY
+          for asset in $(ls pkg/*/*.wasm); do
+            SIZE=$(cat $asset | pv -f -b 2>&1 >/dev/null | tr -d '\n\r')
+            COMPRESSED_SIZE=$(cat "${asset}.br" | pv -f -b 2>&1 >/dev/null | tr -d '\n\r')
+            echo "| ${asset} | $SIZE | $COMPRESSED_SIZE |" >> $GITHUB_STEP_SUMMARY
+          done;
