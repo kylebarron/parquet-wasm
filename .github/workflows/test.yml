@@ -13,11 +13,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: stable
-            profile: minimal
-            override: true
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Install
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
@@ -33,13 +29,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-            toolchain: stable
-            profile: minimal
-            override: true
+            targets: wasm32-unknown-unknown
 
-      - run: rustup target add wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
 
       - run: cargo install cargo-all-features
@@ -53,11 +46,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: stable
-            profile: minimal
-            override: true
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Install
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
@@ -84,11 +73,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-            toolchain: stable
-            profile: minimal
-            override: true
             components: rustfmt
 
       - uses: Swatinem/rust-cache@v2
@@ -103,11 +89,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-            toolchain: stable
-            profile: minimal
-            override: true
             components: clippy
 
       - uses: Swatinem/rust-cache@v2
@@ -121,11 +104,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-            toolchain: stable
-            profile: minimal
-            override: true
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Install
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
@@ -145,7 +124,8 @@ jobs:
       - name: Size Reporting
         run: |
           ARROW1_SIZE=$(cat pkg/esm/arrow1_bg.wasm | pv -f -b 2>&1 >/dev/null)
-          ARROW1_BR_SIZE=$(brotli -Z -c pkg/esm/arrow1_bg.wasm | pv -f -b 2>&1 >/dev/null)
+          brotli -Z pkg/esm/arrow1_bg.wasm
+          ARROW1_BR_SIZE=$(cat pkg/esm/arrow1_bg.wasm.br | pv -f -b 2>&1 >/dev/null)
           echo $ARROW1_SIZE
           echo $ARROW1_BR_SIZE
           echo "| Asset  | Size |" >> $GITHUB_STEP_SUMMARY
