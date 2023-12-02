@@ -123,9 +123,9 @@ jobs:
         run: yarn build
       - name: Size Reporting
         run: |
-          ARROW1_SIZE=$(cat pkg/esm/arrow1_bg.wasm | pv -f -b 2>&1 >/dev/null)
+          ARROW1_SIZE=$(cat pkg/esm/arrow1_bg.wasm | pv -f -b 2>&1 >/dev/null | tr -d '\n')
           brotli -Z pkg/esm/arrow1_bg.wasm
-          ARROW1_BR_SIZE=$(cat pkg/esm/arrow1_bg.wasm.br | pv -f -b 2>&1 >/dev/null)
+          ARROW1_BR_SIZE=$(cat pkg/esm/arrow1_bg.wasm.br | pv -f -b 2>&1 >/dev/null | tr -d '\n')
           echo $ARROW1_SIZE
           echo $ARROW1_BR_SIZE
           echo "| Asset  | Size |" >> $GITHUB_STEP_SUMMARY
