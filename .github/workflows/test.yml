@@ -114,3 +114,36 @@ jobs:
 
       - name: "clippy --all"
         run: cargo clippy --all --features=full --tests -- -D warnings
+
+  node-build-report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: stable
+            profile: minimal
+            override: true
+
+      - name: Install
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Build bundle
+        run: yarn build
+      - name: Size Reporting
+        run: |
+          ARROW1_SIZE=$(cat pkg/esm/arrow1_bg.wasm | pv -f -b 2>&1 >/dev/null)
+          ARROW1_BR_SIZE=$(brotli -Z -c pkg/esm/arrow1_bg.wasm | pv -f -b 2>&1 >/dev/null)
+          echo "| Asset  | Size |" >> $GITHUB_STEP_SUMMARY
+          echo "| ------ | ---- |" >> $GITHUB_STEP_SUMMARY
+          echo "| pkg/esm/arrow1_bg.wasm | $ARROW_SIZE |" >> $GITHUB_STEP_SUMMARY
+          echo "| pkg/esm/arrow1_bg.wasm.br | $ARROW1_BR_SIZE |" >> $GITHUB_STEP_SUMMARY
+        # TODO: matrix equivalent of this / and/or use the @actions/core npm package
