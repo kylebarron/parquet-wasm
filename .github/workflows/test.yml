@@ -131,3 +131,8 @@ jobs:
             COMPRESSED_SIZE=$(cat "${asset}.br" | pv -f -b 2>&1 >/dev/null | tr -d '\n\r')
             echo "| ${asset} | $SIZE | $COMPRESSED_SIZE |" >> $GITHUB_STEP_SUMMARY
           done;
+      - name: Comment PR with execution number
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          filePath: $GITHUB_STEP_SUMMARY
+          comment_tag: execution
