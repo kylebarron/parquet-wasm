@@ -135,6 +135,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: brotli pv
+          version: 1.0
 
       - name: Build bundle
         run: yarn build
