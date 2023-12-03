@@ -131,9 +131,10 @@ jobs:
             COMPRESSED_SIZE=$(cat "${asset}.br" | pv -f -b 2>&1 >/dev/null | tr -d '\n\r')
             echo "| ${asset} | $SIZE | $COMPRESSED_SIZE |" >> $GITHUB_STEP_SUMMARY
           done;
-          cp $GITHUB_STEP_SUMMARY fixed_output.md
-      - name: Comment PR with summary output
-        uses: thollander/actions-comment-pull-request@v2
+          mkdir -p ./pr
+          echo ${{ github.event.number }} > ./pr/NR
+          cp $GITHUB_STEP_SUMMARY ./pr/step_summary.md
+      - uses: actions/upload-artifact@v2
         with:
-          filePath: fixed_output.md
-          comment_tag: execution
+          name: pr
+          path: pr/
