@@ -35,8 +35,22 @@ jobs:
             fs.writeFileSync('${{github.workspace}}/pr.zip', Buffer.from(download.data));
       - run: unzip pr.zip
 
-      - name: Comment PR with summary output
-        uses: thollander/actions-comment-pull-request@v2
+      - name: 'Comment on PR'
+        uses: actions/github-script@v3
         with:
-          filePath: step_summary.md
-          comment_tag: execution
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const issueNumber = Number(fs.readFileSync('./NR'));
+            const summaryContent = fs.readFileSync('./step_summary.md', 'utf-8');
+            const existingCommentsOpts = github.issues.listComments({...context.repo, issue_number: issueNumber});
+            const existingComments = await github.paginate(existingCommentsOpts);
+            const TAG = 'execution';
+            const tagPattern = `<!-- pr_asset_summary_comment "${TAG}" -->`;
+            const body = `${summaryContent}\n${tagPattern}`;
+            const preExistingComment = existingComments.find((comment) => comment.body.includes(tagPattern));
+            if(preExistingComment) {
+              await github.issues.updateComment({ ...context.repo, comment_id: preExistingComment.id, body });
+            } else {
+              await github.issues.createComment({ ...context.repo, issue_number: issueNumber, body });
+            }
