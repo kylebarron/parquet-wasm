@@ -105,6 +105,8 @@ jobs:
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+            targets: wasm32-unknown-unknown
 
       - name: Install
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
@@ -138,7 +140,7 @@ jobs:
           if [[ "${{ github.event_type }}" != "pull_request" ]]; then
             cat ./pr/step_summary.md > $GITHUB_STEP_SUMMARY
           fi;
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: pr
           path: pr/
@@ -148,7 +150,7 @@ jobs:
       github.event_name == 'pull_request'
     needs: node-build-report
     steps:
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: pr
           path: pr/
@@ -178,14 +180,16 @@ jobs:
             const matchArtifact = artifacts.data.artifacts.filter((artifact) => {
               return artifact.name == "pr"
             })[0];
-            const download = await github.rest.actions.downloadArtifact({
-              ...baseContext.repo,
-              artifact_id: matchArtifact.id,
-              archive_format: 'zip',
-            });
-              
-            fs.writeFileSync('${{github.workspace}}/base.zip', Buffer.from(download.data));
-            execSync(`unzip -p base.zip asset_manifest.json >base_asset_manifest.json || true`);
+            if(matchArtifact) {
+              const download = await github.rest.actions.downloadArtifact({
+                ...baseContext.repo,
+                artifact_id: matchArtifact.id,
+                archive_format: 'zip',
+              });
+                
+              fs.writeFileSync('${{github.workspace}}/base.zip', Buffer.from(download.data));
+              execSync(`unzip -p base.zip asset_manifest.json >base_asset_manifest.json || true`);
+            } 
             // now, read in the asset manifests, for the head and base
             let baseAssets = {};
             try {
@@ -242,7 +246,7 @@ jobs:
               ...lineFragments
             ]).write();
             fs.cpSync(process.env.GITHUB_STEP_SUMMARY, './pr/step_summary.md')
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: pr
           path: pr/
