@@ -120,14 +120,14 @@ jobs:
           version: 1.0
 
       - name: Build bundle
-        run: yarn build
+        run: ./scripts/report_build.sh
       - name: Size Reporting
         run: |
-          ls pkg/*/*.wasm | parallel brotli -f -Z {}
+          ls report_pkg/*/*.wasm | parallel brotli -f -Z {}
           mkdir -p ./pr
           echo "| Asset  | Size | Compressed Size |" >> ./pr/step_summary.md
           echo "| ------ | ---- | --------------- |" >> ./pr/step_summary.md
-          for asset in $(ls pkg/*/*.wasm); do
+          for asset in $(ls report_pkg/*/*.wasm); do
             export SIZE=$(stat --format '%s' $asset)
             export COMPRESSED_SIZE=$(stat --format '%s' "${asset}.br")
             export asset
