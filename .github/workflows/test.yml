@@ -116,7 +116,7 @@ jobs:
           node-version: "20"
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: brotli pv parallel
+          packages: brotli pv parallel jq
           version: 1.0
 
       - name: Build bundle
@@ -124,16 +124,124 @@ jobs:
       - name: Size Reporting
         run: |
           ls pkg/*/*.wasm | parallel brotli -f -Z {}
-          echo "| Asset  | Size | Compressed Size |" >> $GITHUB_STEP_SUMMARY
-          echo "| ------ | ---- | --------------- |" >> $GITHUB_STEP_SUMMARY
-          for asset in $(ls pkg/*/*.wasm); do
-            SIZE=$(cat $asset | pv -f -b 2>&1 >/dev/null | tr -d '\n\r')
-            COMPRESSED_SIZE=$(cat "${asset}.br" | pv -f -b 2>&1 >/dev/null | tr -d '\n\r')
-            echo "| ${asset} | $SIZE | $COMPRESSED_SIZE |" >> $GITHUB_STEP_SUMMARY
-          done;
           mkdir -p ./pr
+          echo "| Asset  | Size | Compressed Size |" >> ./pr/step_summary.md
+          echo "| ------ | ---- | --------------- |" >> ./pr/step_summary.md
+          for asset in $(ls pkg/*/*.wasm); do
+            export SIZE=$(stat --format '%s' $asset)
+            export COMPRESSED_SIZE=$(stat --format '%s' "${asset}.br")
+            export asset
+            echo "| ${asset} | $(echo $SIZE | numfmt --to=si --suffix="B") | $(echo $COMPRESSED_SIZE | numfmt --to=si --suffix="B") |" >> ./pr/step_summary.md
+            echo $(jq -n '{"asset": $ENV.asset, "size": $ENV.SIZE | tonumber, "compressed_size": $ENV.COMPRESSED_SIZE | tonumber}')
+          done | jq -s 'map({ (.asset|tostring): .}) | add' > ./pr/asset_manifest.json
           echo ${{ github.event.number }} > ./pr/NR
-          cp $GITHUB_STEP_SUMMARY ./pr/step_summary.md
+          if [[ "${{ github.event_type }}" != "pull_request" ]]; then
+            cat ./pr/step_summary.md > $GITHUB_STEP_SUMMARY
+          fi;
+      - uses: actions/upload-artifact@v2
+        with:
+          name: pr
+          path: pr/
+  delta_generation:
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'pull_request'
+    needs: node-build-report
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: pr
+          path: pr/
+      - name: 'Download artifact'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const { execSync } = require('child_process');
+            const baseContext = {
+              repo: {
+                repo: '${{ github.event.pull_request.base.repo.name }}',
+                owner: '${{ github.event.pull_request.base.repo.owner.login }}'
+              }
+            };
+            const baseWorkflows = await github.rest.actions.listWorkflowRuns({
+              ...baseContext.repo,
+              branch: '${{ github.event.pull_request.base.ref }}',
+              status: 'success',
+              workflow_id: 'test.yml',
+            });
+            const matchWorkflow = baseWorkflows.data?.workflow_runs?.[0];
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              ...baseContext.repo,
+              run_id: matchWorkflow?.id,
+            });
+            const matchArtifact = artifacts.data.artifacts.filter((artifact) => {
+              return artifact.name == "pr"
+            })[0];
+            const download = await github.rest.actions.downloadArtifact({
+              ...baseContext.repo,
+              artifact_id: matchArtifact.id,
+              archive_format: 'zip',
+            });
+              
+            fs.writeFileSync('${{github.workspace}}/base.zip', Buffer.from(download.data));
+            execSync(`unzip -p base.zip asset_manifest.json >base_asset_manifest.json || true`);
+            // now, read in the asset manifests, for the head and base
+            let baseAssets = {};
+            try {
+              baseAssets = JSON.parse(fs.readFileSync('./base_asset_manifest.json'));
+            } catch (error) {
+              console.log('No base asset manifest found');
+            }
+            const assets = JSON.parse(fs.readFileSync('./pr/asset_manifest.json'));
+            const unitOptions = {
+                style: 'unit', unit: 'byte', unitDisplay: 'narrow', notation: 'compact',
+                maximumSignificantDigits: 3
+            };
+            const formatter = new Intl.NumberFormat('en-US', unitOptions);
+            const signedFormatter = new Intl.NumberFormat('en-US', { ...unitOptions, signDisplay: 'always' });
+            const percentFormatter = Intl.NumberFormat('en-US', { style: 'percent', signDisplay: 'always' });
+            const colorMap = {
+                '-1': 'green',
+                1: 'red',
+                0: 'black',
+                NaN: 'black'
+            };
+            // compute deltas and output markdown fragments
+            const lineFragments = Object.entries(assets).map(([k, v]) => {
+                const baseAsset = baseAssets[k] ?? {};
+                const { asset, size, compressed_size, size_delta, compressed_size_delta } = {
+                    ...v,
+                    ...Object.fromEntries(['size', 'compressed_size'].map(subK => {
+                        // compute the percentage change, NaN if the asset wasn't available
+                        const proportionalDelta = 1 - v?.[subK] / baseAsset?.[subK];
+                        const absoluteDelta = baseAsset?.[subK] - v?.[subK]
+                        const sign = Math.sign(proportionalDelta);
+                        // conditionally color the output via an inline latex block
+                        let fragment = '';
+                        if(Number.isFinite(proportionalDelta)) {
+                            fragment = `${signedFormatter.format(absoluteDelta)} ${percentFormatter.format(proportionalDelta)}`;
+                        } else {
+                            fragment = 'N/A';
+                        }
+                        if(!Number.isFinite(proportionalDelta) || sign === 0) {
+                          return [`${subK}_delta`, fragment]
+                        } else {
+                          const formattedFragment = `$\\color{${colorMap[sign]}}\\text{${fragment.replace('%', '\\%')}}$`;
+                          return [`${subK}_delta`, formattedFragment]
+                        }
+                    }))
+                };
+                // output a markdown fragment
+                const sizeFragment = `${formatter.format(size)} ${size_delta}`
+                const compressedFragment = `${formatter.format(compressed_size)} ${compressed_size_delta}`
+                return [asset, sizeFragment, compressedFragment]
+            });
+            await core.summary.addHeading('Asset Sizes').addTable([
+              [{data: 'Asset', header: true}, {data: 'Uncompressed Size', header: true}, {data: 'Compressed Size', header: true}],
+              ...lineFragments
+            ]).write();
+            fs.cpSync(process.env.GITHUB_STEP_SUMMARY, './pr/step_summary.md')
       - uses: actions/upload-artifact@v2
         with:
           name: pr

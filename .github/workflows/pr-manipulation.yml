@@ -17,24 +17,23 @@ jobs:
         uses: actions/github-script@v3.1.0
         with:
           script: |
-            var artifacts = await github.actions.listWorkflowRunArtifacts({
-               owner: context.repo.owner,
-               repo: context.repo.repo,
-               run_id: ${{github.event.workflow_run.id }},
+            const fs = require('fs');
+            const artifacts = await github.actions.listWorkflowRunArtifacts({
+              ...context.repo,
+              run_id: ${{github.event.workflow_run.id }},
             });
-            var matchArtifact = artifacts.data.artifacts.filter((artifact) => {
+            const matchArtifact = artifacts.data.artifacts.filter((artifact) => {
               return artifact.name == "pr"
             })[0];
-            var download = await github.actions.downloadArtifact({
-               owner: context.repo.owner,
-               repo: context.repo.repo,
-               artifact_id: matchArtifact.id,
-               archive_format: 'zip',
+            const download = await github.actions.downloadArtifact({
+              ...context.repo,
+              artifact_id: matchArtifact.id,
+              archive_format: 'zip',
             });
-            var fs = require('fs');
+            
             fs.writeFileSync('${{github.workspace}}/pr.zip', Buffer.from(download.data));
       - run: unzip pr.zip
-
+      
       - name: 'Comment on PR'
         uses: actions/github-script@v3
         with:
@@ -43,6 +42,7 @@ jobs:
             const fs = require('fs');
             const issueNumber = Number(fs.readFileSync('./NR'));
             const summaryContent = fs.readFileSync('./step_summary.md', 'utf-8');
+
             const existingCommentsOpts = github.issues.listComments.endpoint.merge({
               ...context.repo, issue_number: issueNumber
             });
