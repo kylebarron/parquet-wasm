@@ -43,12 +43,14 @@ jobs:
             const fs = require('fs');
             const issueNumber = Number(fs.readFileSync('./NR'));
             const summaryContent = fs.readFileSync('./step_summary.md', 'utf-8');
-            const existingCommentsOpts = github.issues.listComments({...context.repo, issue_number: issueNumber});
+            const existingCommentsOpts = github.issues.listComments.endpoint.merge({
+              ...context.repo, issue_number: issueNumber
+            });
             const existingComments = await github.paginate(existingCommentsOpts);
             const TAG = 'execution';
             const tagPattern = `<!-- pr_asset_summary_comment "${TAG}" -->`;
             const body = `${summaryContent}\n${tagPattern}`;
-            const preExistingComment = existingComments.find((comment) => comment.body.includes(tagPattern));
+            const preExistingComment = existingComments.find((comment) => comment.body?.includes(tagPattern));
             if(preExistingComment) {
               await github.issues.updateComment({ ...context.repo, comment_id: preExistingComment.id, body });
             } else {
