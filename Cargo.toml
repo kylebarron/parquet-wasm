@@ -58,7 +58,7 @@ full = [
 ]
 
 [dependencies]
-wasm-bindgen = { version = "0.2.83", features = ["serde-serialize"] }
+wasm-bindgen = { version = "0.2.89", features = ["serde-serialize"] }
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
@@ -72,8 +72,8 @@ console_error_panic_hook = { version = "0.1.6", optional = true }
 # if wee_alloc only saves 10KB, might not be worth the slower allocation speed?
 # wee_alloc = "0.4.5"
 
-js-sys = "0.3.60"
-getrandom = { version = "0.2.6", features = ["js"] }
+js-sys = "0.3.66"
+getrandom = { version = "0.2.11", features = ["js"] }
 thiserror = "1.0"
 
 arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "564a7485fcd585647ba77e2c5d8f2cff6db02122" }
@@ -97,7 +97,7 @@ bytes = { version = "1", optional = true }
 
 serde-wasm-bindgen = { version = "0.6", optional = true }
 
-wasm-bindgen-futures = { version = "0.4.30", optional = true }
+wasm-bindgen-futures = { version = "0.4.39", optional = true }
 futures = { version = "0.3", optional = true }
 range-reader = { version = "0.2", optional = true }
 reqwest = { version = "0.11.22", optional = true, default-features = false }
@@ -107,12 +107,12 @@ zstd = { version = "*", features = [
   "wasm",
   "thin",
 ], default-features = false, optional = true }
-async-compat = { version = "0.2.2", optional = true }
+async-compat = { version = "0.2.3", optional = true }
 async-stream = { version = "0.3.5", optional = true }
-wasm-streams = { version = "0.3.0", optional = true }
+wasm-streams = { version = "0.4.0", optional = true }
 
 [dependencies.web-sys]
-version = "0.3.4"
+version = "0.3.66"
 features = [
   'console',
   'Headers',
@@ -126,7 +126,7 @@ features = [
 ]
 
 [dev-dependencies]
-wasm-bindgen-test = "0.3.31"
+wasm-bindgen-test = "0.3.39"
 
 [package.metadata.cargo-all-features]
 
