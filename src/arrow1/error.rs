@@ -10,7 +10,8 @@ pub enum ParquetWasmError {
 
     #[error(transparent)]
     ParquetError(Box<ParquetError>),
-
+    #[error("Column {0} not found in table")]
+    UnknownColumn(String),
     #[cfg(feature = "async")]
     #[error("HTTP error: `{0}`")]
     HTTPError(Box<reqwest::Error>),

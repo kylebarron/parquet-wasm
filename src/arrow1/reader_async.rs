@@ -1,11 +1,12 @@
 use futures::channel::oneshot;
 use futures::future::BoxFuture;
+use parquet::arrow::ProjectionMask;
 use std::ops::Range;
 use std::sync::Arc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 
-use crate::arrow1::error::{Result, WasmResult};
+use crate::arrow1::error::{Result, WasmResult, ParquetWasmError};
 use crate::common::fetch::{
     create_reader, get_content_length, range_from_end, range_from_start_and_length,
 };
@@ -31,6 +32,8 @@ use wasm_bindgen::prelude::*;
 pub struct AsyncParquetFile {
     reader: HTTPFileReader,
     meta: ArrowReaderMetadata,
+    batch_size: usize,
+    projection_mask: Option<ProjectionMask>,
 }
 
 #[wasm_bindgen]
@@ -40,7 +43,33 @@ impl AsyncParquetFile {
         let client = Client::new();
         let mut reader = HTTPFileReader::new(url.clone(), client.clone(), 1024);
         let meta = ArrowReaderMetadata::load_async(&mut reader, Default::default()).await?;
-        Ok(Self { reader, meta })
+        Ok(Self { reader, meta, projection_mask: None, batch_size: 1024 })
+    }
+    #[wasm_bindgen]
+    pub fn with_batch_size(self, batch_size: usize) -> Self {
+        Self { batch_size, ..self }
+    }
+    #[wasm_bindgen]
+    pub fn select_columns(self, columns: Vec<String>) -> WasmResult<AsyncParquetFile> {
+        let pq_schema = self.meta.parquet_schema();
+        let col_paths = pq_schema.columns().iter().map(|col| col.path().string()).collect::<Vec<_>>();
+        let indices: Vec<usize> = columns.iter().map(|col| {
+            let field_indices: Vec<usize> = col_paths.iter().enumerate().filter(|(idx, path)| {
+                // identical OR the path starts with the column AND the substring is immediately followed by the
+                // path separator
+                path.to_string() == col.clone() || path.starts_with(col) && {
+                    let left_index = path.find(col).unwrap();
+                    path.chars().nth(left_index + col.len()).unwrap() == '.'
+                }
+            }).map(|(idx, _)| idx).collect();
+            if field_indices.is_empty() {
+                Err(ParquetWasmError::UnknownColumn(col.clone()))
+            } else {
+                Ok(field_indices)
+            }
+        }).collect::<Result<Vec<Vec<usize>>>>()?.into_iter().flatten().collect();
+        let projection_mask = Some(ProjectionMask::leaves(pq_schema, indices));
+        Ok(Self { projection_mask, ..self })
     }
 
     #[wasm_bindgen]
@@ -53,14 +82,42 @@ impl AsyncParquetFile {
         let builder = ParquetRecordBatchStreamBuilder::new_with_metadata(
             self.reader.clone(),
             self.meta.clone(),
-        );
+        )
+        .with_batch_size(self.batch_size)
+        .with_projection(self.projection_mask.as_ref().unwrap_or(&ProjectionMask::all()).clone());
         let stream = builder.with_row_groups(vec![i]).build()?;
-        let mut results = stream.try_collect::<Vec<_>>().await.unwrap();
+        let results = stream.try_collect::<Vec<_>>().await.unwrap();
 
         // NOTE: This is not only one batch by default due to arrow-rs's default rechunking.
         // assert_eq!(results.len(), 1, "Expected one record batch");
         // Ok(RecordBatch::new(results.pop().unwrap()))
         Ok(Table::new(results))
+    }
+    #[wasm_bindgen]
+    pub async fn stream(&self, concurrency: Option<usize>) -> WasmResult<wasm_streams::readable::sys::ReadableStream> {
+        use futures::StreamExt;
+        let concurrency = concurrency.unwrap_or(1);
+        let meta = self.meta.clone();
+        let reader = self.reader.clone();
+        let batch_size = self.batch_size.clone();
+        let num_row_groups = self.meta.metadata().num_row_groups();
+        let projection_mask = self.projection_mask.as_ref().unwrap_or(&ProjectionMask::all()).clone();
+        let buffered_stream = stream::iter((0..num_row_groups).map(move |i| {
+            let builder = ParquetRecordBatchStreamBuilder::new_with_metadata(
+                reader.clone(),
+                meta.clone(),
+            )
+            .with_batch_size(batch_size)
+            .with_projection(projection_mask.clone())
+            .with_row_groups(vec![i]);
+            builder.build().unwrap().try_collect::<Vec<_>>()
+        })).buffered(concurrency);
+        let out_stream = buffered_stream.flat_map(|maybe_record_batches| {
+            stream::iter(maybe_record_batches.unwrap()).map(|record_batch| {
+                Ok(RecordBatch::new(record_batch).into())
+            })
+        });
+        Ok(wasm_streams::ReadableStream::from_stream(out_stream).into_raw())
     }
 }
 
