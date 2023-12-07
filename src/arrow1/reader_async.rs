@@ -27,7 +27,7 @@ use parquet::file::footer::{decode_footer, decode_metadata};
 use parquet::file::metadata::{FileMetaData, ParquetMetaData};
 use range_reader::RangedAsyncReader;
 use reqwest::Client;
-use wasm_bindgen::prelude::*;
+
 use async_trait::async_trait;
 
 
@@ -38,7 +38,7 @@ trait SharedIO<T: AsyncFileReader + Unpin + Sync + Clone + 'static> {
             reader.clone(),
             meta.clone(),
         )
-        .with_batch_size(batch_size.clone())
+        .with_batch_size(*batch_size)
         .with_projection(projection_mask.as_ref().unwrap_or(&ProjectionMask::all()).clone());
         builder
     }
@@ -58,7 +58,7 @@ trait SharedIO<T: AsyncFileReader + Unpin + Sync + Clone + 'static> {
         let concurrency = concurrency.unwrap_or(1);
         let meta = meta.clone();
         let reader = reader.clone();
-        let batch_size = batch_size.clone();
+        let batch_size = *batch_size;
         let num_row_groups = meta.metadata().num_row_groups();
         let projection_mask = projection_mask.clone();
         let buffered_stream = stream::iter((0..num_row_groups).map(move |i| {
@@ -278,8 +278,8 @@ impl WrappedFile {
             let out_vec = Uint8Array::new_with_byte_offset(&buf, 0).to_vec();
             sender.send(out_vec).unwrap();
         });
-        let data = receiver.await.unwrap();
-        data
+        
+        receiver.await.unwrap()
     }
 }
 
