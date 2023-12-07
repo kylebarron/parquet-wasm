@@ -1,6 +1,7 @@
 use futures::channel::oneshot;
 use futures::future::BoxFuture;
 use parquet::arrow::ProjectionMask;
+use parquet::schema::types::SchemaDescriptor;
 use std::ops::Range;
 use std::sync::Arc;
 use wasm_bindgen::prelude::*;
@@ -52,23 +53,7 @@ impl AsyncParquetFile {
     #[wasm_bindgen]
     pub fn select_columns(self, columns: Vec<String>) -> WasmResult<AsyncParquetFile> {
         let pq_schema = self.meta.parquet_schema();
-        let col_paths = pq_schema.columns().iter().map(|col| col.path().string()).collect::<Vec<_>>();
-        let indices: Vec<usize> = columns.iter().map(|col| {
-            let field_indices: Vec<usize> = col_paths.iter().enumerate().filter(|(idx, path)| {
-                // identical OR the path starts with the column AND the substring is immediately followed by the
-                // path separator
-                path.to_string() == col.clone() || path.starts_with(col) && {
-                    let left_index = path.find(col).unwrap();
-                    path.chars().nth(left_index + col.len()).unwrap() == '.'
-                }
-            }).map(|(idx, _)| idx).collect();
-            if field_indices.is_empty() {
-                Err(ParquetWasmError::UnknownColumn(col.clone()))
-            } else {
-                Ok(field_indices)
-            }
-        }).collect::<Result<Vec<Vec<usize>>>>()?.into_iter().flatten().collect();
-        let projection_mask = Some(ProjectionMask::leaves(pq_schema, indices));
+        let projection_mask = Some(generate_projection_mask(columns, pq_schema)?);
         Ok(Self { projection_mask, ..self })
     }
 
@@ -195,6 +180,216 @@ impl AsyncFileReader for HTTPFileReader {
     fn get_metadata(&mut self) -> BoxFuture<'_, parquet::errors::Result<Arc<ParquetMetaData>>> {
         async move {
             let meta = fetch_parquet_metadata(self.url.as_str(), &self.client, None).await?;
+            Ok(Arc::new(meta))
+        }
+        .boxed()
+    }
+}
+
+#[wasm_bindgen]
+pub struct AsyncParquetLocalFile {
+    reader: JsFileReader,
+    meta: ArrowReaderMetadata,
+    batch_size: usize,
+    projection_mask: Option<ProjectionMask>,
+}
+
+#[wasm_bindgen]
+impl AsyncParquetLocalFile {
+    #[wasm_bindgen(constructor)]
+    pub async fn new(handle: web_sys::File) -> WasmResult<AsyncParquetLocalFile> {
+        let mut reader = JsFileReader::new(handle, 1024);
+        let meta = ArrowReaderMetadata::load_async(&mut reader, Default::default()).await?;
+        Ok(Self { reader, meta, batch_size: 1024, projection_mask: None })
+    }
+
+    #[wasm_bindgen]
+    pub fn with_batch_size(self, batch_size: usize) -> Self {
+        Self { batch_size, ..self }
+    }
+    #[wasm_bindgen]
+    pub fn select_columns(self, columns: Vec<String>) -> WasmResult<AsyncParquetLocalFile> {
+        let pq_schema = self.meta.parquet_schema();
+        let projection_mask = Some(generate_projection_mask(columns, pq_schema)?);
+        Ok(Self { projection_mask, ..self })
+    }
+
+    #[wasm_bindgen]
+    pub fn metadata(&self) -> WasmResult<crate::arrow1::metadata::ParquetMetaData> {
+        Ok(self.meta.metadata().as_ref().to_owned().into())
+    }
+
+    #[wasm_bindgen]
+    pub async fn read_row_group(&self, i: usize) -> WasmResult<Table> {
+        let builder = ParquetRecordBatchStreamBuilder::new_with_metadata(
+            self.reader.clone(),
+            self.meta.clone(),
+        )
+        .with_batch_size(self.batch_size)
+        .with_projection(self.projection_mask.as_ref().unwrap_or(&ProjectionMask::all()).clone());
+        let stream = builder.with_row_groups(vec![i]).build()?;
+        let results = stream.try_collect::<Vec<_>>().await.unwrap();
+
+        // NOTE: This is not only one batch by default due to arrow-rs's default rechunking.
+        // assert_eq!(results.len(), 1, "Expected one record batch");
+        // Ok(RecordBatch::new(results.pop().unwrap()))
+        Ok(Table::new(results))
+    }
+
+    #[wasm_bindgen]
+    pub async fn stream(&self) -> WasmResult<wasm_streams::readable::sys::ReadableStream> {
+        use futures::StreamExt;
+        let reader = self.reader.clone();
+        let meta = self.meta.clone();
+        // TODO: figure out a way of unwrapping the inner TryCollect without buffering
+        // (since there's no point reading a local file concurrently)
+        let concurrency = 1;
+        let batch_size = self.batch_size.clone();
+        let projection_mask = self.projection_mask.as_ref().unwrap_or(&ProjectionMask::all()).clone();
+        let num_row_groups = meta.metadata().num_row_groups();
+        let outer_stream = (0..num_row_groups).map(move |i| {
+            let builder = ParquetRecordBatchStreamBuilder::new_with_metadata(
+                reader.clone(),
+                meta.clone(),
+            )
+            .with_row_groups(vec![i])
+            .with_batch_size(batch_size)
+            .with_projection(projection_mask.clone());
+            builder.build().unwrap().try_collect::<Vec<_>>()
+        });
+        let buffered = stream::iter(outer_stream).buffered(concurrency);
+        let out_stream = buffered.flat_map(|maybe_record_batches| {
+            stream::iter(maybe_record_batches.unwrap()).map(|record_batch| {
+                Ok(RecordBatch::new(record_batch).into())
+            })
+        });
+        Ok(wasm_streams::ReadableStream::from_stream(out_stream).into_raw())
+    }
+}
+
+#[derive(Debug, Clone)]
+struct WrappedFile {
+    inner: Arc<web_sys::File>,
+}
+
+unsafe impl Send for WrappedFile {}
+unsafe impl Sync for WrappedFile {}
+
+impl WrappedFile {
+
+    pub fn new(inner: Arc<web_sys::File>) -> Self {
+        Self { inner }
+    }
+    pub fn size(&self) -> f64 {
+        self.inner.size()
+    }
+    pub async fn get_bytes(&mut self, range: Range<usize>) -> Vec<u8> {
+        use wasm_bindgen_futures::JsFuture;
+        use js_sys::Uint8Array;
+        let (sender, receiver) = oneshot::channel();
+        let file = self.inner.clone();
+        spawn_local(async move {
+            let subset_blob = file.slice_with_i32_and_i32(
+                range.start.try_into().unwrap(), range.end.try_into().unwrap()
+            ).unwrap();
+            let buf = JsFuture::from(subset_blob.array_buffer()).await.unwrap();
+            let out_vec = Uint8Array::new_with_byte_offset(&buf, 0).to_vec();
+            sender.send(out_vec).unwrap();
+        });
+        let data = receiver.await.unwrap();
+        data
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct JsFileReader {
+    file: WrappedFile,
+    coalesce_byte_size: usize
+}
+
+impl JsFileReader {
+    pub fn new(file: web_sys::File, coalesce_byte_size: usize) -> Self {
+        Self {
+            file: WrappedFile::new(file.into()),
+            coalesce_byte_size,
+        }
+    }
+}
+
+impl AsyncFileReader for JsFileReader {
+    fn get_bytes(&mut self, range: Range<usize>) -> BoxFuture<'_, parquet::errors::Result<Bytes>> {
+        async {
+            let (sender, receiver) = oneshot::channel();
+            let mut file = self.file.clone();
+            spawn_local(async move {
+                let result: Bytes = file.get_bytes(range).await.into();
+                sender.send(result).unwrap()
+            });
+            let data = receiver.await.unwrap();
+            Ok(data)
+        }.boxed()
+    }
+
+    fn get_byte_ranges(
+        &mut self,
+        ranges: Vec<Range<usize>>,
+    ) -> BoxFuture<'_, parquet::errors::Result<Vec<Bytes>>> {
+        let fetch_ranges = merge_ranges(&ranges, self.coalesce_byte_size);
+        
+        // NOTE: This still does _sequential_ requests, but it should be _fewer_ requests if they
+        // can be merged.
+        async move {
+            let mut fetched = Vec::with_capacity(ranges.len());
+           
+            for range in fetch_ranges.iter() {
+                let data = self.get_bytes(range.clone()).await?;
+                fetched.push(data);
+            }
+
+            Ok(ranges
+                .iter()
+                .map(|range| {
+                    // a given range CAN span two coalesced row group sets.
+                    // log!("Range: {:?} Actual length: {:?}", range.end - range.start, res.len());
+                    let idx = fetch_ranges.partition_point(|v| v.start <= range.start) - 1;
+                    let fetch_range = &fetch_ranges[idx];
+                    let fetch_bytes = &fetched[idx];
+
+                    let start = range.start - fetch_range.start;
+                    let end = range.end - fetch_range.start;
+                    fetch_bytes.slice(start..end)
+                })
+                .collect())
+        }
+        .boxed()
+    }
+
+    fn get_metadata(&mut self) -> BoxFuture<'_, parquet::errors::Result<Arc<ParquetMetaData>>> {
+        async move {
+            // we only *really* need the last 8 bytes to determine the location of the metadata bytes
+            let file_size: usize = (self.file.size() as i64).try_into().unwrap();
+            // we already know the size of the file!
+            let suffix_range: Range<usize> = (file_size - 8)..file_size;
+            let suffix = self.get_bytes(suffix_range).await.unwrap();
+            let suffix_len = suffix.len();
+
+            let mut footer = [0; 8];
+            footer.copy_from_slice(&suffix[suffix_len - 8..suffix_len]);
+            let metadata_byte_length = decode_footer(&footer)?;
+            // Did not fetch the entire file metadata in the initial read, need to make a second request
+            let meta = if metadata_byte_length > suffix_len - 8 {
+                // might want to figure out how to get get_bytes to accept a one-sided range
+                let meta_range = (file_size - metadata_byte_length - 8)..file_size;
+
+                let meta_bytes = self.get_bytes(meta_range).await.unwrap();
+
+                decode_metadata(&meta_bytes[0..meta_bytes.len() - 8])?
+            } else {
+                let metadata_start = suffix_len - metadata_byte_length - 8;
+
+                let slice = &suffix[metadata_start..suffix_len - 8];
+                decode_metadata(slice)?
+            };
             Ok(Arc::new(meta))
         }
         .boxed()
@@ -365,6 +560,27 @@ pub async fn fetch_parquet_metadata(
     };
 
     Ok(metadata)
+}
+
+fn generate_projection_mask(columns: Vec<String>, pq_schema: &SchemaDescriptor) -> Result<ProjectionMask> {
+    let col_paths = pq_schema.columns().iter().map(|col| col.path().string()).collect::<Vec<_>>();
+    let indices: Vec<usize> = columns.iter().map(|col| {
+    let field_indices: Vec<usize> = col_paths.iter().enumerate().filter(|(_idx, path)| {
+            // identical OR the path starts with the column AND the substring is immediately followed by the
+            // path separator
+            path.to_string() == col.clone() || path.starts_with(col) && {
+                let left_index = path.find(col).unwrap();
+                path.chars().nth(left_index + col.len()).unwrap() == '.'
+            }
+        }).map(|(idx, _)| idx).collect();
+        if field_indices.is_empty() {
+            Err(ParquetWasmError::UnknownColumn(col.clone()))
+        } else {
+            Ok(field_indices)
+        }
+    }).collect::<Result<Vec<Vec<usize>>>>()?.into_iter().flatten().collect();
+    let projection_mask = ProjectionMask::leaves(pq_schema, indices);
+    Ok(projection_mask)
 }
 
 pub async fn read_metadata_async(

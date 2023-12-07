@@ -123,6 +123,7 @@ features = [
   'Window',
   "Document",
   "Element",
+  "File"
 ]
 
 [dev-dependencies]
