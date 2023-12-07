@@ -1,4 +1,3 @@
-
 use wasm_bindgen::prelude::*;
 
 /// Global Parquet metadata.
