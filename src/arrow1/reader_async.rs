@@ -28,6 +28,52 @@ use parquet::file::metadata::{FileMetaData, ParquetMetaData};
 use range_reader::RangedAsyncReader;
 use reqwest::Client;
 use wasm_bindgen::prelude::*;
+use async_trait::async_trait;
+
+
+#[async_trait]
+trait SharedIO<T: AsyncFileReader + Unpin + Sync + Clone + 'static> {
+    fn generate_builder(reader: &T, meta: &ArrowReaderMetadata, batch_size: &usize, projection_mask: &Option<ProjectionMask>) -> ParquetRecordBatchStreamBuilder<T>{
+        let builder = ParquetRecordBatchStreamBuilder::new_with_metadata(
+            reader.clone(),
+            meta.clone(),
+        )
+        .with_batch_size(batch_size.clone())
+        .with_projection(projection_mask.as_ref().unwrap_or(&ProjectionMask::all()).clone());
+        builder
+    }
+    async fn inner_read_row_group(&self, reader: &T, meta: &ArrowReaderMetadata, batch_size: &usize, projection_mask: &Option<ProjectionMask>, i: usize) -> Result<Table> {
+        let builder = Self::generate_builder(reader, meta, batch_size, projection_mask);
+        let stream = builder.with_row_groups(vec![i]).build()?;
+        let results = stream.try_collect::<Vec<_>>().await.unwrap();
+
+        // NOTE: This is not only one batch by default due to arrow-rs's default rechunking.
+        // assert_eq!(results.len(), 1, "Expected one record batch");
+        // Ok(RecordBatch::new(results.pop().unwrap()))
+        Ok(Table::new(results))
+    }
+
+    async fn inner_stream(&self, concurrency: Option<usize>, meta: &ArrowReaderMetadata, reader: &T, batch_size: &usize, projection_mask: &Option<ProjectionMask>) -> WasmResult<wasm_streams::readable::sys::ReadableStream> {
+        use futures::StreamExt;
+        let concurrency = concurrency.unwrap_or(1);
+        let meta = meta.clone();
+        let reader = reader.clone();
+        let batch_size = batch_size.clone();
+        let num_row_groups = meta.metadata().num_row_groups();
+        let projection_mask = projection_mask.clone();
+        let buffered_stream = stream::iter((0..num_row_groups).map(move |i| {
+            let builder = Self::generate_builder(&reader, &meta, &batch_size, &projection_mask)
+            .with_row_groups(vec![i]);
+            builder.build().unwrap().try_collect::<Vec<_>>()
+        })).buffered(concurrency);
+        let out_stream = buffered_stream.flat_map(|maybe_record_batches| {
+            stream::iter(maybe_record_batches.unwrap()).map(|record_batch| {
+                Ok(RecordBatch::new(record_batch).into())
+            })
+        });
+        Ok(wasm_streams::ReadableStream::from_stream(out_stream).into_raw())
+    }
+}
 
 #[wasm_bindgen]
 pub struct AsyncParquetFile {
@@ -35,6 +81,9 @@ pub struct AsyncParquetFile {
     meta: ArrowReaderMetadata,
     batch_size: usize,
     projection_mask: Option<ProjectionMask>,
+}
+
+impl SharedIO<HTTPFileReader> for AsyncParquetFile {
 }
 
 #[wasm_bindgen]
@@ -64,45 +113,12 @@ impl AsyncParquetFile {
 
     #[wasm_bindgen]
     pub async fn read_row_group(&self, i: usize) -> WasmResult<Table> {
-        let builder = ParquetRecordBatchStreamBuilder::new_with_metadata(
-            self.reader.clone(),
-            self.meta.clone(),
-        )
-        .with_batch_size(self.batch_size)
-        .with_projection(self.projection_mask.as_ref().unwrap_or(&ProjectionMask::all()).clone());
-        let stream = builder.with_row_groups(vec![i]).build()?;
-        let results = stream.try_collect::<Vec<_>>().await.unwrap();
-
-        // NOTE: This is not only one batch by default due to arrow-rs's default rechunking.
-        // assert_eq!(results.len(), 1, "Expected one record batch");
-        // Ok(RecordBatch::new(results.pop().unwrap()))
-        Ok(Table::new(results))
+        let inner = self.inner_read_row_group(&self.reader, &self.meta, &self.batch_size, &self.projection_mask, i).await.unwrap();
+        Ok(inner)
     }
     #[wasm_bindgen]
     pub async fn stream(&self, concurrency: Option<usize>) -> WasmResult<wasm_streams::readable::sys::ReadableStream> {
-        use futures::StreamExt;
-        let concurrency = concurrency.unwrap_or(1);
-        let meta = self.meta.clone();
-        let reader = self.reader.clone();
-        let batch_size = self.batch_size.clone();
-        let num_row_groups = self.meta.metadata().num_row_groups();
-        let projection_mask = self.projection_mask.as_ref().unwrap_or(&ProjectionMask::all()).clone();
-        let buffered_stream = stream::iter((0..num_row_groups).map(move |i| {
-            let builder = ParquetRecordBatchStreamBuilder::new_with_metadata(
-                reader.clone(),
-                meta.clone(),
-            )
-            .with_batch_size(batch_size)
-            .with_projection(projection_mask.clone())
-            .with_row_groups(vec![i]);
-            builder.build().unwrap().try_collect::<Vec<_>>()
-        })).buffered(concurrency);
-        let out_stream = buffered_stream.flat_map(|maybe_record_batches| {
-            stream::iter(maybe_record_batches.unwrap()).map(|record_batch| {
-                Ok(RecordBatch::new(record_batch).into())
-            })
-        });
-        Ok(wasm_streams::ReadableStream::from_stream(out_stream).into_raw())
+        self.inner_stream(concurrency, &self.meta, &self.reader, &self.batch_size, &self.projection_mask).await
     }
 }
 
@@ -194,6 +210,9 @@ pub struct AsyncParquetLocalFile {
     projection_mask: Option<ProjectionMask>,
 }
 
+impl SharedIO<JsFileReader> for AsyncParquetLocalFile {
+}
+
 #[wasm_bindgen]
 impl AsyncParquetLocalFile {
     #[wasm_bindgen(constructor)]
@@ -221,49 +240,12 @@ impl AsyncParquetLocalFile {
 
     #[wasm_bindgen]
     pub async fn read_row_group(&self, i: usize) -> WasmResult<Table> {
-        let builder = ParquetRecordBatchStreamBuilder::new_with_metadata(
-            self.reader.clone(),
-            self.meta.clone(),
-        )
-        .with_batch_size(self.batch_size)
-        .with_projection(self.projection_mask.as_ref().unwrap_or(&ProjectionMask::all()).clone());
-        let stream = builder.with_row_groups(vec![i]).build()?;
-        let results = stream.try_collect::<Vec<_>>().await.unwrap();
-
-        // NOTE: This is not only one batch by default due to arrow-rs's default rechunking.
-        // assert_eq!(results.len(), 1, "Expected one record batch");
-        // Ok(RecordBatch::new(results.pop().unwrap()))
-        Ok(Table::new(results))
+        let inner = self.inner_read_row_group(&self.reader, &self.meta, &self.batch_size, &self.projection_mask, i).await.unwrap();
+        Ok(inner)
     }
-
     #[wasm_bindgen]
-    pub async fn stream(&self) -> WasmResult<wasm_streams::readable::sys::ReadableStream> {
-        use futures::StreamExt;
-        let reader = self.reader.clone();
-        let meta = self.meta.clone();
-        // TODO: figure out a way of unwrapping the inner TryCollect without buffering
-        // (since there's no point reading a local file concurrently)
-        let concurrency = 1;
-        let batch_size = self.batch_size.clone();
-        let projection_mask = self.projection_mask.as_ref().unwrap_or(&ProjectionMask::all()).clone();
-        let num_row_groups = meta.metadata().num_row_groups();
-        let outer_stream = (0..num_row_groups).map(move |i| {
-            let builder = ParquetRecordBatchStreamBuilder::new_with_metadata(
-                reader.clone(),
-                meta.clone(),
-            )
-            .with_row_groups(vec![i])
-            .with_batch_size(batch_size)
-            .with_projection(projection_mask.clone());
-            builder.build().unwrap().try_collect::<Vec<_>>()
-        });
-        let buffered = stream::iter(outer_stream).buffered(concurrency);
-        let out_stream = buffered.flat_map(|maybe_record_batches| {
-            stream::iter(maybe_record_batches.unwrap()).map(|record_batch| {
-                Ok(RecordBatch::new(record_batch).into())
-            })
-        });
-        Ok(wasm_streams::ReadableStream::from_stream(out_stream).into_raw())
+    pub async fn stream(&self, concurrency: Option<usize>) -> WasmResult<wasm_streams::readable::sys::ReadableStream> {
+        self.inner_stream(concurrency, &self.meta, &self.reader, &self.batch_size, &self.projection_mask).await
     }
 }
 

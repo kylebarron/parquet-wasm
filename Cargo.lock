@@ -1182,6 +1182,7 @@ dependencies = [
  "arrow2",
  "async-compat",
  "async-stream",
+ "async-trait",
  "bytes",
  "console_error_panic_hook",
  "futures",
