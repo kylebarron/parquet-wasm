@@ -20,6 +20,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
+      - run: cargo install --git https://github.com/rustwasm/wasm-bindgen --rev 4d4851d45200d0d1aeaa07108072dfa0f1f185f7 wasm-bindgen-cli
       - run: wasm-pack build --dev --target nodejs
       - run: wasm-pack test --node
 
@@ -57,6 +58,8 @@ jobs:
         with:
           node-version: "20"
 
+      - run: cargo install --git https://github.com/rustwasm/wasm-bindgen --rev 4d4851d45200d0d1aeaa07108072dfa0f1f185f7 wasm-bindgen-cli
+      
       - name: Build bundle
         run: yarn build:test
 

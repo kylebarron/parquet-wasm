@@ -1,7 +1,7 @@
 import * as wasm from "../../pkg/node/arrow1";
 import { readFileSync } from "fs";
 import { tableFromIPC, tableToIPC } from "apache-arrow";
-import { testArrowTablesEqual, readExpectedArrowData } from "./utils";
+import { testArrowTablesEqual, readExpectedArrowData, temporaryServer } from "./utils";
 import { describe, it, expect } from "vitest";
 
 // Path from repo root
@@ -77,3 +77,21 @@ it("error produced trying to read file with arrayBuffer", (t) => {
     );
   }
 });
+
+it("read stream-write stream-read stream round trip (no writer properties provided)", async (t) => {
+  const server = await temporaryServer();
+  const listeningPort = server.addresses()[0].port;
+  const rootUrl = `http://localhost:${listeningPort}`;
+
+  const expectedTable = readExpectedArrowData();
+
+  const url = `${rootUrl}/1-partition-brotli.parquet`;
+  const originalStream = await wasm.readParquetStream(url);
+
+  const stream = await wasm.transformParquetStream(originalStream);
+  const accumulatedBuffer = new Uint8Array(await new Response(stream).arrayBuffer());
+  const roundtripTable = tableFromIPC(wasm.readParquet(accumulatedBuffer).intoIPCStream());
+
+  testArrowTablesEqual(expectedTable, roundtripTable);
+  await server.close();
+})

@@ -18,4 +18,7 @@ pub mod writer;
 #[cfg(feature = "writer")]
 pub mod writer_properties;
 
+#[cfg(all(feature = "writer", feature = "async"))]
+pub mod writer_async;
+
 pub mod error;
