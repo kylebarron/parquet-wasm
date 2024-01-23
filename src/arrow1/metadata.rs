@@ -73,7 +73,8 @@ impl FileMetaData {
     /// ```
     #[wasm_bindgen]
     pub fn created_by(&self) -> Option<String> {
-        self.0.created_by().map(|s| s.to_string())
+        let s = self.0.created_by()?;
+        Some(s.to_string())
     }
 
     /// Returns key_value_metadata of this file.
