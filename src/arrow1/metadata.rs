@@ -8,20 +8,20 @@ pub struct ParquetMetaData(parquet::file::metadata::ParquetMetaData);
 #[wasm_bindgen]
 impl ParquetMetaData {
     /// Returns file metadata as reference.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = fileMetadata)]
     pub fn file_metadata(&self) -> FileMetaData {
         self.0.file_metadata().clone().into()
     }
 
     /// Returns number of row groups in this file.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = numRowGroups)]
     pub fn num_row_groups(&self) -> usize {
         self.0.num_row_groups()
     }
 
     /// Returns row group metadata for `i`th position.
     /// Position should be less than number of row groups `num_row_groups`.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = rowGroup)]
     pub fn row_group(&self, i: usize) -> RowGroupMetaData {
         self.0.row_group(i).clone().into()
     }
@@ -58,7 +58,7 @@ impl FileMetaData {
     }
 
     /// Returns number of rows in the file.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = numRows)]
     pub fn num_rows(&self) -> i64 {
         self.0.num_rows()
     }
@@ -71,14 +71,14 @@ impl FileMetaData {
     /// ```shell
     /// parquet-mr version 1.8.0 (build 0fda28af84b9746396014ad6a415b90592a98b3b)
     /// ```
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = createdBy)]
     pub fn created_by(&self) -> Option<String> {
         let s = self.0.created_by()?;
         Some(s.to_string())
     }
 
     /// Returns key_value_metadata of this file.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = keyValueMetadata)]
     pub fn key_value_metadata(&self) -> Result<js_sys::Map, JsValue> {
         let map = js_sys::Map::new();
         if let Some(metadata) = self.0.key_value_metadata() {
@@ -112,7 +112,7 @@ pub struct RowGroupMetaData(parquet::file::metadata::RowGroupMetaData);
 #[wasm_bindgen]
 impl RowGroupMetaData {
     /// Number of columns in this row group.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = numColumns)]
     pub fn num_columns(&self) -> usize {
         self.0.num_columns()
     }
@@ -124,19 +124,19 @@ impl RowGroupMetaData {
     }
 
     /// Number of rows in this row group.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = numRows)]
     pub fn num_rows(&self) -> i64 {
         self.0.num_rows()
     }
 
     /// Total byte size of all uncompressed column data in this row group.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = totalByteSize)]
     pub fn total_byte_size(&self) -> i64 {
         self.0.total_byte_size()
     }
 
     /// Total size of all compressed column data in this row group.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = compressedSize)]
     pub fn compressed_size(&self) -> i64 {
         self.0.compressed_size()
     }
@@ -165,13 +165,13 @@ impl ColumnChunkMetaData {
     ///
     /// If not set, assumed to belong to the same file as the metadata.
     /// This path is relative to the current file.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = filePath)]
     pub fn file_path(&self) -> Option<String> {
         self.0.file_path().map(|s| s.to_string())
     }
 
     /// Byte offset in `file_path()`.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = fileOffset)]
     pub fn file_offset(&self) -> i64 {
         self.0.file_offset()
     }
@@ -182,7 +182,7 @@ impl ColumnChunkMetaData {
     // }
 
     /// Path (or identifier) of this column.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = columnPath)]
     pub fn column_path(&self) -> Vec<String> {
         let path = self.0.column_path();
         path.parts().to_vec()
@@ -194,7 +194,7 @@ impl ColumnChunkMetaData {
     // }
 
     /// Total number of values in this column chunk.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = numValues)]
     pub fn num_values(&self) -> i64 {
         self.0.num_values()
     }
@@ -205,13 +205,13 @@ impl ColumnChunkMetaData {
     // }
 
     /// Returns the total compressed data size of this column chunk.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = compressedSize)]
     pub fn compressed_size(&self) -> i64 {
         self.0.compressed_size()
     }
 
     /// Returns the total uncompressed data size of this column chunk.
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = uncompressedSize)]
     pub fn uncompressed_size(&self) -> i64 {
         self.0.uncompressed_size()
     }

@@ -49,6 +49,7 @@ trait SharedIO<T: AsyncFileReader + Unpin + Sync + Clone + 'static> {
                 );
         builder
     }
+
     async fn inner_read_row_group(
         &self,
         reader: &T,
@@ -120,11 +121,13 @@ impl AsyncParquetFile {
             batch_size: 1024,
         })
     }
-    #[wasm_bindgen]
+
+    #[wasm_bindgen(js_name = withBatchSize)]
     pub fn with_batch_size(self, batch_size: usize) -> Self {
         Self { batch_size, ..self }
     }
-    #[wasm_bindgen]
+
+    #[wasm_bindgen(js_name = selectColumns)]
     pub fn select_columns(self, columns: Vec<String>) -> WasmResult<AsyncParquetFile> {
         let pq_schema = self.meta.parquet_schema();
         let projection_mask = Some(generate_projection_mask(columns, pq_schema)?);
@@ -139,7 +142,7 @@ impl AsyncParquetFile {
         Ok(self.meta.metadata().as_ref().to_owned().into())
     }
 
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = readRowGroup)]
     pub async fn read_row_group(&self, i: usize) -> WasmResult<Table> {
         let inner = self
             .inner_read_row_group(
@@ -153,6 +156,7 @@ impl AsyncParquetFile {
             .unwrap();
         Ok(inner)
     }
+
     #[wasm_bindgen]
     pub async fn stream(
         &self,
@@ -273,11 +277,12 @@ impl AsyncParquetLocalFile {
         })
     }
 
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = withBatchSize)]
     pub fn with_batch_size(self, batch_size: usize) -> Self {
         Self { batch_size, ..self }
     }
-    #[wasm_bindgen]
+
+    #[wasm_bindgen(js_name = selectColumns)]
     pub fn select_columns(self, columns: Vec<String>) -> WasmResult<AsyncParquetLocalFile> {
         let pq_schema = self.meta.parquet_schema();
         let projection_mask = Some(generate_projection_mask(columns, pq_schema)?);
@@ -292,7 +297,7 @@ impl AsyncParquetLocalFile {
         Ok(self.meta.metadata().as_ref().to_owned().into())
     }
 
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = readRowGroup)]
     pub async fn read_row_group(&self, i: usize) -> WasmResult<Table> {
         let inner = self
             .inner_read_row_group(
@@ -306,6 +311,7 @@ impl AsyncParquetLocalFile {
             .unwrap();
         Ok(inner)
     }
+
     #[wasm_bindgen]
     pub async fn stream(
         &self,
