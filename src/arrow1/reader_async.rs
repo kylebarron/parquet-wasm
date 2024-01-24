@@ -1,3 +1,6 @@
+//! An asynchronous Parquet reader that is able to read and inspect remote files without
+//! downloading them in entirety.
+
 use futures::channel::oneshot;
 use futures::future::BoxFuture;
 use parquet::arrow::ProjectionMask;
@@ -402,6 +405,8 @@ impl AsyncFileReader for JsFileReader {
 
         // NOTE: This still does _sequential_ requests, but it should be _fewer_ requests if they
         // can be merged.
+        // Assuming that we have a file on the local file system, these fetches should be
+        // _relatively_ fast
         async move {
             let mut fetched = Vec::with_capacity(ranges.len());
 
@@ -481,66 +486,6 @@ pub async fn make_range_request_with_client(
     let data = receiver.await.unwrap();
     Ok(data)
 }
-
-// async fn make_request(
-//     url: &str,
-//     client: &Client,
-//     range: Range<usize>,
-// ) -> parquet::errors::Result<Bytes> {
-//     todo!()
-// }
-
-// async fn get_bytes<'a>(
-//     url: &'a str,
-//     client: &'a Client,
-//     range: Range<usize>,
-// ) -> BoxFuture<'a, parquet::errors::Result<Bytes>> {
-//     async move {
-//         let range_str =
-//             range_from_start_and_length(range.start as u64, (range.end - range.start) as u64);
-
-//         // Map reqwest error to parquet error
-//         let map_err = |err| parquet::errors::ParquetError::External(Box::new(err));
-
-//         let resp = client
-//             .get(url)
-//             .header("Range", range_str)
-//             .send()
-//             .await
-//             .map_err(map_err)?
-//             .error_for_status()
-//             .map_err(map_err)?;
-//         let bytes = resp.bytes().await.map_err(map_err)?;
-//         Ok(bytes)
-//     }
-//     .boxed()
-// }
-
-// async fn get_byte_ranges<'a>(
-//     url: &'a str,
-//     client: &'a Client,
-//     ranges: Vec<Range<usize>>,
-//     coalesce_byte_size: usize,
-// ) -> BoxFuture<'a, parquet::errors::Result<Vec<Bytes>>> {
-//     let fetch_ranges = merge_ranges(&ranges, coalesce_byte_size);
-
-//     let fetched: Vec<_> = futures::stream::iter(fetch_ranges.iter().cloned())
-//         .map(move |range| get_bytes(url, client, range))
-//         .buffered(10)
-//         .try_collect()
-//         .await?;
-
-//     todo!()
-//     // let bodies = stream::iter(fetch_ranges)
-//     //     .map(|range| {
-//     //         let client = &client;
-//     //         async move {
-//     //             let resp = client.get(url).send().await?;
-//     //             resp.bytes().await
-//     //         }
-//     //     })
-//     //     .buffer_unordered(10);
-// }
 
 /// Returns a sorted list of ranges that cover `ranges`
 ///
