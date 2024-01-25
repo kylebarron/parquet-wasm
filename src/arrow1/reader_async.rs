@@ -3,7 +3,6 @@
 
 use futures::channel::oneshot;
 use futures::future::BoxFuture;
-use futures::lock::Mutex;
 use parquet::arrow::ProjectionMask;
 use parquet::schema::types::SchemaDescriptor;
 use std::ops::Range;
@@ -336,22 +335,22 @@ impl AsyncParquetLocalFile {
 
 #[derive(Debug, Clone)]
 struct WrappedFile {
-    inner: Arc<Mutex<web_sys::File>>,
+    inner: web_sys::File,
     pub size: f64,
 }
 /// Safety: This is not in fact thread-safe. Do not attempt to use this in work-stealing
 /// async runtimes / multi-threaded environments
-/// 
-/// web_sys::File objects, like all JSValues, are !Send (even in JS, there's 
+///
+/// web_sys::File objects, like all JSValues, are !Send (even in JS, there's
 /// maybe ~5 Transferable types), and eventually boil down to PhantomData<*mut u8>.
 /// Any struct that holds one is inherently !Send, which disqualifies it from being used
-/// with the AsyncFileReader trait. 
+/// with the AsyncFileReader trait.
 unsafe impl Send for WrappedFile {}
 
 impl WrappedFile {
     pub fn new(inner: web_sys::File) -> Self {
         let size = inner.size();
-        Self { inner: Arc::new(Mutex::new(inner)), size }
+        Self { inner, size }
     }
     pub async fn get_bytes(&mut self, range: Range<usize>) -> Vec<u8> {
         use js_sys::Uint8Array;
@@ -359,7 +358,7 @@ impl WrappedFile {
         let (sender, receiver) = oneshot::channel();
         let file = self.inner.clone();
         spawn_local(async move {
-            let subset_blob = file.lock().await
+            let subset_blob = file
                 .slice_with_i32_and_i32(
                     range.start.try_into().unwrap(),
                     range.end.try_into().unwrap(),
@@ -383,7 +382,7 @@ pub struct JsFileReader {
 impl JsFileReader {
     pub fn new(file: web_sys::File, coalesce_byte_size: usize) -> Self {
         Self {
-            file: WrappedFile::new(file.into()),
+            file: WrappedFile::new(file),
             coalesce_byte_size,
         }
     }
