@@ -3,6 +3,7 @@
 
 use futures::channel::oneshot;
 use futures::future::BoxFuture;
+use futures::lock::Mutex;
 use parquet::arrow::ProjectionMask;
 use parquet::schema::types::SchemaDescriptor;
 use std::ops::Range;
@@ -33,8 +34,8 @@ use reqwest::Client;
 
 use async_trait::async_trait;
 
-#[async_trait]
-trait SharedIO<T: AsyncFileReader + Unpin + Sync + Clone + 'static> {
+#[async_trait(?Send)]
+trait SharedIO<T: AsyncFileReader + Unpin + Clone + 'static> {
     fn generate_builder(
         reader: &T,
         meta: &ArrowReaderMetadata,
@@ -256,6 +257,8 @@ impl AsyncFileReader for HTTPFileReader {
     }
 }
 
+/// Safety: Do not use this in a multi-threaded environment,
+/// (transitively depends on !Send web_sys::File)
 #[wasm_bindgen]
 pub struct AsyncParquetLocalFile {
     reader: JsFileReader,
@@ -333,18 +336,22 @@ impl AsyncParquetLocalFile {
 
 #[derive(Debug, Clone)]
 struct WrappedFile {
-    inner: Arc<web_sys::File>,
+    inner: Arc<Mutex<web_sys::File>>,
+    pub size: f64,
 }
-
+/// Safety: This is not in fact thread-safe. Do not attempt to use this in work-stealing
+/// async runtimes / multi-threaded environments
+/// 
+/// web_sys::File objects, like all JSValues, are !Send (even in JS, there's 
+/// maybe ~5 Transferable types), and eventually boil down to PhantomData<*mut u8>.
+/// Any struct that holds one is inherently !Send, which disqualifies it from being used
+/// with the AsyncFileReader trait. 
 unsafe impl Send for WrappedFile {}
-unsafe impl Sync for WrappedFile {}
 
 impl WrappedFile {
-    pub fn new(inner: Arc<web_sys::File>) -> Self {
-        Self { inner }
-    }
-    pub fn size(&self) -> f64 {
-        self.inner.size()
+    pub fn new(inner: web_sys::File) -> Self {
+        let size = inner.size();
+        Self { inner: Arc::new(Mutex::new(inner)), size }
     }
     pub async fn get_bytes(&mut self, range: Range<usize>) -> Vec<u8> {
         use js_sys::Uint8Array;
@@ -352,7 +359,7 @@ impl WrappedFile {
         let (sender, receiver) = oneshot::channel();
         let file = self.inner.clone();
         spawn_local(async move {
-            let subset_blob = file
+            let subset_blob = file.lock().await
                 .slice_with_i32_and_i32(
                     range.start.try_into().unwrap(),
                     range.end.try_into().unwrap(),
@@ -384,7 +391,7 @@ impl JsFileReader {
 
 impl AsyncFileReader for JsFileReader {
     fn get_bytes(&mut self, range: Range<usize>) -> BoxFuture<'_, parquet::errors::Result<Bytes>> {
-        async {
+        async move {
             let (sender, receiver) = oneshot::channel();
             let mut file = self.file.clone();
             spawn_local(async move {
@@ -436,7 +443,7 @@ impl AsyncFileReader for JsFileReader {
     fn get_metadata(&mut self) -> BoxFuture<'_, parquet::errors::Result<Arc<ParquetMetaData>>> {
         async move {
             // we only *really* need the last 8 bytes to determine the location of the metadata bytes
-            let file_size: usize = (self.file.size() as i64).try_into().unwrap();
+            let file_size: usize = (self.file.size as i64).try_into().unwrap();
             // we already know the size of the file!
             let suffix_range: Range<usize> = (file_size - 8)..file_size;
             let suffix = self.get_bytes(suffix_range).await.unwrap();
