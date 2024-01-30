@@ -10,10 +10,10 @@ use std::sync::Arc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 
-use crate::error::{ParquetWasmError, Result, WasmResult};
 use crate::common::fetch::{
     create_reader, get_content_length, range_from_end, range_from_start_and_length,
 };
+use crate::error::{ParquetWasmError, Result, WasmResult};
 
 use arrow::ipc::writer::StreamWriter;
 use arrow_wasm::{RecordBatch, Table};

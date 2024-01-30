@@ -89,8 +89,7 @@ pub async fn read_parquet_stream(
     content_length: Option<usize>,
 ) -> WasmResult<wasm_streams::readable::sys::ReadableStream> {
     use futures::StreamExt;
-    let parquet_stream =
-        crate::reader_async::read_record_batch_stream(url, content_length).await?;
+    let parquet_stream = crate::reader_async::read_record_batch_stream(url, content_length).await?;
     let stream = parquet_stream.map(|maybe_record_batch| {
         let record_batch = maybe_record_batch.unwrap();
         Ok(RecordBatch::new(record_batch).into())
