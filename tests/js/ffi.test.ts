@@ -1,4 +1,4 @@
-import * as wasm from "../../pkg/node/arrow2";
+import * as wasm from "../../pkg/node/parquet_wasm";
 import { readFileSync } from "fs";
 import * as arrow from "apache-arrow";
 import {
@@ -15,7 +15,7 @@ const dataDir = "tests/data";
 // @ts-expect-error
 const WASM_MEMORY: WebAssembly.Memory = wasm.__wasm.memory;
 
-it("read via FFI", () => {
+it("read via FFI", async (t) => {
   const expectedTable = readExpectedArrowData();
 
   const dataPath = `${dataDir}/1-partition-brotli.parquet`;
@@ -50,12 +50,12 @@ it("read file stream", async (t) => {
     url
   )) as unknown as wasm.RecordBatch[];
   const batches = [];
-  for await (const batch of stream) {
-    let ffiBatch = batch.intoFFI();
+  for await (const table of stream) {
+    const ffiTable = table.intoFFI();
     const recordBatch = parseRecordBatch(
       WASM_MEMORY.buffer,
-      ffiBatch.arrayAddr(),
-      ffiBatch.schemaAddr(),
+      ffiTable.arrayAddr(),
+      ffiTable.schemaAddr(),
       true
     );
     batches.push(recordBatch);

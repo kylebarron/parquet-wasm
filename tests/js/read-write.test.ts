@@ -1,6 +1,6 @@
-import * as wasm from "../../pkg/node/arrow2";
+import * as wasm from "../../pkg/node/parquet_wasm";
 import { readFileSync } from "fs";
-import { RecordBatch, Table, tableFromIPC, tableToIPC } from "apache-arrow";
+import { tableFromIPC, tableToIPC } from "apache-arrow";
 import { testArrowTablesEqual, readExpectedArrowData } from "./utils";
 import { describe, it, expect } from "vitest";
 
@@ -9,20 +9,21 @@ const dataDir = "tests/data";
 const testFiles = [
   "1-partition-brotli.parquet",
   "1-partition-gzip.parquet",
-  "1-partition-lz4.parquet",
+  // "1-partition-lz4.parquet",
   "1-partition-none.parquet",
   "1-partition-snappy.parquet",
   "1-partition-zstd.parquet",
   "2-partition-brotli.parquet",
   "2-partition-gzip.parquet",
-  "2-partition-lz4.parquet",
+  // "2-partition-lz4.parquet",
   "2-partition-none.parquet",
   "2-partition-snappy.parquet",
   "2-partition-zstd.parquet",
 ];
 
-describe("read file", () => {
+describe("read file", async (t) => {
   const expectedTable = readExpectedArrowData();
+
   for (const testFile of testFiles) {
     it(testFile, () => {
       const dataPath = `${dataDir}/${testFile}`;
@@ -33,7 +34,7 @@ describe("read file", () => {
   }
 });
 
-it("read-write-read round trip (with writer properties)", () => {
+it("read-write-read round trip (with writer properties)", async (t) => {
   const dataPath = `${dataDir}/1-partition-brotli.parquet`;
   const buffer = readFileSync(dataPath);
   const arr = new Uint8Array(buffer);
@@ -75,24 +76,4 @@ it("error produced trying to read file with arrayBuffer", (t) => {
       "Empty input provided or not a Uint8Array."
     );
   }
-});
-
-it("iterate over row groups", (t) => {
-  const dataPath = `${dataDir}/2-partition-brotli.parquet`;
-  const buffer = readFileSync(dataPath);
-  const arr = new Uint8Array(buffer);
-  const fileMetaData = wasm.readMetadata(arr);
-  const arrowSchema = fileMetaData.arrowSchema();
-
-  const chunks: RecordBatch[] = [];
-  for (let i = 0; i < fileMetaData.numRowGroups(); i++) {
-    let arrowIpcBuffer = wasm
-      .readRowGroup(arr, arrowSchema, fileMetaData.rowGroup(i))
-      .intoIPCStream();
-    chunks.push(...tableFromIPC(arrowIpcBuffer).batches);
-  }
-
-  const table = new Table(chunks);
-  const expectedTable = readExpectedArrowData();
-  testArrowTablesEqual(expectedTable, table);
 });

@@ -1,6 +1,6 @@
-use crate::arrow1::error::WasmResult;
+use crate::error::WasmResult;
 use crate::utils::assert_parquet_file_not_empty;
-use arrow_wasm::arrow1::{RecordBatch, Table};
+use arrow_wasm::{RecordBatch, Table};
 use wasm_bindgen::prelude::*;
 
 /// Read a Parquet file into Arrow data using the [`arrow`](https://crates.io/crates/arrow) and
@@ -33,7 +33,7 @@ use wasm_bindgen::prelude::*;
 #[cfg(feature = "reader")]
 pub fn read_parquet(parquet_file: Vec<u8>) -> WasmResult<Table> {
     assert_parquet_file_not_empty(parquet_file.as_slice())?;
-    Ok(crate::arrow1::reader::read_parquet(parquet_file)?)
+    Ok(crate::reader::read_parquet(parquet_file)?)
 }
 
 /// Write Arrow data to a Parquet file using the [`arrow`](https://crates.io/crates/arrow) and
@@ -71,11 +71,11 @@ pub fn read_parquet(parquet_file: Vec<u8>) -> WasmResult<Table> {
 #[cfg(feature = "writer")]
 pub fn write_parquet(
     table: Table,
-    writer_properties: Option<crate::arrow1::writer_properties::WriterProperties>,
+    writer_properties: Option<crate::writer_properties::WriterProperties>,
 ) -> WasmResult<Vec<u8>> {
     let schema = table.schema().into_inner();
     let batches = table.into_inner();
-    Ok(crate::arrow1::writer::write_parquet(
+    Ok(crate::writer::write_parquet(
         batches.into_iter(),
         schema,
         writer_properties.unwrap_or_default(),
@@ -90,7 +90,7 @@ pub async fn read_parquet_stream(
 ) -> WasmResult<wasm_streams::readable::sys::ReadableStream> {
     use futures::StreamExt;
     let parquet_stream =
-        crate::arrow1::reader_async::read_record_batch_stream(url, content_length).await?;
+        crate::reader_async::read_record_batch_stream(url, content_length).await?;
     let stream = parquet_stream.map(|maybe_record_batch| {
         let record_batch = maybe_record_batch.unwrap();
         Ok(RecordBatch::new(record_batch).into())

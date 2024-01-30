@@ -1,5 +1,3 @@
-import "./arrow1.test";
-import "./arrow1-ffi.test";
-import "./arrow2.test";
-import "./arrow2-geo-metadata.test";
-import "./arrow2-ffi.test";
+import "./read-write.test";
+import "./ffi.test";
+import "./geo-metadata.test";
