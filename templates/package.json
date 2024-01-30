@@ -24,50 +24,61 @@
     "arrow"
   ],
   "exports": {
+    "./bundler/arrow1": {
+      "types": "./bundler/arrow1.d.ts",
+      "default": "./bundler/arrow1.js"
+    },
+    "./esm/arrow1": {
+      "types": "./esm/arrow1.d.ts",
+      "default": "./esm/arrow1.js"
+    },
+    "./esm2/arrow1": {
+      "types": "./esm2/arrow1.d.ts",
+      "default": "./esm2/arrow1.js"
+    },
+    "./node/arrow1": {
+      "types": "./node/arrow1.d.ts",
+      "default": "./node/arrow1.js"
+    },
+    "./bundler/arrow2": {
+      "types": "./bundler/arrow2.d.ts",
+      "default": "./bundler/arrow2.js"
+    },
+    "./esm/arrow2": {
+      "types": "./esm/arrow2.d.ts",
+      "default": "./esm/arrow2.js"
+    },
+    "./esm2/arrow2": {
+      "types": "./esm2/arrow2.d.ts",
+      "default": "./esm2/arrow2.js"
+    },
+    "./node/arrow2": {
+      "types": "./node/arrow2.d.ts",
+      "default": "./node/arrow2.js"
+    },
     "./arrow1": {
-      "import": {
-        "types": "./esm/arrow1.d.ts",
-        "import": "./esm/arrow1.js"
-      },
-      "browser": {
-        "types": "./esm/arrow1.d.ts",
-        "import": "./esm/arrow1.js"
-      },
       "node": {
         "types": "./node/arrow1.d.ts",
-        "require": "./node/arrow1.js",
-        "import": "./node/arrow1.js"
-      }
+        "default": "./node/arrow1.js"
+      },
+      "types": "./esm/arrow1.d.ts",
+      "default": "./esm/arrow1.js"
     },
     "./arrow2": {
-      "import": {
-        "types": "./esm/arrow2.d.ts",
-        "import": "./esm/arrow2.js"
-      },
-      "browser": {
-        "types": "./esm/arrow2.d.ts",
-        "import": "./esm/arrow2.js"
-      },
       "node": {
         "types": "./node/arrow2.d.ts",
-        "require": "./node/arrow2.js",
-        "import": "./node/arrow2.js"
-      }
+        "default": "./node/arrow2.js"
+      },
+      "types": "./esm/arrow2.d.ts",
+      "default": "./esm/arrow2.js"
     },
     ".": {
-      "import": {
-        "types": "./esm/arrow1.d.ts",
-        "import": "./esm/arrow1.js"
-      },
-      "browser": {
-        "types": "./esm/arrow1.d.ts",
-        "import": "./esm/arrow1.js"
-      },
       "node": {
         "types": "./node/arrow1.d.ts",
-        "require": "./node/arrow1.js",
-        "import": "./node/arrow1.js"
-      }
+        "default": "./node/arrow1.js"
+      },
+      "types": "./esm/arrow1.d.ts",
+      "import": "./esm/arrow1.js"
     }
   }
 }
