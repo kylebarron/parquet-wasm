@@ -10,13 +10,13 @@ use std::sync::Arc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 
-use crate::arrow1::error::{ParquetWasmError, Result, WasmResult};
 use crate::common::fetch::{
     create_reader, get_content_length, range_from_end, range_from_start_and_length,
 };
+use crate::error::{ParquetWasmError, Result, WasmResult};
 
 use arrow::ipc::writer::StreamWriter;
-use arrow_wasm::arrow1::{RecordBatch, Table};
+use arrow_wasm::{RecordBatch, Table};
 use bytes::Bytes;
 use futures::TryStreamExt;
 use futures::{stream, FutureExt, StreamExt};
@@ -141,7 +141,7 @@ impl AsyncParquetFile {
     }
 
     #[wasm_bindgen]
-    pub fn metadata(&self) -> WasmResult<crate::arrow1::metadata::ParquetMetaData> {
+    pub fn metadata(&self) -> WasmResult<crate::metadata::ParquetMetaData> {
         Ok(self.meta.metadata().as_ref().to_owned().into())
     }
 
@@ -298,7 +298,7 @@ impl AsyncParquetLocalFile {
     }
 
     #[wasm_bindgen]
-    pub fn metadata(&self) -> WasmResult<crate::arrow1::metadata::ParquetMetaData> {
+    pub fn metadata(&self) -> WasmResult<crate::metadata::ParquetMetaData> {
         Ok(self.meta.metadata().as_ref().to_owned().into())
     }
 

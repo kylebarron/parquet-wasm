@@ -11,7 +11,7 @@
   "devDependencies": {
     "@fastify/static": "^6.12.0",
     "@types/node": "^20",
-    "apache-arrow": "^14.0.1",
+    "apache-arrow": "^14.0.0",
     "arrow-js-ffi": "0.3.0",
     "benny": "^3.7.1",
     "fastify": "^4.26.0",

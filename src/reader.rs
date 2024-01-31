@@ -1,5 +1,5 @@
-use crate::arrow1::error::Result;
-use arrow_wasm::arrow1::Table;
+use crate::error::Result;
+use arrow_wasm::Table;
 use bytes::Bytes;
 use parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder;
 
