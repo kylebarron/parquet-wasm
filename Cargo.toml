@@ -68,7 +68,7 @@ getrandom = { version = "0.2.6", features = ["js"] }
 thiserror = "1.0"
 
 # c7a0db3b2f7034878796939ad46955450cb2c2e7
-arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "c7a0db3b2f7034878796939ad46955450cb2c2e7" }
+arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "1d9bee7851d812f10a43a7376f01480375c2d8a2" }
 # arrow-wasm = { path = "/Users/kyle/github/rust/arrow-wasm" }
 
 arrow = { version = "50", default-features = false, features = [

@@ -73,8 +73,7 @@ pub fn write_parquet(
     table: Table,
     writer_properties: Option<crate::writer_properties::WriterProperties>,
 ) -> WasmResult<Vec<u8>> {
-    let schema = table.schema().into_inner();
-    let batches = table.into_inner();
+    let (schema, batches) = table.into_inner();
     Ok(crate::writer::write_parquet(
         batches.into_iter(),
         schema,

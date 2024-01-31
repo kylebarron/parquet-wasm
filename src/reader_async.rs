@@ -62,13 +62,14 @@ trait SharedIO<T: AsyncFileReader + Unpin + Clone + 'static> {
         i: usize,
     ) -> Result<Table> {
         let builder = Self::generate_builder(reader, meta, batch_size, projection_mask);
+        let schema = builder.schema().clone();
         let stream = builder.with_row_groups(vec![i]).build()?;
         let results = stream.try_collect::<Vec<_>>().await.unwrap();
 
         // NOTE: This is not only one batch by default due to arrow-rs's default rechunking.
         // assert_eq!(results.len(), 1, "Expected one record batch");
         // Ok(RecordBatch::new(results.pop().unwrap()))
-        Ok(Table::new(results))
+        Ok(Table::new(schema, results))
     }
 
     async fn inner_stream(
