@@ -34,10 +34,9 @@ brotli = ["parquet/brotli"]
 gzip = ["parquet/flate2"]
 snappy = ["parquet/snap"]
 zstd = ["parquet/zstd", "dep:zstd"]
-# LZ4 not yet supported on parquet crate
-# lz4 = ["parquet2?/lz4_flex"]
+lz4 = ["parquet/lz4"]
 
-all_compressions = ["brotli", "gzip", "snappy", "zstd"] # "lz4"
+all_compressions = ["brotli", "gzip", "snappy", "zstd", "lz4"]
 
 # Full list of available features
 full = [
