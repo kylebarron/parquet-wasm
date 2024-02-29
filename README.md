@@ -198,8 +198,8 @@ The Parquet specification permits several compression codecs. This library curre
 - [x] Gzip
 - [x] Brotli
 - [x] ZSTD
+- [x] LZ4_RAW
 - [ ] LZ4 (deprecated)
-- [x] LZ4_RAW. Supported in `arrow2` only.
 
 LZ4 support in Parquet is a bit messy. As described [here](https://github.com/apache/parquet-format/blob/54e53e5d7794d383529dd30746378f19a12afd58/Compression.md), there are _two_ LZ4 compression options in Parquet (as of version 2.9.0). The original version `LZ4` is now deprecated; it used an undocumented framing scheme which made interoperability difficult. The specification now reads:
 
@@ -259,7 +259,7 @@ By default, `arrow`, `all_compressions`, `reader`, and `writer` features are ena
 - `gzip`: Activate Gzip compression.
 - `snappy`: Activate Snappy compression.
 - `zstd`: Activate ZSTD compression.
-- `lz4`: Activate LZ4_RAW compression (only applies to the `arrow2` endpoints).
+- `lz4`: Activate LZ4_RAW compression.
 - `debug`: Expose the `setPanicHook` function for better error messages for Rust panics.
 
 ## Node <20
