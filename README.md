@@ -198,8 +198,8 @@ The Parquet specification permits several compression codecs. This library curre
 - [x] Gzip
 - [x] Brotli
 - [x] ZSTD
+- [x] LZ4_RAW
 - [ ] LZ4 (deprecated)
-- [x] LZ4_RAW. Supported in `arrow2` only.
 
 LZ4 support in Parquet is a bit messy. As described [here](https://github.com/apache/parquet-format/blob/54e53e5d7794d383529dd30746378f19a12afd58/Compression.md), there are _two_ LZ4 compression options in Parquet (as of version 2.9.0). The original version `LZ4` is now deprecated; it used an undocumented framing scheme which made interoperability difficult. The specification now reads:
 
