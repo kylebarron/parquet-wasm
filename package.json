@@ -14,7 +14,7 @@
     "apache-arrow": "^15.0.2",
     "arrow-js-ffi": "^0.4.1",
     "benny": "^3.7.1",
-    "fastify": "^4.26.1",
+    "fastify": "^4.26.2",
     "gh-pages": "^6.1.1",
     "typedoc": "^0.25.8",
     "typescript": "^5.3.2",
