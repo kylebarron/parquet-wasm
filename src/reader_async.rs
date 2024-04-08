@@ -1,21 +1,21 @@
 //! An asynchronous Parquet reader that is able to read and inspect remote files without
 //! downloading them in entirety.
 
-use futures::channel::oneshot;
-use futures::future::BoxFuture;
-use parquet::arrow::ProjectionMask;
-use parquet::schema::types::SchemaDescriptor;
-use object_store::ObjectStore;
-use url::Url;
-use std::ops::Range;
-use std::sync::Arc;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen_futures::spawn_local;
-use object_store_wasm::HttpStore;
 use crate::common::fetch::{
     create_reader, get_content_length, range_from_end, range_from_start_and_length,
 };
 use crate::error::{ParquetWasmError, Result, WasmResult};
+use futures::channel::oneshot;
+use futures::future::BoxFuture;
+use object_store::ObjectStore;
+use object_store_wasm::HttpStore;
+use parquet::arrow::ProjectionMask;
+use parquet::schema::types::SchemaDescriptor;
+use std::ops::Range;
+use std::sync::Arc;
+use url::Url;
+use wasm_bindgen::prelude::*;
+use wasm_bindgen_futures::spawn_local;
 
 use arrow::ipc::writer::StreamWriter;
 use arrow_wasm::{RecordBatch, Table};
@@ -24,8 +24,7 @@ use futures::TryStreamExt;
 use futures::{stream, FutureExt, StreamExt};
 use parquet::arrow::arrow_reader::ArrowReaderMetadata;
 use parquet::arrow::async_reader::{
-    AsyncFileReader, ParquetRecordBatchStream, ParquetRecordBatchStreamBuilder,
-    ParquetObjectReader
+    AsyncFileReader, ParquetObjectReader, ParquetRecordBatchStream, ParquetRecordBatchStreamBuilder,
 };
 
 use async_compat::{Compat, CompatExt};
@@ -119,7 +118,6 @@ impl SharedIO<ParquetObjectReader> for AsyncParquetFile {}
 impl AsyncParquetFile {
     #[wasm_bindgen(constructor)]
     pub async fn new(url: String) -> WasmResult<AsyncParquetFile> {
-        let client = Client::new();
         let parsed_url = Url::parse(&url)?;
         let base_url = Url::parse(&parsed_url.origin().unicode_serialization())?;
         let storage_container = Arc::new(HttpStore::new(base_url));
