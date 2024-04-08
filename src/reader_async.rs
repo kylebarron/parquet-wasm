@@ -5,11 +5,13 @@ use futures::channel::oneshot;
 use futures::future::BoxFuture;
 use parquet::arrow::ProjectionMask;
 use parquet::schema::types::SchemaDescriptor;
+use object_store::ObjectStore;
+use url::Url;
 use std::ops::Range;
 use std::sync::Arc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
-
+use object_store_wasm::HttpStore;
 use crate::common::fetch::{
     create_reader, get_content_length, range_from_end, range_from_start_and_length,
 };
@@ -23,6 +25,7 @@ use futures::{stream, FutureExt, StreamExt};
 use parquet::arrow::arrow_reader::ArrowReaderMetadata;
 use parquet::arrow::async_reader::{
     AsyncFileReader, ParquetRecordBatchStream, ParquetRecordBatchStreamBuilder,
+    ParquetObjectReader
 };
 
 use async_compat::{Compat, CompatExt};
@@ -103,20 +106,26 @@ trait SharedIO<T: AsyncFileReader + Unpin + Clone + 'static> {
 
 #[wasm_bindgen]
 pub struct AsyncParquetFile {
-    reader: HTTPFileReader,
+    reader: ParquetObjectReader,
     meta: ArrowReaderMetadata,
     batch_size: usize,
     projection_mask: Option<ProjectionMask>,
 }
 
 impl SharedIO<HTTPFileReader> for AsyncParquetFile {}
+impl SharedIO<ParquetObjectReader> for AsyncParquetFile {}
 
 #[wasm_bindgen]
 impl AsyncParquetFile {
     #[wasm_bindgen(constructor)]
     pub async fn new(url: String) -> WasmResult<AsyncParquetFile> {
         let client = Client::new();
-        let mut reader = HTTPFileReader::new(url.clone(), client.clone(), 1024);
+        let parsed_url = Url::parse(&url)?;
+        let base_url = Url::parse(&parsed_url.origin().unicode_serialization())?;
+        let storage_container = Arc::new(HttpStore::new(base_url));
+        let location = object_store::path::Path::parse(parsed_url.path()).unwrap();
+        let file_meta = storage_container.head(&location).await.unwrap();
+        let mut reader = ParquetObjectReader::new(storage_container, file_meta);
         let meta = ArrowReaderMetadata::load_async(&mut reader, Default::default()).await?;
         Ok(Self {
             reader,
