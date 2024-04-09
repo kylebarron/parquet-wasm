@@ -1158,7 +1158,7 @@ dependencies = [
 [[package]]
 name = "object-store-wasm"
 version = "0.1.0"
-source = "git+https://github.com/H-Plus-Time/object-store-wasm?branch=main#71d91e7b1578a52039e0ae4ff14459007f915cbc"
+source = "git+https://github.com/H-Plus-Time/object-store-wasm?branch=main#7f18f451fd4dab335871f0d2b13d5365c056a4ae"
 dependencies = [
  "async-trait",
  "backon",
