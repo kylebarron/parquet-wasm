@@ -7,7 +7,8 @@ wasm-pack build \
   --no-pack \
   --out-dir report_pkg/slim \
   --out-name parquet_wasm \
-  --target web
+  --target web \
+  --no-default-features
 echo "Building arrow-rs sync"
 wasm-pack build \
   --release \
