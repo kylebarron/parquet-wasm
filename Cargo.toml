@@ -97,7 +97,7 @@ wasm-streams = { version = "0.4.0", optional = true }
 async-trait = "0.1.74"
 object_store = { version = "0.9.0", default-features = false, features = [] }
 url = "2.5.0"
-object-store-wasm = { git = "https://github.com/H-Plus-Time/object-store-wasm", branch = "ehttp-refactor" }
+object-store-wasm = { git = "https://github.com/H-Plus-Time/object-store-wasm", branch = "main" }
 # object-store-wasm = { version = "*", path = "../object-store-wasm" }
 
 [dependencies.web-sys]
