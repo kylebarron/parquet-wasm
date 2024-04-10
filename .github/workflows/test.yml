@@ -193,7 +193,7 @@ jobs:
             // now, read in the asset manifests, for the head and base
             let baseAssets = {};
             try {
-              baseAssets = JSON.parse(fs.readFileSync('./base_asset_manifest.json'));
+              baseAssets = JSON.parse(fs.readFileSync('./base_asset_manifest.json')) ?? {};
             } catch (error) {
               console.log('No base asset manifest found');
             }
