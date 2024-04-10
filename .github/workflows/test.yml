@@ -231,7 +231,7 @@ jobs:
                         if(!Number.isFinite(proportionalDelta) || sign === 0) {
                           return [`${subK}_delta`, fragment]
                         } else {
-                          const formattedFragment = `$\\color{${colorMap[sign]}}\\text{${fragment.replace('%', '\\%')}}$`;
+                          const formattedFragment = `$\\color{${colorMap[sign]}}\\textbf{${fragment.replace('%', '\\%')}}$`;
                           return [`${subK}_delta`, formattedFragment]
                         }
                     }))
