@@ -21,20 +21,25 @@
     "arrow"
   ],
   "exports": {
+    "./bundler": {
+      "types": "./bundler/parquet_wasm.d.ts",
+      "default": "./bundler/parquet_wasm.js"
+    },
+    "./esm": {
+      "types": "./esm/parquet_wasm.d.ts",
+      "default": "./esm/parquet_wasm.js"
+    },
+    "./node": {
+      "types": "./node/parquet_wasm.d.ts",
+      "default": "./node/parquet_wasm.js"
+    },
     ".": {
-      "import": {
-        "types": "./esm/parquet_wasm.d.ts",
-        "import": "./esm/parquet_wasm.js"
-      },
-      "browser": {
-        "types": "./esm/parquet_wasm.d.ts",
-        "import": "./esm/parquet_wasm.js"
-      },
       "node": {
         "types": "./node/parquet_wasm.d.ts",
-        "require": "./node/parquet_wasm.js",
-        "import": "./node/parquet_wasm.js"
-      }
+        "default": "./node/parquet_wasm.js"
+      },
+      "types": "./esm/parquet_wasm.d.ts",
+      "default": "./esm/parquet_wasm.js"
     }
   }
 }
