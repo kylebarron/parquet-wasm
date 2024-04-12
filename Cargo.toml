@@ -1,6 +1,6 @@
 [package]
 name = "parquet-wasm"
-version = "0.6.0-beta.2"
+version = "0.6.0-beta.3"
 authors = ["Kyle Barron <kylebarron2@gmail.com>"]
 edition = "2021"
 description = "WebAssembly Parquet reader and writer."
@@ -39,13 +39,7 @@ lz4 = ["parquet/lz4"]
 all_compressions = ["brotli", "gzip", "snappy", "zstd", "lz4"]
 
 # Full list of available features
-full = [
-  "async",
-  "debug",
-  "all_compressions",
-  "reader",
-  "writer",
-]
+full = ["async", "debug", "all_compressions", "reader", "writer"]
 
 [dependencies]
 wasm-bindgen = { version = "0.2.88", features = ["serde-serialize"] }
@@ -70,10 +64,7 @@ thiserror = "1.0"
 arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "1d9bee7851d812f10a43a7376f01480375c2d8a2" }
 # arrow-wasm = { path = "/Users/kyle/github/rust/arrow-wasm" }
 
-arrow = { version = "50", default-features = false, features = [
-  "ipc",
-  "ffi",
-] }
+arrow = { version = "50", default-features = false, features = ["ipc", "ffi"] }
 parquet = { version = "50", default-features = false, features = [
   "arrow",
   "base64",
