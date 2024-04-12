@@ -1,4 +1,4 @@
-use crate::arrow1::error::Result;
+use crate::error::Result;
 use arrow::datatypes::SchemaRef;
 use arrow::record_batch::RecordBatch;
 use parquet::arrow::arrow_writer::ArrowWriter;
@@ -8,7 +8,7 @@ use parquet::arrow::arrow_writer::ArrowWriter;
 pub fn write_parquet(
     batches: impl Iterator<Item = RecordBatch>,
     schema: SchemaRef,
-    writer_properties: crate::arrow1::writer_properties::WriterProperties,
+    writer_properties: crate::writer_properties::WriterProperties,
 ) -> Result<Vec<u8>> {
     // Create Parquet writer
     let mut output_file: Vec<u8> = vec![];

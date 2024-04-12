@@ -1,5 +1,5 @@
-use crate::arrow1::error::Result;
-use arrow_wasm::arrow1::Table;
+use crate::error::Result;
+use arrow_wasm::Table;
 use bytes::Bytes;
 use parquet::arrow::arrow_reader::ParquetRecordBatchReaderBuilder;
 
@@ -9,6 +9,7 @@ pub fn read_parquet(parquet_file: Vec<u8>) -> Result<Table> {
     // Create Parquet reader
     let cursor: Bytes = parquet_file.into();
     let builder = ParquetRecordBatchReaderBuilder::try_new(cursor).unwrap();
+    let schema = builder.schema().clone();
 
     // Create Arrow reader
     let reader = builder.build().unwrap();
@@ -19,5 +20,5 @@ pub fn read_parquet(parquet_file: Vec<u8>) -> Result<Table> {
         batches.push(maybe_chunk?)
     }
 
-    Ok(Table::new(batches))
+    Ok(Table::new(schema, batches))
 }

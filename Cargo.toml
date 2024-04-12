@@ -1,6 +1,6 @@
 [package]
 name = "parquet-wasm"
-version = "0.6.0-beta.1"
+version = "0.6.0-beta.2"
 authors = ["Kyle Barron <kylebarron2@gmail.com>"]
 edition = "2021"
 description = "WebAssembly Parquet reader and writer."
@@ -15,14 +15,7 @@ rust-version = "1.62"
 crate-type = ["cdylib", "rlib"]
 
 [features]
-default = ["arrow1", "all_compressions", "reader", "writer"]
-arrow1 = ["dep:arrow", "dep:parquet", "dep:bytes", "arrow-wasm/arrow1"]
-arrow2 = [
-  "dep:arrow2",
-  "dep:parquet2",
-  "dep:serde-wasm-bindgen",
-  "arrow-wasm/arrow2",
-]
+default = ["all_compressions", "reader", "writer", "async"]
 reader = []
 writer = []
 async = [
@@ -33,23 +26,20 @@ async = [
   "dep:wasm-streams",
   "dep:async-compat",
   "dep:async-stream",
-  "parquet?/async",
+  "parquet/async",
 ]
 debug = ["console_error_panic_hook"]
 
-brotli = ["parquet?/brotli", "parquet2?/brotli"]
-gzip = ["parquet?/flate2", "parquet2?/gzip"]
-snappy = ["parquet?/snap", "parquet2?/snappy"]
-zstd = ["parquet?/zstd", "parquet2?/zstd", "dep:zstd"]
-# LZ4 not yet supported on parquet crate
-lz4 = ["parquet2?/lz4_flex"]
+brotli = ["parquet/brotli"]
+gzip = ["parquet/flate2"]
+snappy = ["parquet/snap"]
+zstd = ["parquet/zstd", "dep:zstd"]
+lz4 = ["parquet/lz4"]
 
 all_compressions = ["brotli", "gzip", "snappy", "zstd", "lz4"]
 
 # Full list of available features
 full = [
-  "arrow1",
-  "arrow2",
   "async",
   "debug",
   "all_compressions",
@@ -58,7 +48,7 @@ full = [
 ]
 
 [dependencies]
-wasm-bindgen = { version = "0.2.83", features = ["serde-serialize"] }
+wasm-bindgen = { version = "0.2.88", features = ["serde-serialize"] }
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
@@ -76,26 +66,19 @@ js-sys = "0.3.60"
 getrandom = { version = "0.2.6", features = ["js"] }
 thiserror = "1.0"
 
-arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "564a7485fcd585647ba77e2c5d8f2cff6db02122" }
+# c7a0db3b2f7034878796939ad46955450cb2c2e7
+arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "1d9bee7851d812f10a43a7376f01480375c2d8a2" }
 # arrow-wasm = { path = "/Users/kyle/github/rust/arrow-wasm" }
 
-arrow2 = { version = "0.18", optional = true, features = [
-  "io_ipc",
-  "io_parquet",
-] }
-parquet2 = { version = "0.17", default_features = false, optional = true }
-
-arrow = { version = "49", default-features = false, optional = true, features = [
+arrow = { version = "50", default-features = false, features = [
   "ipc",
   "ffi",
 ] }
-parquet = { version = "49", default-features = false, optional = true, features = [
+parquet = { version = "50", default-features = false, features = [
   "arrow",
   "base64",
 ] }
-bytes = { version = "1", optional = true }
-
-serde-wasm-bindgen = { version = "0.6", optional = true }
+bytes = "1"
 
 wasm-bindgen-futures = { version = "0.4.30", optional = true }
 futures = { version = "0.3", optional = true }
@@ -110,6 +93,7 @@ zstd = { version = "*", features = [
 async-compat = { version = "0.2.2", optional = true }
 async-stream = { version = "0.3.5", optional = true }
 wasm-streams = { version = "0.3.0", optional = true }
+async-trait = "0.1.74"
 
 [dependencies.web-sys]
 version = "0.3.4"
@@ -123,16 +107,13 @@ features = [
   'Window',
   "Document",
   "Element",
+  "File",
 ]
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.31"
 
 [package.metadata.cargo-all-features]
-
-# In practice, no one would ever use these pairs together, so we don't test their
-# intersections
-skip_feature_sets = [["arrow1", "arrow2"], ["arrow1", "lz4"]]
 
 # If your crate has a large number of optional dependencies, skip them for speed
 skip_optional_dependencies = true

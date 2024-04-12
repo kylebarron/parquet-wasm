@@ -12,73 +12,34 @@
   "files": [
     "*"
   ],
-  "module": "bundler/arrow2.js",
-  "types": "bundler/arrow2.d.ts",
-  "sideEffects": [
-    "./arrow1.js",
-    "./snippets/*"
-  ],
+  "module": "bundler/parquet_wasm.js",
+  "types": "bundler/parquet_wasm.d.ts",
+  "sideEffects": [],
   "keywords": [
     "parquet",
     "webassembly",
     "arrow"
   ],
   "exports": {
-    "./bundler/arrow1": {
-      "types": "./bundler/arrow1.d.ts",
-      "default": "./bundler/arrow1.js"
+    "./bundler": {
+      "types": "./bundler/parquet_wasm.d.ts",
+      "default": "./bundler/parquet_wasm.js"
     },
-    "./esm/arrow1": {
-      "types": "./esm/arrow1.d.ts",
-      "default": "./esm/arrow1.js"
+    "./esm": {
+      "types": "./esm/parquet_wasm.d.ts",
+      "default": "./esm/parquet_wasm.js"
     },
-    "./esm2/arrow1": {
-      "types": "./esm2/arrow1.d.ts",
-      "default": "./esm2/arrow1.js"
-    },
-    "./node/arrow1": {
-      "types": "./node/arrow1.d.ts",
-      "default": "./node/arrow1.js"
-    },
-    "./bundler/arrow2": {
-      "types": "./bundler/arrow2.d.ts",
-      "default": "./bundler/arrow2.js"
-    },
-    "./esm/arrow2": {
-      "types": "./esm/arrow2.d.ts",
-      "default": "./esm/arrow2.js"
-    },
-    "./esm2/arrow2": {
-      "types": "./esm2/arrow2.d.ts",
-      "default": "./esm2/arrow2.js"
-    },
-    "./node/arrow2": {
-      "types": "./node/arrow2.d.ts",
-      "default": "./node/arrow2.js"
-    },
-    "./arrow1": {
-      "node": {
-        "types": "./node/arrow1.d.ts",
-        "default": "./node/arrow1.js"
-      },
-      "types": "./esm/arrow1.d.ts",
-      "default": "./esm/arrow1.js"
-    },
-    "./arrow2": {
-      "node": {
-        "types": "./node/arrow2.d.ts",
-        "default": "./node/arrow2.js"
-      },
-      "types": "./esm/arrow2.d.ts",
-      "default": "./esm/arrow2.js"
+    "./node": {
+      "types": "./node/parquet_wasm.d.ts",
+      "default": "./node/parquet_wasm.js"
     },
     ".": {
       "node": {
-        "types": "./node/arrow1.d.ts",
-        "default": "./node/arrow1.js"
+        "types": "./node/parquet_wasm.d.ts",
+        "default": "./node/parquet_wasm.js"
       },
-      "types": "./esm/arrow1.d.ts",
-      "import": "./esm/arrow1.js"
+      "types": "./esm/parquet_wasm.d.ts",
+      "default": "./esm/parquet_wasm.js"
     }
   }
 }

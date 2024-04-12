@@ -25,8 +25,10 @@ pub async fn get_content_length(url: String) -> Result<usize, reqwest::Error> {
 
 /// Construct range header from start and length
 pub fn range_from_start_and_length(start: u64, length: u64) -> String {
-    // TODO: should this be start + length - 1?
-    format!("bytes={}-{}", start, start + length)
+    // Subtract 1 from length because end is inclusive
+    // > bytes units ... are offsets (zero-indexed & inclusive)
+    // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Range
+    format!("bytes={}-{}", start, start + length - 1)
 }
 
 pub fn range_from_start(start: u64) -> String {

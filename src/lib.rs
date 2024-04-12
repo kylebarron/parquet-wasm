@@ -1,13 +1,19 @@
 extern crate web_sys;
 
-#[cfg(feature = "arrow1")]
-pub mod arrow1;
-
-#[cfg(feature = "arrow2")]
-pub mod arrow2;
-
 pub mod common;
 pub mod utils;
+
+pub mod error;
+pub mod metadata;
+#[cfg(feature = "reader")]
+pub mod reader;
+#[cfg(all(feature = "reader", feature = "async"))]
+pub mod reader_async;
+pub mod wasm;
+#[cfg(feature = "writer")]
+pub mod writer;
+#[cfg(feature = "writer")]
+pub mod writer_properties;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
