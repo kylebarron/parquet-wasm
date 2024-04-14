@@ -7,10 +7,12 @@ use crate::common::fetch::{
 use crate::error::{ParquetWasmError, Result, WasmResult};
 use futures::channel::oneshot;
 use futures::future::BoxFuture;
+use js_sys::Object;
 use object_store::ObjectStore;
-use object_store_wasm::HttpStore;
+use object_store_wasm::parse::parse_url_opts;
 use parquet::arrow::ProjectionMask;
 use parquet::schema::types::SchemaDescriptor;
+use std::collections::HashMap;
 use std::ops::Range;
 use std::sync::Arc;
 use url::Url;
@@ -117,13 +119,18 @@ impl SharedIO<ParquetObjectReader> for AsyncParquetFile {}
 #[wasm_bindgen]
 impl AsyncParquetFile {
     #[wasm_bindgen(constructor)]
-    pub async fn new(url: String) -> WasmResult<AsyncParquetFile> {
+    pub async fn new(url: String, options: Option<Object>) -> WasmResult<AsyncParquetFile> {
         let parsed_url = Url::parse(&url)?;
-        let base_url = Url::parse(&parsed_url.origin().unicode_serialization())?;
-        let storage_container = Arc::new(HttpStore::new(base_url));
-        let location = object_store::path::Path::parse(parsed_url.path()).unwrap();
-        let file_meta = storage_container.head(&location).await.unwrap();
-        let mut reader = ParquetObjectReader::new(storage_container, file_meta);
+        let (storage_container, path) = match options {
+            Some(options) => {
+                let deserialized_options: HashMap<String, String> =
+                    serde_wasm_bindgen::from_value(options.into())?;
+                parse_url_opts(&parsed_url, deserialized_options.iter())?
+            }
+            None => parse_url_opts(&parsed_url, std::iter::empty::<(String, String)>())?,
+        };
+        let file_meta = storage_container.head(&path).await.unwrap();
+        let mut reader = ParquetObjectReader::new(storage_container.into(), file_meta);
         let meta = ArrowReaderMetadata::load_async(&mut reader, Default::default()).await?;
         Ok(Self {
             reader,
