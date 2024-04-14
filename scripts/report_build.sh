@@ -8,7 +8,8 @@ wasm-pack build \
   --out-dir report_pkg/slim \
   --out-name parquet_wasm \
   --target web \
-  --no-default-features
+  --no-default-features \
+  --features={reader,writer}
 echo "Building arrow-rs sync"
 wasm-pack build \
   --release \
@@ -16,6 +17,7 @@ wasm-pack build \
   --out-dir report_pkg/sync \
   --out-name parquet_wasm \
   --target web \
+  --no-default-features \
   --features={reader,writer,all_compressions} &
 
 echo "Building arrow-rs async_full"
@@ -25,6 +27,6 @@ wasm-pack build \
   --out-dir report_pkg/async_full \
   --out-name parquet_wasm \
   --target web \
-  --features={reader,writer,all_compressions,async} &
+  --features=full &
 
 wait;
