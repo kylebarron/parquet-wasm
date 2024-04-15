@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use futures::channel::oneshot;
 use futures::future::BoxFuture;
 use range_reader::{RangeOutput, RangedAsyncReader};

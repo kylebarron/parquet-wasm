@@ -2,6 +2,7 @@ use crate::common::writer_properties::{Compression, Encoding, WriterVersion};
 use parquet::basic::{BrotliLevel, GzipLevel, ZstdLevel};
 use wasm_bindgen::prelude::*;
 
+#[allow(deprecated)]
 impl From<Encoding> for parquet::basic::Encoding {
     fn from(x: Encoding) -> parquet::basic::Encoding {
         match x {
