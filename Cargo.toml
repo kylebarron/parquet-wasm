@@ -99,7 +99,6 @@ async-trait = "0.1.74"
 object_store = { version = "0.9.0", default-features = false, features = [] }
 url = "2.5.0"
 object-store-wasm = { version = "0.0.3" }
-# object-store-wasm = { version = "*", path = "../object-store-wasm" }
 
 [dependencies.web-sys]
 version = "0.3.4"
