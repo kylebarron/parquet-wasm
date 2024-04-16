@@ -9,7 +9,7 @@ use futures::channel::oneshot;
 use futures::future::BoxFuture;
 use js_sys::Object;
 use object_store::ObjectStore;
-use object_store_wasm::parse::parse_url_opts;
+use object_store_wasm::parse::{parse_url, parse_url_opts};
 use parquet::arrow::ProjectionMask;
 use parquet::schema::types::SchemaDescriptor;
 use std::collections::HashMap;
@@ -127,9 +127,9 @@ impl AsyncParquetFile {
                     serde_wasm_bindgen::from_value(options.into())?;
                 parse_url_opts(&parsed_url, deserialized_options.iter())?
             }
-            None => parse_url_opts(&parsed_url, std::iter::empty::<(String, String)>())?,
+            None => parse_url(&parsed_url)?,
         };
-        let file_meta = storage_container.head(&path).await.unwrap();
+        let file_meta = storage_container.head(&path).await?;
         let mut reader = ParquetObjectReader::new(storage_container.into(), file_meta);
         let meta = ArrowReaderMetadata::load_async(&mut reader, Default::default()).await?;
         Ok(Self {
