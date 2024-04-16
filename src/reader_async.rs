@@ -1,19 +1,23 @@
 //! An asynchronous Parquet reader that is able to read and inspect remote files without
 //! downloading them in entirety.
 
-use futures::channel::oneshot;
-use futures::future::BoxFuture;
-use parquet::arrow::ProjectionMask;
-use parquet::schema::types::SchemaDescriptor;
-use std::ops::Range;
-use std::sync::Arc;
-use wasm_bindgen::prelude::*;
-use wasm_bindgen_futures::spawn_local;
-
 use crate::common::fetch::{
     create_reader, get_content_length, range_from_end, range_from_start_and_length,
 };
 use crate::error::{ParquetWasmError, Result, WasmResult};
+use futures::channel::oneshot;
+use futures::future::BoxFuture;
+use js_sys::Object;
+use object_store::ObjectStore;
+use object_store_wasm::parse::{parse_url, parse_url_opts};
+use parquet::arrow::ProjectionMask;
+use parquet::schema::types::SchemaDescriptor;
+use std::collections::HashMap;
+use std::ops::Range;
+use std::sync::Arc;
+use url::Url;
+use wasm_bindgen::prelude::*;
+use wasm_bindgen_futures::spawn_local;
 
 use arrow::ipc::writer::StreamWriter;
 use arrow_wasm::{RecordBatch, Table};
@@ -22,7 +26,7 @@ use futures::TryStreamExt;
 use futures::{stream, FutureExt, StreamExt};
 use parquet::arrow::arrow_reader::ArrowReaderMetadata;
 use parquet::arrow::async_reader::{
-    AsyncFileReader, ParquetRecordBatchStream, ParquetRecordBatchStreamBuilder,
+    AsyncFileReader, ParquetObjectReader, ParquetRecordBatchStream, ParquetRecordBatchStreamBuilder,
 };
 
 use async_compat::{Compat, CompatExt};
@@ -103,20 +107,30 @@ trait SharedIO<T: AsyncFileReader + Unpin + Clone + 'static> {
 
 #[wasm_bindgen]
 pub struct AsyncParquetFile {
-    reader: HTTPFileReader,
+    reader: ParquetObjectReader,
     meta: ArrowReaderMetadata,
     batch_size: usize,
     projection_mask: Option<ProjectionMask>,
 }
 
 impl SharedIO<HTTPFileReader> for AsyncParquetFile {}
+impl SharedIO<ParquetObjectReader> for AsyncParquetFile {}
 
 #[wasm_bindgen]
 impl AsyncParquetFile {
     #[wasm_bindgen(constructor)]
-    pub async fn new(url: String) -> WasmResult<AsyncParquetFile> {
-        let client = Client::new();
-        let mut reader = HTTPFileReader::new(url.clone(), client.clone(), 1024);
+    pub async fn new(url: String, options: Option<Object>) -> WasmResult<AsyncParquetFile> {
+        let parsed_url = Url::parse(&url)?;
+        let (storage_container, path) = match options {
+            Some(options) => {
+                let deserialized_options: HashMap<String, String> =
+                    serde_wasm_bindgen::from_value(options.into())?;
+                parse_url_opts(&parsed_url, deserialized_options.iter())?
+            }
+            None => parse_url(&parsed_url)?,
+        };
+        let file_meta = storage_container.head(&path).await?;
+        let mut reader = ParquetObjectReader::new(storage_container.into(), file_meta);
         let meta = ArrowReaderMetadata::load_async(&mut reader, Default::default()).await?;
         Ok(Self {
             reader,

@@ -27,6 +27,7 @@ async = [
   "dep:async-compat",
   "dep:async-stream",
   "parquet/async",
+  "dep:serde-wasm-bindgen"
 ]
 debug = ["console_error_panic_hook"]
 
@@ -43,7 +44,7 @@ full = ["async", "debug", "all_compressions", "reader", "writer"]
 
 [dependencies]
 wasm-bindgen = { version = "0.2.88", features = ["serde-serialize"] }
-
+serde-wasm-bindgen = { version = "0.6.5", optional = true }
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
 # all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
@@ -68,13 +69,14 @@ arrow = { version = "51", default-features = false, features = ["ipc", "ffi"] }
 parquet = { version = "51", default-features = false, features = [
   "arrow",
   "base64",
+  "object_store"
 ] }
 bytes = "1"
 
 wasm-bindgen-futures = { version = "0.4.30", optional = true }
 futures = { version = "0.3", optional = true }
 range-reader = { version = "0.2", optional = true }
-reqwest = { version = "0.11.22", optional = true, default-features = false }
+reqwest = { version = "0.12.3", optional = true, default-features = false }
 
 # Pass "wasm" and "thin" down to the transitive zstd dependency
 zstd = { version = "*", features = [
@@ -86,8 +88,11 @@ zstd-sys = { version = "=2.0.9", optional = true, default-features = false }
 # https://github.com/kylebarron/parquet-wasm/pull/496#issuecomment-2057374608
 async-compat = { version = "=0.2.2", optional = true }
 async-stream = { version = "0.3.5", optional = true }
-wasm-streams = { version = "0.3.0", optional = true }
+wasm-streams = { version = "0.4.0", optional = true }
 async-trait = "0.1.74"
+object_store = { version = "0.9.0", default-features = false }
+url = "2.5.0"
+object-store-wasm = { version = "0.0.3" }
 
 [dependencies.web-sys]
 version = "0.3.4"
