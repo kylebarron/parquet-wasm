@@ -87,6 +87,17 @@ impl Default for WriterProperties {
     }
 }
 
+#[wasm_bindgen(typescript_custom_section)]
+const TS_FieldMetadata: &'static str = r#"
+export type KeyValueMetadata = Map<string, string>;
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "KeyValueMetadata")]
+    pub type KeyValueMetadata;
+}
+
 /// Builder to create a writing configuration for `writeParquet`
 ///
 /// Call {@linkcode build} on the finished builder to create an immputable {@linkcode WriterProperties} to pass to `writeParquet`
@@ -148,8 +159,11 @@ impl WriterPropertiesBuilder {
 
     /// Sets "key_value_metadata" property.
     #[wasm_bindgen(js_name = setKeyValueMetadata)]
-    pub fn set_key_value_metadata(self, value: JsValue) -> WasmResult<WriterPropertiesBuilder> {
-        let options: Option<HashMap<String, String>> = serde_wasm_bindgen::from_value(value)?;
+    pub fn set_key_value_metadata(
+        self,
+        value: KeyValueMetadata,
+    ) -> WasmResult<WriterPropertiesBuilder> {
+        let options: Option<HashMap<String, String>> = serde_wasm_bindgen::from_value(value.obj)?;
         let kv_options = options.map(|options| {
             options
                 .iter()
