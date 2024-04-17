@@ -1,5 +1,9 @@
+use std::collections::HashMap;
+
 use crate::common::writer_properties::{Compression, Encoding, WriterVersion};
+use crate::error::WasmResult;
 use parquet::basic::{BrotliLevel, GzipLevel, ZstdLevel};
+use parquet::file::metadata::KeyValue;
 use wasm_bindgen::prelude::*;
 
 #[allow(deprecated)]
@@ -142,16 +146,18 @@ impl WriterPropertiesBuilder {
         Self(self.0.set_created_by(value))
     }
 
-    // /// Sets "key_value_metadata" property.
-    // #[wasm_bindgen(js_name = setKeyValueMetadata)]
-    // pub fn set_key_value_metadata(
-    //     self,
-    //     value: Option<Vec<parquet::file::metadata::KeyValue>>,
-    // ) -> Self {
-    //     Self {
-    //         0: self.0.set_key_value_metadata(value),
-    //     }
-    // }
+    /// Sets "key_value_metadata" property.
+    #[wasm_bindgen(js_name = setKeyValueMetadata)]
+    pub fn set_key_value_metadata(self, value: JsValue) -> WasmResult<WriterPropertiesBuilder> {
+        let options: Option<HashMap<String, String>> = serde_wasm_bindgen::from_value(value)?;
+        let kv_options = options.map(|options| {
+            options
+                .iter()
+                .map(|(k, v)| KeyValue::new(k.clone(), Some(v.clone())))
+                .collect()
+        });
+        Ok(Self(self.0.set_key_value_metadata(kv_options)))
+    }
 
     // ----------------------------------------------------------------------
     // Setters for any column (global)
