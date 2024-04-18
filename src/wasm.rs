@@ -1,10 +1,11 @@
 use crate::error::WasmResult;
+#[cfg(feature = "reader")]
+use crate::read_options::ReaderOptions;
 use crate::utils::assert_parquet_file_not_empty;
-use arrow_wasm::{RecordBatch, Table};
+use arrow_wasm::{RecordBatch, Schema, Table};
 use wasm_bindgen::prelude::*;
 
-/// Read a Parquet file into Arrow data using the [`arrow`](https://crates.io/crates/arrow) and
-/// [`parquet`](https://crates.io/crates/parquet) Rust crates.
+/// Read a Parquet file into Arrow data.
 ///
 /// This returns an Arrow table in WebAssembly memory. To transfer the Arrow table to JavaScript
 /// memory you have two options:
@@ -31,13 +32,26 @@ use wasm_bindgen::prelude::*;
 /// @param parquet_file Uint8Array containing Parquet data
 #[wasm_bindgen(js_name = readParquet)]
 #[cfg(feature = "reader")]
-pub fn read_parquet(parquet_file: Vec<u8>) -> WasmResult<Table> {
+pub fn read_parquet(parquet_file: Vec<u8>, options: Option<ReaderOptions>) -> WasmResult<Table> {
     assert_parquet_file_not_empty(parquet_file.as_slice())?;
-    Ok(crate::reader::read_parquet(parquet_file)?)
+    Ok(crate::reader::read_parquet(
+        parquet_file,
+        options
+            .map(|x| x.try_into())
+            .transpose()?
+            .unwrap_or_default(),
+    )?)
 }
 
-/// Write Arrow data to a Parquet file using the [`arrow`](https://crates.io/crates/arrow) and
-/// [`parquet`](https://crates.io/crates/parquet) Rust crates.
+/// Read an Arrow schema from a Parquet file in memory.
+#[wasm_bindgen(js_name = readSchema)]
+#[cfg(feature = "reader")]
+pub fn read_schema(parquet_file: Vec<u8>) -> WasmResult<Schema> {
+    assert_parquet_file_not_empty(parquet_file.as_slice())?;
+    Ok(crate::reader::read_schema(parquet_file)?)
+}
+
+/// Write Arrow data to a Parquet file.
 ///
 /// For example, to create a Parquet file with Snappy compression:
 ///
