@@ -43,6 +43,7 @@ full = ["async", "debug", "all_compressions", "reader", "writer"]
 
 [dependencies]
 wasm-bindgen = { version = "0.2.88", features = ["serde-serialize"] }
+serde = "1.0.198"
 serde-wasm-bindgen = { version = "0.6.5" }
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires

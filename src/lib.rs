@@ -6,6 +6,8 @@ pub mod utils;
 pub mod error;
 pub mod metadata;
 #[cfg(feature = "reader")]
+pub mod read_options;
+#[cfg(feature = "reader")]
 pub mod reader;
 #[cfg(all(feature = "reader", feature = "async"))]
 pub mod reader_async;
