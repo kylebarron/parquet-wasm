@@ -1,6 +1,6 @@
 use wasm_bindgen::prelude::*;
 
-use crate::writer_properties::{Compression, Encoding};
+use crate::common::properties::{Compression, Encoding};
 
 /// Global Parquet metadata.
 #[derive(Debug, Clone)]

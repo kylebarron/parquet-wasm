@@ -1,4 +1,5 @@
 use crate::error::WasmResult;
+#[cfg(feature = "reader")]
 use crate::read_options::ReaderOptions;
 use crate::utils::assert_parquet_file_not_empty;
 use arrow_wasm::{RecordBatch, Schema, Table};
