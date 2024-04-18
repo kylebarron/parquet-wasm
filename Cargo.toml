@@ -27,7 +27,6 @@ async = [
   "dep:async-compat",
   "dep:async-stream",
   "parquet/async",
-  "dep:serde-wasm-bindgen"
 ]
 debug = ["console_error_panic_hook"]
 
@@ -44,7 +43,7 @@ full = ["async", "debug", "all_compressions", "reader", "writer"]
 
 [dependencies]
 wasm-bindgen = { version = "0.2.88", features = ["serde-serialize"] }
-serde-wasm-bindgen = { version = "0.6.5", optional = true }
+serde-wasm-bindgen = { version = "0.6.5" }
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
 # all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
@@ -69,7 +68,7 @@ arrow = { version = "51", default-features = false, features = ["ipc", "ffi"] }
 parquet = { version = "51", default-features = false, features = [
   "arrow",
   "base64",
-  "object_store"
+  "object_store",
 ] }
 bytes = "1"
 
