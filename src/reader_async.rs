@@ -4,14 +4,12 @@
 use crate::common::fetch::{
     create_reader, get_content_length, range_from_end, range_from_start_and_length,
 };
-use crate::error::{ParquetWasmError, Result, WasmResult};
+use crate::error::{Result, WasmResult};
 use crate::read_options::{JsReaderOptions, ReaderOptions};
 use futures::channel::oneshot;
 use futures::future::BoxFuture;
 use object_store::ObjectStore;
 use object_store_wasm::parse::{parse_url, parse_url_opts};
-use parquet::arrow::ProjectionMask;
-use parquet::schema::types::SchemaDescriptor;
 use std::collections::HashMap;
 use std::ops::Range;
 use std::sync::Arc;
@@ -534,47 +532,6 @@ pub async fn fetch_parquet_metadata(
     };
 
     Ok(metadata)
-}
-
-pub fn generate_projection_mask<S: AsRef<str>>(
-    columns: &[S],
-    pq_schema: &SchemaDescriptor,
-) -> Result<ProjectionMask> {
-    let col_paths = pq_schema
-        .columns()
-        .iter()
-        .map(|col| col.path().string())
-        .collect::<Vec<_>>();
-    let indices: Vec<usize> = columns
-        .iter()
-        .map(|col| {
-            let col = col.as_ref();
-            let field_indices: Vec<usize> = col_paths
-                .iter()
-                .enumerate()
-                .filter(|(_idx, path)| {
-                    // identical OR the path starts with the column AND the substring is immediately followed by the
-                    // path separator
-                    path.as_str() == col
-                        || path.starts_with(col) && {
-                            let left_index = path.find(col).unwrap();
-                            path.chars().nth(left_index + col.len()).unwrap() == '.'
-                        }
-                })
-                .map(|(idx, _)| idx)
-                .collect();
-            if field_indices.is_empty() {
-                Err(ParquetWasmError::UnknownColumn(col.to_string()))
-            } else {
-                Ok(field_indices)
-            }
-        })
-        .collect::<Result<Vec<Vec<usize>>>>()?
-        .into_iter()
-        .flatten()
-        .collect();
-    let projection_mask = ProjectionMask::leaves(pq_schema, indices);
-    Ok(projection_mask)
 }
 
 pub async fn read_metadata_async(

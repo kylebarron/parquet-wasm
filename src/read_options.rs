@@ -1,9 +1,10 @@
 use parquet::arrow::arrow_reader::ArrowReaderBuilder;
+use parquet::arrow::ProjectionMask;
+use parquet::schema::types::SchemaDescriptor;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
-use crate::error::Result;
-use crate::reader_async::generate_projection_mask;
+use crate::error::{ParquetWasmError, Result};
 
 #[wasm_bindgen(typescript_custom_section)]
 const TS_ReaderOptions: &'static str = r#"
@@ -85,4 +86,45 @@ impl TryFrom<ReaderOptions> for JsReaderOptions {
     fn try_from(value: ReaderOptions) -> std::result::Result<Self, Self::Error> {
         serde_wasm_bindgen::from_value(value.obj)
     }
+}
+
+fn generate_projection_mask<S: AsRef<str>>(
+    columns: &[S],
+    pq_schema: &SchemaDescriptor,
+) -> Result<ProjectionMask> {
+    let col_paths = pq_schema
+        .columns()
+        .iter()
+        .map(|col| col.path().string())
+        .collect::<Vec<_>>();
+    let indices: Vec<usize> = columns
+        .iter()
+        .map(|col| {
+            let col = col.as_ref();
+            let field_indices: Vec<usize> = col_paths
+                .iter()
+                .enumerate()
+                .filter(|(_idx, path)| {
+                    // identical OR the path starts with the column AND the substring is immediately followed by the
+                    // path separator
+                    path.as_str() == col
+                        || path.starts_with(col) && {
+                            let left_index = path.find(col).unwrap();
+                            path.chars().nth(left_index + col.len()).unwrap() == '.'
+                        }
+                })
+                .map(|(idx, _)| idx)
+                .collect();
+            if field_indices.is_empty() {
+                Err(ParquetWasmError::UnknownColumn(col.to_string()))
+            } else {
+                Ok(field_indices)
+            }
+        })
+        .collect::<Result<Vec<Vec<usize>>>>()?
+        .into_iter()
+        .flatten()
+        .collect();
+    let projection_mask = ProjectionMask::leaves(pq_schema, indices);
+    Ok(projection_mask)
 }
