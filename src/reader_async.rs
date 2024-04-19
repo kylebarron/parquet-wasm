@@ -168,7 +168,7 @@ impl ParquetFile {
     ///
     ///    - `batchSize`: The number of rows in each batch. If not provided, the upstream parquet
     ///           default is 1024.
-    ///    - ~~`rowGroups`: Only read data from the provided row group indexes.~~ **The rowGroups parameter does not yet take effect here.**
+    ///    - `rowGroups`: Only read data from the provided row group indexes.
     ///    - `limit`: Provide a limit to the number of rows to be read.
     ///    - `offset`: Provide an offset to skip over the given number of rows.
     ///    - `columns`: The column names from the file to read.
@@ -184,19 +184,14 @@ impl ParquetFile {
             .unwrap_or_default();
 
         let concurrency = options.concurrency.unwrap_or_default().max(1);
-
-        // TODO: enable row group selection
-        // let row_groups = options
-        //     .row_groups
-        //     .clone()
-        //     .unwrap_or_else(|| (0..self.meta.metadata().num_row_groups()).collect());
-        // let row_groups_slice = row_groups.as_slice();
-
-        let num_row_groups = self.meta.metadata().num_row_groups();
+        let row_groups = options
+            .row_groups
+            .clone()
+            .unwrap_or_else(|| (0..self.meta.metadata().num_row_groups()).collect());
         let reader = self.reader.clone();
         let meta = self.meta.clone();
 
-        let buffered_stream = stream::iter((0..num_row_groups).map(move |i| {
+        let buffered_stream = stream::iter(row_groups.into_iter().map(move |i| {
             let builder = create_builder(&reader.clone(), &meta.clone(), &options.clone())
                 .unwrap()
                 .with_row_groups(vec![i]);
