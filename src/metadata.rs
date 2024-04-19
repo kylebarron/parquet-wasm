@@ -71,8 +71,8 @@ impl FileMetaData {
 
     /// Returns number of rows in the file.
     #[wasm_bindgen(js_name = numRows)]
-    pub fn num_rows(&self) -> u32 {
-        self.0.num_rows().try_into().unwrap()
+    pub fn num_rows(&self) -> f64 {
+        self.0.num_rows() as f64
     }
 
     /// String message for application that wrote this file.
@@ -147,20 +147,20 @@ impl RowGroupMetaData {
 
     /// Number of rows in this row group.
     #[wasm_bindgen(js_name = numRows)]
-    pub fn num_rows(&self) -> u32 {
-        self.0.num_rows().try_into().unwrap()
+    pub fn num_rows(&self) -> f64 {
+        self.0.num_rows() as f64
     }
 
     /// Total byte size of all uncompressed column data in this row group.
     #[wasm_bindgen(js_name = totalByteSize)]
-    pub fn total_byte_size(&self) -> u32 {
-        self.0.total_byte_size().try_into().unwrap()
+    pub fn total_byte_size(&self) -> f64 {
+        self.0.total_byte_size() as f64
     }
 
     /// Total size of all compressed column data in this row group.
     #[wasm_bindgen(js_name = compressedSize)]
-    pub fn compressed_size(&self) -> u32 {
-        self.0.compressed_size().try_into().unwrap()
+    pub fn compressed_size(&self) -> f64 {
+        self.0.compressed_size() as f64
     }
 }
 
@@ -194,8 +194,8 @@ impl ColumnChunkMetaData {
 
     /// Byte offset in `file_path()`.
     #[wasm_bindgen(js_name = fileOffset)]
-    pub fn file_offset(&self) -> u32 {
-        self.0.file_offset().try_into().unwrap()
+    pub fn file_offset(&self) -> i64 {
+        self.0.file_offset()
     }
 
     // /// Type of this column. Must be primitive.
@@ -222,8 +222,8 @@ impl ColumnChunkMetaData {
 
     /// Total number of values in this column chunk.
     #[wasm_bindgen(js_name = numValues)]
-    pub fn num_values(&self) -> u32 {
-        self.0.num_values().try_into().unwrap()
+    pub fn num_values(&self) -> f64 {
+        self.0.num_values() as f64
     }
 
     /// Compression for this column.
@@ -233,14 +233,14 @@ impl ColumnChunkMetaData {
 
     /// Returns the total compressed data size of this column chunk.
     #[wasm_bindgen(js_name = compressedSize)]
-    pub fn compressed_size(&self) -> u32 {
-        self.0.compressed_size().try_into().unwrap()
+    pub fn compressed_size(&self) -> f64 {
+        self.0.compressed_size() as f64
     }
 
     /// Returns the total uncompressed data size of this column chunk.
     #[wasm_bindgen(js_name = uncompressedSize)]
-    pub fn uncompressed_size(&self) -> u32 {
-        self.0.uncompressed_size().try_into().unwrap()
+    pub fn uncompressed_size(&self) -> f64 {
+        self.0.uncompressed_size() as f64
     }
 }
 
