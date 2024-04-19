@@ -5,9 +5,9 @@ use crate::common::fetch::{
     create_reader, get_content_length, range_from_end, range_from_start_and_length,
 };
 use crate::error::{ParquetWasmError, Result, WasmResult};
+use crate::read_options::{JsReaderOptions, ReaderOptions};
 use futures::channel::oneshot;
 use futures::future::BoxFuture;
-use js_sys::Object;
 use object_store::ObjectStore;
 use object_store_wasm::parse::{parse_url, parse_url_opts};
 use parquet::arrow::ProjectionMask;
@@ -35,91 +35,69 @@ use parquet::file::metadata::{FileMetaData, ParquetMetaData};
 use range_reader::RangedAsyncReader;
 use reqwest::Client;
 
-use async_trait::async_trait;
+fn create_builder<T: AsyncFileReader + Unpin + Clone + 'static>(
+    reader: &T,
+    meta: &ArrowReaderMetadata,
+    options: &JsReaderOptions,
+) -> Result<ParquetRecordBatchStreamBuilder<T>> {
+    let builder = ParquetRecordBatchStreamBuilder::new_with_metadata(reader.clone(), meta.clone());
+    options.apply_to_builder(builder)
+}
 
-#[async_trait(?Send)]
-trait SharedIO<T: AsyncFileReader + Unpin + Clone + 'static> {
-    fn generate_builder(
-        reader: &T,
-        meta: &ArrowReaderMetadata,
-        batch_size: &usize,
-        projection_mask: &Option<ProjectionMask>,
-    ) -> ParquetRecordBatchStreamBuilder<T> {
-        let builder =
-            ParquetRecordBatchStreamBuilder::new_with_metadata(reader.clone(), meta.clone())
-                .with_batch_size(*batch_size)
-                .with_projection(
-                    projection_mask
-                        .as_ref()
-                        .unwrap_or(&ProjectionMask::all())
-                        .clone(),
-                );
-        builder
+/// An abstraction over either a browser File handle or an ObjectStore instance
+///
+/// This allows exposing a single ParquetFile class to the user.
+#[derive(Clone)]
+enum InnerParquetFile {
+    File(JsFileReader),
+    ObjectStore(ParquetObjectReader),
+}
+
+impl AsyncFileReader for InnerParquetFile {
+    fn get_bytes(&mut self, range: Range<usize>) -> BoxFuture<'_, parquet::errors::Result<Bytes>> {
+        match self {
+            Self::File(reader) => reader.get_bytes(range),
+            Self::ObjectStore(reader) => reader.get_bytes(range),
+        }
     }
 
-    async fn inner_read_row_group(
-        &self,
-        reader: &T,
-        meta: &ArrowReaderMetadata,
-        batch_size: &usize,
-        projection_mask: &Option<ProjectionMask>,
-        i: usize,
-    ) -> Result<Table> {
-        let builder = Self::generate_builder(reader, meta, batch_size, projection_mask);
-        let schema = builder.schema().clone();
-        let stream = builder.with_row_groups(vec![i]).build()?;
-        let results = stream.try_collect::<Vec<_>>().await.unwrap();
-
-        // NOTE: This is not only one batch by default due to arrow-rs's default rechunking.
-        // assert_eq!(results.len(), 1, "Expected one record batch");
-        // Ok(RecordBatch::new(results.pop().unwrap()))
-        Ok(Table::new(schema, results))
+    fn get_byte_ranges(
+        &mut self,
+        ranges: Vec<Range<usize>>,
+    ) -> BoxFuture<'_, parquet::errors::Result<Vec<Bytes>>> {
+        match self {
+            Self::File(reader) => reader.get_byte_ranges(ranges),
+            Self::ObjectStore(reader) => reader.get_byte_ranges(ranges),
+        }
     }
 
-    async fn inner_stream(
-        &self,
-        concurrency: Option<usize>,
-        meta: &ArrowReaderMetadata,
-        reader: &T,
-        batch_size: &usize,
-        projection_mask: &Option<ProjectionMask>,
-    ) -> WasmResult<wasm_streams::readable::sys::ReadableStream> {
-        use futures::StreamExt;
-        let concurrency = concurrency.unwrap_or(1);
-        let meta = meta.clone();
-        let reader = reader.clone();
-        let batch_size = *batch_size;
-        let num_row_groups = meta.metadata().num_row_groups();
-        let projection_mask = projection_mask.clone();
-        let buffered_stream = stream::iter((0..num_row_groups).map(move |i| {
-            let builder = Self::generate_builder(&reader, &meta, &batch_size, &projection_mask)
-                .with_row_groups(vec![i]);
-            builder.build().unwrap().try_collect::<Vec<_>>()
-        }))
-        .buffered(concurrency);
-        let out_stream = buffered_stream.flat_map(|maybe_record_batches| {
-            stream::iter(maybe_record_batches.unwrap())
-                .map(|record_batch| Ok(RecordBatch::new(record_batch).into()))
-        });
-        Ok(wasm_streams::ReadableStream::from_stream(out_stream).into_raw())
+    fn get_metadata(&mut self) -> BoxFuture<'_, parquet::errors::Result<Arc<ParquetMetaData>>> {
+        match self {
+            Self::File(reader) => reader.get_metadata(),
+            Self::ObjectStore(reader) => reader.get_metadata(),
+        }
     }
 }
 
 #[wasm_bindgen]
-pub struct AsyncParquetFile {
-    reader: ParquetObjectReader,
+pub struct ParquetFile {
+    reader: InnerParquetFile,
     meta: ArrowReaderMetadata,
-    batch_size: usize,
-    projection_mask: Option<ProjectionMask>,
 }
 
-impl SharedIO<HTTPFileReader> for AsyncParquetFile {}
-impl SharedIO<ParquetObjectReader> for AsyncParquetFile {}
-
 #[wasm_bindgen]
-impl AsyncParquetFile {
-    #[wasm_bindgen(constructor)]
-    pub async fn new(url: String, options: Option<Object>) -> WasmResult<AsyncParquetFile> {
+impl ParquetFile {
+    /// Construct a ParquetFile from a new URL.
+    ///
+    /// @param options The options to pass into `object-store`'s [`parse_url_opts`]
+    ///
+    /// [parse_url_opts]: https://docs.rs/object_store/latest/object_store/fn.parse_url_opts.html
+    /// [File]: https://developer.mozilla.org/en-US/docs/Web/API/File
+    ///
+    /// Safety: Do not use this in a multi-threaded environment,
+    /// (transitively depends on !Send web_sys::File)
+    #[wasm_bindgen(js_name = fromUrl)]
+    pub async fn from_url(url: String, options: Option<js_sys::Map>) -> WasmResult<ParquetFile> {
         let parsed_url = Url::parse(&url)?;
         let (storage_container, path) = match options {
             Some(options) => {
@@ -133,25 +111,24 @@ impl AsyncParquetFile {
         let mut reader = ParquetObjectReader::new(storage_container.into(), file_meta);
         let meta = ArrowReaderMetadata::load_async(&mut reader, Default::default()).await?;
         Ok(Self {
-            reader,
+            reader: InnerParquetFile::ObjectStore(reader),
             meta,
-            projection_mask: None,
-            batch_size: 1024,
         })
     }
 
-    #[wasm_bindgen(js_name = withBatchSize)]
-    pub fn with_batch_size(self, batch_size: usize) -> Self {
-        Self { batch_size, ..self }
-    }
-
-    #[wasm_bindgen(js_name = selectColumns)]
-    pub fn select_columns(self, columns: Vec<String>) -> WasmResult<AsyncParquetFile> {
-        let pq_schema = self.meta.parquet_schema();
-        let projection_mask = Some(generate_projection_mask(columns, pq_schema)?);
+    /// Construct a ParquetFile from a new [File] handle.
+    ///
+    /// [File]: https://developer.mozilla.org/en-US/docs/Web/API/File
+    ///
+    /// Safety: Do not use this in a multi-threaded environment,
+    /// (transitively depends on !Send web_sys::File)
+    #[wasm_bindgen(js_name = fromFile)]
+    pub async fn from_file(handle: web_sys::File) -> WasmResult<ParquetFile> {
+        let mut reader = JsFileReader::new(handle, 1024);
+        let meta = ArrowReaderMetadata::load_async(&mut reader, Default::default()).await?;
         Ok(Self {
-            projection_mask,
-            ..self
+            reader: InnerParquetFile::File(reader),
+            meta,
         })
     }
 
@@ -160,34 +137,76 @@ impl AsyncParquetFile {
         Ok(self.meta.metadata().as_ref().to_owned().into())
     }
 
-    #[wasm_bindgen(js_name = readRowGroup)]
-    pub async fn read_row_group(&self, i: usize) -> WasmResult<Table> {
-        let inner = self
-            .inner_read_row_group(
-                &self.reader,
-                &self.meta,
-                &self.batch_size,
-                &self.projection_mask,
-                i,
-            )
-            .await
-            .unwrap();
-        Ok(inner)
+    /// Read from the Parquet file in an async fashion.
+    ///
+    /// @param options Options for reading Parquet data. Optional keys include:
+    ///     - batchSize: The number of rows in each batch. If not provided, the upstream parquet
+    ///       default is 1024.
+    ///     - rowGroups: Only read data from the provided row group indexes.
+    ///     - limit: Provide a limit to the number of rows to be read.
+    ///     - offset: Provide an offset to skip over the given number of rows.
+    ///     - columns: The column names from the file to read.
+    #[wasm_bindgen]
+    pub async fn read(&self, options: Option<ReaderOptions>) -> WasmResult<Table> {
+        let options = options
+            .map(|x| x.try_into())
+            .transpose()?
+            .unwrap_or_default();
+        let builder = create_builder(&self.reader, &self.meta, &options)?;
+
+        let schema = builder.schema().clone();
+        let stream = builder.build()?;
+        let batches = stream.try_collect::<Vec<_>>().await.unwrap();
+
+        Ok(Table::new(schema, batches))
     }
 
+    /// Create a readable stream of record batches.
+    ///
+    /// Each item in the stream will be a {@linkcode RecordBatch}.
+    ///
+    /// @param options Options for reading Parquet data. Optional keys include:
+    ///     - batchSize: The number of rows in each batch. If not provided, the upstream parquet
+    ///       default is 1024.
+    ///     - rowGroups: Only read data from the provided row group indexes.
+    ///     - limit: Provide a limit to the number of rows to be read.
+    ///     - offset: Provide an offset to skip over the given number of rows.
+    ///     - columns: The column names from the file to read.
+    ///     - concurrency: The number of concurrent requests to make
     #[wasm_bindgen]
     pub async fn stream(
         &self,
-        concurrency: Option<usize>,
+        options: Option<ReaderOptions>,
     ) -> WasmResult<wasm_streams::readable::sys::ReadableStream> {
-        self.inner_stream(
-            concurrency,
-            &self.meta,
-            &self.reader,
-            &self.batch_size,
-            &self.projection_mask,
-        )
-        .await
+        let options: JsReaderOptions = options
+            .map(|x| x.try_into())
+            .transpose()?
+            .unwrap_or_default();
+
+        let concurrency = options.concurrency.unwrap_or_default().max(1);
+
+        // TODO: enable row group selection
+        // let row_groups = options
+        //     .row_groups
+        //     .unwrap_or_else(|| (0..self.meta.metadata().num_row_groups()).collect());
+        // let row_groups_slice = row_groups.as_slice();
+
+        let num_row_groups = self.meta.metadata().num_row_groups();
+        let reader = self.reader.clone();
+        let meta = self.meta.clone();
+
+        let buffered_stream = stream::iter((0..num_row_groups).map(move |i| {
+            let builder = create_builder(&reader.clone(), &meta.clone(), &options.clone())
+                .unwrap()
+                .with_row_groups(vec![i]);
+            builder.build().unwrap().try_collect::<Vec<_>>()
+        }))
+        .buffered(concurrency);
+        let out_stream = buffered_stream.flat_map(|maybe_record_batches| {
+            stream::iter(maybe_record_batches.unwrap())
+                .map(|record_batch| Ok(RecordBatch::new(record_batch).into()))
+        });
+        Ok(wasm_streams::ReadableStream::from_stream(out_stream).into_raw())
     }
 }
 
@@ -268,83 +287,6 @@ impl AsyncFileReader for HTTPFileReader {
             Ok(Arc::new(meta))
         }
         .boxed()
-    }
-}
-
-/// Safety: Do not use this in a multi-threaded environment,
-/// (transitively depends on !Send web_sys::File)
-#[wasm_bindgen]
-pub struct AsyncParquetLocalFile {
-    reader: JsFileReader,
-    meta: ArrowReaderMetadata,
-    batch_size: usize,
-    projection_mask: Option<ProjectionMask>,
-}
-
-impl SharedIO<JsFileReader> for AsyncParquetLocalFile {}
-
-#[wasm_bindgen]
-impl AsyncParquetLocalFile {
-    #[wasm_bindgen(constructor)]
-    pub async fn new(handle: web_sys::File) -> WasmResult<AsyncParquetLocalFile> {
-        let mut reader = JsFileReader::new(handle, 1024);
-        let meta = ArrowReaderMetadata::load_async(&mut reader, Default::default()).await?;
-        Ok(Self {
-            reader,
-            meta,
-            batch_size: 1024,
-            projection_mask: None,
-        })
-    }
-
-    #[wasm_bindgen(js_name = withBatchSize)]
-    pub fn with_batch_size(self, batch_size: usize) -> Self {
-        Self { batch_size, ..self }
-    }
-
-    #[wasm_bindgen(js_name = selectColumns)]
-    pub fn select_columns(self, columns: Vec<String>) -> WasmResult<AsyncParquetLocalFile> {
-        let pq_schema = self.meta.parquet_schema();
-        let projection_mask = Some(generate_projection_mask(columns, pq_schema)?);
-        Ok(Self {
-            projection_mask,
-            ..self
-        })
-    }
-
-    #[wasm_bindgen]
-    pub fn metadata(&self) -> WasmResult<crate::metadata::ParquetMetaData> {
-        Ok(self.meta.metadata().as_ref().to_owned().into())
-    }
-
-    #[wasm_bindgen(js_name = readRowGroup)]
-    pub async fn read_row_group(&self, i: usize) -> WasmResult<Table> {
-        let inner = self
-            .inner_read_row_group(
-                &self.reader,
-                &self.meta,
-                &self.batch_size,
-                &self.projection_mask,
-                i,
-            )
-            .await
-            .unwrap();
-        Ok(inner)
-    }
-
-    #[wasm_bindgen]
-    pub async fn stream(
-        &self,
-        concurrency: Option<usize>,
-    ) -> WasmResult<wasm_streams::readable::sys::ReadableStream> {
-        self.inner_stream(
-            concurrency,
-            &self.meta,
-            &self.reader,
-            &self.batch_size,
-            &self.projection_mask,
-        )
-        .await
     }
 }
 
@@ -592,8 +534,8 @@ pub async fn fetch_parquet_metadata(
     Ok(metadata)
 }
 
-fn generate_projection_mask(
-    columns: Vec<String>,
+pub fn generate_projection_mask<S: AsRef<str>>(
+    columns: &[S],
     pq_schema: &SchemaDescriptor,
 ) -> Result<ProjectionMask> {
     let col_paths = pq_schema
@@ -604,13 +546,14 @@ fn generate_projection_mask(
     let indices: Vec<usize> = columns
         .iter()
         .map(|col| {
+            let col = col.as_ref();
             let field_indices: Vec<usize> = col_paths
                 .iter()
                 .enumerate()
                 .filter(|(_idx, path)| {
                     // identical OR the path starts with the column AND the substring is immediately followed by the
                     // path separator
-                    path.to_string() == col.clone()
+                    path.as_str() == col
                         || path.starts_with(col) && {
                             let left_index = path.find(col).unwrap();
                             path.chars().nth(left_index + col.len()).unwrap() == '.'
@@ -619,7 +562,7 @@ fn generate_projection_mask(
                 .map(|(idx, _)| idx)
                 .collect();
             if field_indices.is_empty() {
-                Err(ParquetWasmError::UnknownColumn(col.clone()))
+                Err(ParquetWasmError::UnknownColumn(col.to_string()))
             } else {
                 Ok(field_indices)
             }
