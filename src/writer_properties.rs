@@ -1,45 +1,9 @@
-use crate::common::writer_properties::{Compression, Encoding, WriterVersion};
-use parquet::basic::{BrotliLevel, GzipLevel, ZstdLevel};
+use std::collections::HashMap;
+
+use crate::common::properties::{Compression, Encoding, WriterVersion};
+use crate::error::WasmResult;
+use parquet::file::metadata::KeyValue;
 use wasm_bindgen::prelude::*;
-
-impl From<Encoding> for parquet::basic::Encoding {
-    fn from(x: Encoding) -> parquet::basic::Encoding {
-        match x {
-            Encoding::PLAIN => parquet::basic::Encoding::PLAIN,
-            Encoding::PLAIN_DICTIONARY => parquet::basic::Encoding::PLAIN_DICTIONARY,
-            Encoding::RLE => parquet::basic::Encoding::RLE,
-            Encoding::BIT_PACKED => parquet::basic::Encoding::BIT_PACKED,
-            Encoding::DELTA_BINARY_PACKED => parquet::basic::Encoding::DELTA_BINARY_PACKED,
-            Encoding::DELTA_LENGTH_BYTE_ARRAY => parquet::basic::Encoding::DELTA_LENGTH_BYTE_ARRAY,
-            Encoding::DELTA_BYTE_ARRAY => parquet::basic::Encoding::DELTA_BYTE_ARRAY,
-            Encoding::RLE_DICTIONARY => parquet::basic::Encoding::RLE_DICTIONARY,
-            Encoding::BYTE_STREAM_SPLIT => parquet::basic::Encoding::BYTE_STREAM_SPLIT,
-        }
-    }
-}
-
-impl From<Compression> for parquet::basic::Compression {
-    fn from(x: Compression) -> parquet::basic::Compression {
-        match x {
-            Compression::UNCOMPRESSED => parquet::basic::Compression::UNCOMPRESSED,
-            Compression::SNAPPY => parquet::basic::Compression::SNAPPY,
-            Compression::GZIP => parquet::basic::Compression::GZIP(GzipLevel::default()),
-            Compression::BROTLI => parquet::basic::Compression::BROTLI(BrotliLevel::default()),
-            Compression::LZ4 => parquet::basic::Compression::LZ4,
-            Compression::ZSTD => parquet::basic::Compression::ZSTD(ZstdLevel::default()),
-            Compression::LZ4_RAW => parquet::basic::Compression::LZ4_RAW,
-        }
-    }
-}
-
-impl From<WriterVersion> for parquet::file::properties::WriterVersion {
-    fn from(x: WriterVersion) -> parquet::file::properties::WriterVersion {
-        match x {
-            WriterVersion::V1 => parquet::file::properties::WriterVersion::PARQUET_1_0,
-            WriterVersion::V2 => parquet::file::properties::WriterVersion::PARQUET_2_0,
-        }
-    }
-}
 
 /// Controls the level of statistics to be computed by the writer
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -80,6 +44,17 @@ impl Default for WriterProperties {
     fn default() -> Self {
         WriterPropertiesBuilder::default().build()
     }
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const TS_FieldMetadata: &'static str = r#"
+export type KeyValueMetadata = Map<string, string>;
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "KeyValueMetadata")]
+    pub type KeyValueMetadata;
 }
 
 /// Builder to create a writing configuration for `writeParquet`
@@ -141,16 +116,21 @@ impl WriterPropertiesBuilder {
         Self(self.0.set_created_by(value))
     }
 
-    // /// Sets "key_value_metadata" property.
-    // #[wasm_bindgen(js_name = setKeyValueMetadata)]
-    // pub fn set_key_value_metadata(
-    //     self,
-    //     value: Option<Vec<parquet::file::metadata::KeyValue>>,
-    // ) -> Self {
-    //     Self {
-    //         0: self.0.set_key_value_metadata(value),
-    //     }
-    // }
+    /// Sets "key_value_metadata" property.
+    #[wasm_bindgen(js_name = setKeyValueMetadata)]
+    pub fn set_key_value_metadata(
+        self,
+        value: KeyValueMetadata,
+    ) -> WasmResult<WriterPropertiesBuilder> {
+        let options: Option<HashMap<String, String>> = serde_wasm_bindgen::from_value(value.obj)?;
+        let kv_options = options.map(|options| {
+            options
+                .iter()
+                .map(|(k, v)| KeyValue::new(k.clone(), Some(v.clone())))
+                .collect()
+        });
+        Ok(Self(self.0.set_key_value_metadata(kv_options)))
+    }
 
     // ----------------------------------------------------------------------
     // Setters for any column (global)

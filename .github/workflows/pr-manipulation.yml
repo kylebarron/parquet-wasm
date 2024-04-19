@@ -18,14 +18,14 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const artifacts = await github.actions.listWorkflowRunArtifacts({
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
               ...context.repo,
               run_id: ${{github.event.workflow_run.id }},
             });
             const matchArtifact = artifacts.data.artifacts.filter((artifact) => {
               return artifact.name == "pr"
             })[0];
-            const download = await github.actions.downloadArtifact({
+            const download = await github.rest.actions.downloadArtifact({
               ...context.repo,
               artifact_id: matchArtifact.id,
               archive_format: 'zip',
@@ -43,7 +43,7 @@ jobs:
             const issueNumber = Number(fs.readFileSync('./NR'));
             const summaryContent = fs.readFileSync('./step_summary.md', 'utf-8');
 
-            const existingCommentsOpts = github.issues.listComments.endpoint.merge({
+            const existingCommentsOpts = github.rest.issues.listComments.endpoint.merge({
               ...context.repo, issue_number: issueNumber
             });
             const existingComments = await github.paginate(existingCommentsOpts);
@@ -52,7 +52,7 @@ jobs:
             const body = `${summaryContent}\n${tagPattern}`;
             const preExistingComment = existingComments.find((comment) => comment.body?.includes(tagPattern));
             if(preExistingComment) {
-              await github.issues.updateComment({ ...context.repo, comment_id: preExistingComment.id, body });
+              await github.rest.issues.updateComment({ ...context.repo, comment_id: preExistingComment.id, body });
             } else {
-              await github.issues.createComment({ ...context.repo, issue_number: issueNumber, body });
+              await github.rest.issues.createComment({ ...context.repo, issue_number: issueNumber, body });
             }

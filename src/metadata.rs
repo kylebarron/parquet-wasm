@@ -1,5 +1,7 @@
 use wasm_bindgen::prelude::*;
 
+use crate::common::properties::{Compression, Encoding};
+
 /// Global Parquet metadata.
 #[derive(Debug, Clone)]
 #[wasm_bindgen]
@@ -24,6 +26,16 @@ impl ParquetMetaData {
     #[wasm_bindgen(js_name = rowGroup)]
     pub fn row_group(&self, i: usize) -> RowGroupMetaData {
         self.0.row_group(i).clone().into()
+    }
+
+    /// Returns row group metadata for all row groups
+    #[wasm_bindgen(js_name = rowGroups)]
+    pub fn row_groups(&self) -> Vec<RowGroupMetaData> {
+        self.0
+            .row_groups()
+            .iter()
+            .map(|rg| rg.clone().into())
+            .collect()
     }
 
     // /// Returns the column index for this file if loaded
@@ -123,6 +135,16 @@ impl RowGroupMetaData {
         self.0.column(i).clone().into()
     }
 
+    /// Returns column chunk metadata for all columns
+    #[wasm_bindgen]
+    pub fn columns(&self) -> Vec<ColumnChunkMetaData> {
+        self.0
+            .columns()
+            .iter()
+            .map(|col| col.clone().into())
+            .collect()
+    }
+
     /// Number of rows in this row group.
     #[wasm_bindgen(js_name = numRows)]
     pub fn num_rows(&self) -> i64 {
@@ -188,10 +210,15 @@ impl ColumnChunkMetaData {
         path.parts().to_vec()
     }
 
-    // /// All encodings used for this column.
-    // pub fn encodings(&self) -> &Vec<Encoding> {
-    //     &self.encodings
-    // }
+    /// All encodings used for this column.
+    #[wasm_bindgen]
+    pub fn encodings(&self) -> Vec<Encoding> {
+        self.0
+            .encodings()
+            .iter()
+            .map(|encoding| (*encoding).into())
+            .collect()
+    }
 
     /// Total number of values in this column chunk.
     #[wasm_bindgen(js_name = numValues)]
@@ -199,10 +226,10 @@ impl ColumnChunkMetaData {
         self.0.num_values()
     }
 
-    // /// Compression for this column.
-    // pub fn compression(&self) -> Compression {
-    //     self.compression
-    // }
+    /// Compression for this column.
+    pub fn compression(&self) -> Compression {
+        self.0.compression().into()
+    }
 
     /// Returns the total compressed data size of this column chunk.
     #[wasm_bindgen(js_name = compressedSize)]

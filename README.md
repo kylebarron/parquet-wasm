@@ -50,7 +50,7 @@ Presumably no one wants to use both `parquet` and `parquet2` at once, so the def
 [node-arrow2-docs]: https://kylebarron.dev/parquet-wasm/modules/node_arrow2.html
 [esm-arrow2-docs]: https://kylebarron.dev/parquet-wasm/modules/esm_arrow2.html
 
-Note that when using the `esm` bundles, the default export must be awaited. See [here](https://rustwasm.github.io/docs/wasm-bindgen/examples/without-a-bundler.html) for an example.
+**Note that when using the `esm` bundles, the default export must be awaited**. Otherwise, you'll get an error `TypeError: Cannot read properties of undefined`. See [here](https://rustwasm.github.io/docs/wasm-bindgen/examples/without-a-bundler.html) for an example.
 
 ### `arrow2` API
 
