@@ -168,7 +168,7 @@ impl ParquetFile {
     ///
     ///    - `batchSize`: The number of rows in each batch. If not provided, the upstream parquet
     ///           default is 1024.
-    ///    - `rowGroups`: Only read data from the provided row group indexes.
+    ///    - ~~`rowGroups`: Only read data from the provided row group indexes.~~ **The rowGroups parameter does not yet take effect here.**
     ///    - `limit`: Provide a limit to the number of rows to be read.
     ///    - `offset`: Provide an offset to skip over the given number of rows.
     ///    - `columns`: The column names from the file to read.
@@ -188,6 +188,7 @@ impl ParquetFile {
         // TODO: enable row group selection
         // let row_groups = options
         //     .row_groups
+        //     .clone()
         //     .unwrap_or_else(|| (0..self.meta.metadata().num_row_groups()).collect());
         // let row_groups_slice = row_groups.as_slice();
 
