@@ -6,14 +6,13 @@ import {
   readExpectedArrowData,
   temporaryServer,
 } from "./utils";
-import { parseRecordBatch } from "arrow-js-ffi";
+import { parseTable, parseRecordBatch } from "arrow-js-ffi";
 import { it } from "vitest";
 
 // Path from repo root
 const dataDir = "tests/data";
 
-// @ts-expect-error
-const WASM_MEMORY: WebAssembly.Memory = wasm.__wasm.memory;
+const WASM_MEMORY = wasm.wasmMemory();
 
 it("read via FFI", async (t) => {
   const expectedTable = readExpectedArrowData();
@@ -23,19 +22,12 @@ it("read via FFI", async (t) => {
   const arr = new Uint8Array(buffer);
   const ffiTable = wasm.readParquet(arr).intoFFI();
 
-  const batches: arrow.RecordBatch[] = [];
-  for (let i = 0; i < ffiTable.numBatches(); i++) {
-    const recordBatch = parseRecordBatch(
-      WASM_MEMORY.buffer,
-      ffiTable.arrayAddr(i),
-      ffiTable.schemaAddr(),
-      true
-    );
-    batches.push(recordBatch);
-  }
-
-  const initialTable = new arrow.Table(batches);
-  testArrowTablesEqual(expectedTable, initialTable);
+  const table = parseTable(
+    WASM_MEMORY.buffer,
+    ffiTable.arrayAddrs(),
+    ffiTable.schemaAddr()
+  );
+  testArrowTablesEqual(expectedTable, table);
 });
 
 it("read file stream", async (t) => {
@@ -49,13 +41,14 @@ it("read file stream", async (t) => {
   const stream = (await wasm.readParquetStream(
     url
   )) as unknown as wasm.RecordBatch[];
+
   const batches = [];
-  for await (const table of stream) {
-    const ffiTable = table.intoFFI();
+  for await (const wasmRecordBatch of stream) {
+    const ffiRecordBatch = wasmRecordBatch.intoFFI();
     const recordBatch = parseRecordBatch(
       WASM_MEMORY.buffer,
-      ffiTable.arrayAddr(),
-      ffiTable.schemaAddr(),
+      ffiRecordBatch.arrayAddr(),
+      ffiRecordBatch.schemaAddr(),
       true
     );
     batches.push(recordBatch);

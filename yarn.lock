@@ -500,10 +500,10 @@ array-uniq@^1.0.1:
   resolved "https://registry.yarnpkg.com/array-uniq/-/array-uniq-1.0.3.tgz#af6ac877a25cc7f74e058894753858dfdb24fdb6"
   integrity sha512-MNha4BWQ6JbwhFhj03YK552f7cb3AzoE8SzeljgChvL1dl3IcvggXVz1DilzySZkCja+CXuZbdW7yATchWn8/Q==
 
-arrow-js-ffi@^0.4.1:
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/arrow-js-ffi/-/arrow-js-ffi-0.4.1.tgz#d989cd939322d5474bb4d9ae45ab17f51885839c"
-  integrity sha512-gBE63pHv1lhScKImDKE9JhKyUflGe+1JfZUPNyyVSxpI0P9f2Rxs2NeiQ/Bz9gIjUgk5cjEaDFKc59LC7ER1RQ==
+arrow-js-ffi@^0.4.2:
+  version "0.4.2"
+  resolved "https://registry.yarnpkg.com/arrow-js-ffi/-/arrow-js-ffi-0.4.2.tgz#c0e2fee02ea6378e07558c5780baba41e339858a"
+  integrity sha512-tD6jl4MYXjsMRoVVDX+po04fpd0bO8XaKqa3gtRerGSttS4Vh39NW3ELU0oLuIPNSkwM5In/G1aSSCHyVlrKjA==
 
 assertion-error@^1.1.0:
   version "1.1.0"

@@ -61,7 +61,7 @@ js-sys = "0.3.60"
 getrandom = { version = "0.2.6", features = ["js"] }
 thiserror = "1.0"
 
-arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "0c07adc924dffde5770dd9cd65da9b31c0d21060", default-features = false, features = [
+arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "dc564f6ebd37c1f5f60ebd45c7e281829ba223dc", default-features = false, features = [
   "table",
   "record_batch",
   "schema",

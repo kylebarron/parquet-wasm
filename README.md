@@ -4,7 +4,7 @@ WebAssembly bindings to read and write the [Apache Parquet](https://parquet.apac
 
 This is designed to be used alongside a JavaScript Arrow implementation, such as the canonical [JS Arrow library](https://arrow.apache.org/docs/js/).
 
-Including all compression codecs, the brotli-encoded WASM bundle is 907KB.
+Including read and write support and all compression codecs, the brotli-compressed WASM bundle is 1.2 MB. Refer to [custom builds](#custom-builds) for how to build a smaller bundle. A minimal read-only bundle without compression support can be as small as 456 KB brotli-compressed.
 
 ## Install
 
@@ -12,7 +12,11 @@ Including all compression codecs, the brotli-encoded WASM bundle is 907KB.
 
 ```
 yarn add parquet-wasm
-# or
+```
+
+or
+
+```
 npm install parquet-wasm
 ```
 
@@ -20,15 +24,16 @@ npm install parquet-wasm
 
 ### Choice of bundles
 
-| Entry point     | Description                                             | Documentation        |
-| --------------- | ------------------------------------------------------- | -------------------- |
-| `esm` (default) | ESM, to be used directly from the Web as an ES Module   | [Link][esm-docs]     |
-| `bundler`       | "Bundler" build, to be used in bundlers such as Webpack | [Link][bundler-docs] |
-| `node`          | Node build, to be used with `require` in NodeJS         | [Link][node-docs]    |
+| Entry point                  | Description                                             | Documentation        |
+| ---------------------------- | ------------------------------------------------------- | -------------------- |
+| `parquet-wasm`               | ESM, to be used directly from the Web as an ES Module   | [Link][esm-docs]     |
+| `parquet-wasm/esm` (default) | ESM, to be used directly from the Web as an ES Module   | [Link][esm-docs]     |
+| `parquet-wasm/bundler`       | "Bundler" build, to be used in bundlers such as Webpack | [Link][bundler-docs] |
+| `parquet-wasm/node`          | Node build, to be used with `require` in NodeJS         | [Link][node-docs]    |
 
-[bundler-docs]: https://kylebarron.dev/parquet-wasm/modules/bundler_arrow1.html
-[node-docs]: https://kylebarron.dev/parquet-wasm/modules/node_arrow1.html
-[esm-docs]: https://kylebarron.dev/parquet-wasm/modules/esm_arrow1.html
+[bundler-docs]: https://kylebarron.dev/parquet-wasm/modules/bundler_parquet_wasm.html
+[node-docs]: https://kylebarron.dev/parquet-wasm/modules/node_parquet_wasm.html
+[esm-docs]: https://kylebarron.dev/parquet-wasm/modules/esm_parquet_wasm.html
 
 **Note that when using the `esm` bundles, the default export must be awaited**. Otherwise, you'll get an error `TypeError: Cannot read properties of undefined`. See [here](https://rustwasm.github.io/docs/wasm-bindgen/examples/without-a-bundler.html) for an example.
 
@@ -146,7 +151,7 @@ const parquetUint8Array = new Uint8Array(await resp.arrayBuffer());
 const wasmArrowTable = readParquet(parquetUint8Array).intoFFI();
 
 // Arrow JS table that was directly copied from Wasm memory
-const table = parseTable(
+const table: arrow.Table = parseTable(
   WASM_MEMORY.buffer,
   wasmArrowTable.arrayAddrs(),
   wasmArrowTable.schemaAddr()
@@ -215,12 +220,12 @@ Refer to the [`wasm-pack` documentation](https://rustwasm.github.io/docs/wasm-pa
 
 ### Available features
 
-By default, `arrow`, `all_compressions`, `reader`, and `writer` features are enabled. Use `--no-default-features` to remove these defaults.
+By default, `all_compressions`, `reader`, `writer`, and `async` features are enabled. Use `--no-default-features` to remove these defaults.
 
 - `reader`: Activate read support.
 - `writer`: Activate write support.
 - `async`: Activate asynchronous read support.
-- `all_compressions`: Activate all supported compressions for the crate(s) in use.
+- `all_compressions`: Activate all supported compressions.
 - `brotli`: Activate Brotli compression.
 - `gzip`: Activate Gzip compression.
 - `snappy`: Activate Snappy compression.
