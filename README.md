@@ -24,12 +24,12 @@ npm install parquet-wasm
 
 ### Choice of bundles
 
-| Entry point                  | Description                                             | Documentation        |
-| ---------------------------- | ------------------------------------------------------- | -------------------- |
-| `parquet-wasm`               | ESM, to be used directly from the Web as an ES Module   | [Link][esm-docs]     |
-| `parquet-wasm/esm` (default) | ESM, to be used directly from the Web as an ES Module   | [Link][esm-docs]     |
-| `parquet-wasm/bundler`       | "Bundler" build, to be used in bundlers such as Webpack | [Link][bundler-docs] |
-| `parquet-wasm/node`          | Node build, to be used with `require` in NodeJS         | [Link][node-docs]    |
+| Entry point            | Description                                             | Documentation        |
+| ---------------------- | ------------------------------------------------------- | -------------------- |
+| `parquet-wasm`         | ESM, to be used directly from the Web as an ES Module   | [Link][esm-docs]     |
+| `parquet-wasm/esm`     | ESM, to be used directly from the Web as an ES Module   | [Link][esm-docs]     |
+| `parquet-wasm/bundler` | "Bundler" build, to be used in bundlers such as Webpack | [Link][bundler-docs] |
+| `parquet-wasm/node`    | Node build, to be used with `require` in NodeJS         | [Link][node-docs]    |
 
 [bundler-docs]: https://kylebarron.dev/parquet-wasm/modules/bundler_parquet_wasm.html
 [node-docs]: https://kylebarron.dev/parquet-wasm/modules/node_parquet_wasm.html
