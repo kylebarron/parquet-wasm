@@ -71,8 +71,8 @@ impl FileMetaData {
 
     /// Returns number of rows in the file.
     #[wasm_bindgen(js_name = numRows)]
-    pub fn num_rows(&self) -> i64 {
-        self.0.num_rows()
+    pub fn num_rows(&self) -> f64 {
+        self.0.num_rows() as f64
     }
 
     /// String message for application that wrote this file.
@@ -147,20 +147,20 @@ impl RowGroupMetaData {
 
     /// Number of rows in this row group.
     #[wasm_bindgen(js_name = numRows)]
-    pub fn num_rows(&self) -> i64 {
-        self.0.num_rows()
+    pub fn num_rows(&self) -> f64 {
+        self.0.num_rows() as f64
     }
 
     /// Total byte size of all uncompressed column data in this row group.
     #[wasm_bindgen(js_name = totalByteSize)]
-    pub fn total_byte_size(&self) -> i64 {
-        self.0.total_byte_size()
+    pub fn total_byte_size(&self) -> f64 {
+        self.0.total_byte_size() as f64
     }
 
     /// Total size of all compressed column data in this row group.
     #[wasm_bindgen(js_name = compressedSize)]
-    pub fn compressed_size(&self) -> i64 {
-        self.0.compressed_size()
+    pub fn compressed_size(&self) -> f64 {
+        self.0.compressed_size() as f64
     }
 }
 
@@ -222,8 +222,8 @@ impl ColumnChunkMetaData {
 
     /// Total number of values in this column chunk.
     #[wasm_bindgen(js_name = numValues)]
-    pub fn num_values(&self) -> i64 {
-        self.0.num_values()
+    pub fn num_values(&self) -> f64 {
+        self.0.num_values() as f64
     }
 
     /// Compression for this column.
@@ -233,14 +233,14 @@ impl ColumnChunkMetaData {
 
     /// Returns the total compressed data size of this column chunk.
     #[wasm_bindgen(js_name = compressedSize)]
-    pub fn compressed_size(&self) -> i64 {
-        self.0.compressed_size()
+    pub fn compressed_size(&self) -> f64 {
+        self.0.compressed_size() as f64
     }
 
     /// Returns the total uncompressed data size of this column chunk.
     #[wasm_bindgen(js_name = uncompressedSize)]
-    pub fn uncompressed_size(&self) -> i64 {
-        self.0.uncompressed_size()
+    pub fn uncompressed_size(&self) -> f64 {
+        self.0.uncompressed_size() as f64
     }
 }
 
