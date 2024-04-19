@@ -20,8 +20,10 @@ use wasm_bindgen::prelude::*;
 ///
 /// ```js
 /// import { tableFromIPC } from "apache-arrow";
-/// // Edit the `parquet-wasm` import as necessary
-/// import { readParquet } from "parquet-wasm/node/arrow1";
+/// import initWasm, {readParquet} from "parquet-wasm";
+///
+/// // Instantiate the WebAssembly context
+/// await initWasm();
 ///
 /// const resp = await fetch("https://example.com/file.parquet");
 /// const parquetUint8Array = new Uint8Array(await resp.arrayBuffer());
@@ -58,12 +60,15 @@ pub fn read_schema(parquet_file: Vec<u8>) -> WasmResult<Schema> {
 /// ```js
 /// import { tableToIPC } from "apache-arrow";
 /// // Edit the `parquet-wasm` import as necessary
-/// import {
+/// import initWasm, {
 ///   Table,
 ///   WriterPropertiesBuilder,
 ///   Compression,
 ///   writeParquet,
-/// } from "parquet-wasm/node/arrow1";
+/// } from "parquet-wasm";
+///
+/// // Instantiate the WebAssembly context
+/// await initWasm();
 ///
 /// // Given an existing arrow JS table under `table`
 /// const wasmTable = Table.fromIPCStream(tableToIPC(table, "stream"));

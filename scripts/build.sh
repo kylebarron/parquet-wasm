@@ -58,7 +58,7 @@ echo '{"type": "module"}' > pkg/esm/package.json
 # Update files array in package.json using JQ
 # Set module field to bundler/arrow1.js
 # Set types field to bundler/arrow1.d.ts
-jq '.files = ["*"] | .module="bundler/arrow2.js" | .types="bundler/arrow2.d.ts"' pkg/package.json > pkg/package.json.tmp
+jq '.files = ["*"] | .module="esm/parquet_wasm.js" | .types="esm/parquet_wasm.d.ts"' pkg/package.json > pkg/package.json.tmp
 
 # Overwrite existing package.json file
 mv pkg/package.json.tmp pkg/package.json

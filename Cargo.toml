@@ -61,9 +61,11 @@ js-sys = "0.3.60"
 getrandom = { version = "0.2.6", features = ["js"] }
 thiserror = "1.0"
 
-# c7a0db3b2f7034878796939ad46955450cb2c2e7
-arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "85b53e6d0384cebbcaf1b5160244803ae3fbb653" }
-# arrow-wasm = { path = "/Users/kyle/github/rust/arrow-wasm" }
+arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "0c07adc924dffde5770dd9cd65da9b31c0d21060", default-features = false, features = [
+  "table",
+  "record_batch",
+  "schema",
+] }
 
 arrow = { version = "51", default-features = false, features = ["ipc", "ffi"] }
 parquet = { version = "51", default-features = false, features = [
