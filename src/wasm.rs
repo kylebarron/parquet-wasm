@@ -14,14 +14,16 @@ use wasm_bindgen::prelude::*;
 ///   Arrow JS's `tableFromIPC` function.
 /// - (More performant but bleeding edge): Call {@linkcode Table.intoFFI} to construct a data
 ///   representation that can be parsed zero-copy from WebAssembly with
-///   [arrow-js-ffi](https://github.com/kylebarron/arrow-js-ffi).
+///   [arrow-js-ffi](https://github.com/kylebarron/arrow-js-ffi) using `parseTable`.
 ///
-/// Example:
+/// Example with IPC stream:
 ///
 /// ```js
 /// import { tableFromIPC } from "apache-arrow";
-/// // Edit the `parquet-wasm` import as necessary
-/// import { readParquet } from "parquet-wasm/node/arrow1";
+/// import initWasm, {readParquet} from "parquet-wasm";
+///
+/// // Instantiate the WebAssembly context
+/// await initWasm();
 ///
 /// const resp = await fetch("https://example.com/file.parquet");
 /// const parquetUint8Array = new Uint8Array(await resp.arrayBuffer());
@@ -29,7 +31,34 @@ use wasm_bindgen::prelude::*;
 /// const arrowTable = tableFromIPC(arrowWasmTable.intoIPCStream());
 /// ```
 ///
+/// Example with `arrow-js-ffi`:
+///
+/// ```js
+/// import { parseTable } from "arrow-js-ffi";
+/// import initWasm, {readParquet, wasmMemory} from "parquet-wasm";
+///
+/// // Instantiate the WebAssembly context
+/// await initWasm();
+/// const WASM_MEMORY = wasmMemory();
+///
+/// const resp = await fetch("https://example.com/file.parquet");
+/// const parquetUint8Array = new Uint8Array(await resp.arrayBuffer());
+/// const arrowWasmTable = readParquet(parquetUint8Array);
+/// const ffiTable = arrowWasmTable.intoFFI();
+/// const arrowTable = parseTable(
+///   WASM_MEMORY.buffer,
+///   ffiTable.arrayAddrs(),
+///   ffiTable.schemaAddr()
+/// );
+/// ```
+///
 /// @param parquet_file Uint8Array containing Parquet data
+/// @param options Options for reading Parquet data. Optional keys include:
+///     - batchSize: The number of rows in each batch. If not provided, the upstream parquet
+///       default is 1024.
+///     - rowGroups: Only read data from the provided row group indexes.
+///     - limit: Provide a limit to the number of rows to be read.
+///     - offset: Provide an offset to skip over the given number of rows.
 #[wasm_bindgen(js_name = readParquet)]
 #[cfg(feature = "reader")]
 pub fn read_parquet(parquet_file: Vec<u8>, options: Option<ReaderOptions>) -> WasmResult<Table> {
@@ -44,6 +73,52 @@ pub fn read_parquet(parquet_file: Vec<u8>, options: Option<ReaderOptions>) -> Wa
 }
 
 /// Read an Arrow schema from a Parquet file in memory.
+///
+/// This returns an Arrow schema in WebAssembly memory. To transfer the Arrow schema to JavaScript
+/// memory you have two options:
+///
+/// - (Easier): Call {@linkcode Schema.intoIPCStream} to construct a buffer that can be parsed with
+///   Arrow JS's `tableFromIPC` function. This results in an Arrow JS Table with zero rows but a
+///   valid schema.
+/// - (More performant but bleeding edge): Call {@linkcode Schema.intoFFI} to construct a data
+///   representation that can be parsed zero-copy from WebAssembly with
+///   [arrow-js-ffi](https://github.com/kylebarron/arrow-js-ffi) using `parseSchema`.
+///
+/// Example with IPC Stream:
+///
+/// ```js
+/// import { tableFromIPC } from "apache-arrow";
+/// import initWasm, {readSchema} from "parquet-wasm";
+///
+/// // Instantiate the WebAssembly context
+/// await initWasm();
+///
+/// const resp = await fetch("https://example.com/file.parquet");
+/// const parquetUint8Array = new Uint8Array(await resp.arrayBuffer());
+/// const arrowWasmSchema = readSchema(parquetUint8Array);
+/// const arrowTable = tableFromIPC(arrowWasmSchema.intoIPCStream());
+/// const arrowSchema = arrowTable.schema;
+/// ```
+///
+/// Example with `arrow-js-ffi`:
+///
+/// ```js
+/// import { parseSchema } from "arrow-js-ffi";
+/// import initWasm, {readSchema, wasmMemory} from "parquet-wasm";
+///
+/// // Instantiate the WebAssembly context
+/// await initWasm();
+/// const WASM_MEMORY = wasmMemory();
+///
+/// const resp = await fetch("https://example.com/file.parquet");
+/// const parquetUint8Array = new Uint8Array(await resp.arrayBuffer());
+/// const arrowWasmSchema = readSchema(parquetUint8Array);
+/// const ffiSchema = arrowWasmSchema.intoFFI();
+/// const arrowTable = parseSchema(WASM_MEMORY.buffer, ffiSchema.addr());
+/// const arrowSchema = arrowTable.schema;
+/// ```
+///
+/// @param parquet_file Uint8Array containing Parquet data
 #[wasm_bindgen(js_name = readSchema)]
 #[cfg(feature = "reader")]
 pub fn read_schema(parquet_file: Vec<u8>) -> WasmResult<Schema> {
@@ -58,12 +133,15 @@ pub fn read_schema(parquet_file: Vec<u8>) -> WasmResult<Schema> {
 /// ```js
 /// import { tableToIPC } from "apache-arrow";
 /// // Edit the `parquet-wasm` import as necessary
-/// import {
+/// import initWasm, {
 ///   Table,
 ///   WriterPropertiesBuilder,
 ///   Compression,
 ///   writeParquet,
-/// } from "parquet-wasm/node/arrow1";
+/// } from "parquet-wasm";
+///
+/// // Instantiate the WebAssembly context
+/// await initWasm();
 ///
 /// // Given an existing arrow JS table under `table`
 /// const wasmTable = Table.fromIPCStream(tableToIPC(table, "stream"));
@@ -95,6 +173,64 @@ pub fn write_parquet(
     )?)
 }
 
+/// Read a Parquet file into a stream of Arrow `RecordBatch`es.
+///
+/// This returns a ReadableStream containing RecordBatches in WebAssembly memory. To transfer the
+/// Arrow table to JavaScript memory you have two options:
+///
+/// - (Easier): Call {@linkcode RecordBatch.intoIPCStream} to construct a buffer that can be parsed
+///   with Arrow JS's `tableFromIPC` function. (The table will have a single internal record
+///   batch).
+/// - (More performant but bleeding edge): Call {@linkcode RecordBatch.intoFFI} to construct a data
+///   representation that can be parsed zero-copy from WebAssembly with
+///   [arrow-js-ffi](https://github.com/kylebarron/arrow-js-ffi) using `parseRecordBatch`.
+///
+/// Example with IPC stream:
+///
+/// ```js
+/// import { tableFromIPC } from "apache-arrow";
+/// import initWasm, {readParquetStream} from "parquet-wasm";
+///
+/// // Instantiate the WebAssembly context
+/// await initWasm();
+///
+/// const stream = await wasm.readParquetStream(url);
+///
+/// const batches = [];
+/// for await (const wasmRecordBatch of stream) {
+///   const arrowTable = tableFromIPC(wasmRecordBatch.intoIPCStream());
+///   batches.push(...arrowTable.batches);
+/// }
+/// const table = new arrow.Table(batches);
+/// ```
+///
+/// Example with `arrow-js-ffi`:
+///
+/// ```js
+/// import { parseRecordBatch } from "arrow-js-ffi";
+/// import initWasm, {readParquetStream, wasmMemory} from "parquet-wasm";
+///
+/// // Instantiate the WebAssembly context
+/// await initWasm();
+/// const WASM_MEMORY = wasmMemory();
+///
+/// const stream = await wasm.readParquetStream(url);
+///
+/// const batches = [];
+/// for await (const wasmRecordBatch of stream) {
+///   const ffiRecordBatch = wasmRecordBatch.intoFFI();
+///   const recordBatch = parseRecordBatch(
+///     WASM_MEMORY.buffer,
+///     ffiRecordBatch.arrayAddr(),
+///     ffiRecordBatch.schemaAddr(),
+///     true
+///   );
+///   batches.push(recordBatch);
+/// }
+/// const table = new arrow.Table(batches);
+/// ```
+///
+/// @param parquet_file Uint8Array containing Parquet data
 #[wasm_bindgen(js_name = readParquetStream)]
 #[cfg(all(feature = "reader", feature = "async"))]
 pub async fn read_parquet_stream(

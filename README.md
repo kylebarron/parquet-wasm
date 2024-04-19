@@ -1,10 +1,10 @@
 # WASM Parquet [![npm version](https://img.shields.io/npm/v/parquet-wasm.svg)](https://www.npmjs.com/package/parquet-wasm)
 
-WebAssembly bindings to read and write the [Apache Parquet](https://parquet.apache.org/) format to and from [Apache Arrow](https://arrow.apache.org/).
+WebAssembly bindings to read and write the [Apache Parquet](https://parquet.apache.org/) format to and from [Apache Arrow](https://arrow.apache.org/) using the Rust [`parquet`](https://crates.io/crates/parquet) and [`arrow`](https://crates.io/crates/arrow) crates.
 
 This is designed to be used alongside a JavaScript Arrow implementation, such as the canonical [JS Arrow library](https://arrow.apache.org/docs/js/).
 
-Including all compression codecs, the brotli-encoded WASM bundle is 907KB.
+Including read and write support and all compression codecs, the brotli-compressed WASM bundle is 1.2 MB. Refer to [custom builds](#custom-builds) for how to build a smaller bundle. A minimal read-only bundle without compression support can be as small as 456 KB brotli-compressed.
 
 ## Install
 
@@ -12,57 +12,30 @@ Including all compression codecs, the brotli-encoded WASM bundle is 907KB.
 
 ```
 yarn add parquet-wasm
-# or
+```
+
+or
+
+```
 npm install parquet-wasm
 ```
 
 ## API
 
-### Two APIs?
-
-**Important Note!**: the maintainer of arrow2 and parquet2 has stepped back, and therefore I plan to deprecate the parquet2-based API in the future. See issue [#308](https://github.com/kylebarron/parquet-wasm/issues/308).
-
-These bindings expose _two_ APIs to users because there are _two separate implementations_ of Parquet and Arrow in Rust.
-
-- [`parquet`](https://crates.io/crates/parquet) and [`arrow`](https://crates.io/crates/arrow): These are the "official" Rust implementations of Arrow and Parquet. These projects started earlier and may be more feature complete.
-- [`parquet2`](https://crates.io/crates/parquet2) and [`arrow2`](https://crates.io/crates/arrow2): These are safer (in terms of memory access) and claim to be faster, though I haven't written my own benchmarks yet.
-
-Since these parallel projects exist, why not give the user the choice of which to use? In general the reading API is identical in both APIs, however the write options differ between the two projects.
-
 ### Choice of bundles
 
-Presumably no one wants to use both `parquet` and `parquet2` at once, so the default bundles separate `parquet` and `parquet2` into separate entry points to keep bundle size as small as possible. The following describe the six bundles available:
+| Entry point                  | Description                                             | Documentation        |
+| ---------------------------- | ------------------------------------------------------- | -------------------- |
+| `parquet-wasm`               | ESM, to be used directly from the Web as an ES Module   | [Link][esm-docs]     |
+| `parquet-wasm/esm` (default) | ESM, to be used directly from the Web as an ES Module   | [Link][esm-docs]     |
+| `parquet-wasm/bundler`       | "Bundler" build, to be used in bundlers such as Webpack | [Link][bundler-docs] |
+| `parquet-wasm/node`          | Node build, to be used with `require` in NodeJS         | [Link][node-docs]    |
 
-| Entry point                                     | Rust crates used        | Description                                             | Documentation               |
-| ----------------------------------------------- | ----------------------- | ------------------------------------------------------- | --------------------------- |
-| `parquet-wasm/bundler/arrow1`                   | `parquet` and `arrow`   | "Bundler" build, to be used in bundlers such as Webpack | [Link][bundler-arrow1-docs] |
-| `parquet-wasm/node/arrow1`                      | `parquet` and `arrow`   | Node build, to be used with `require` in NodeJS         | [Link][node-arrow1-docs]    |
-| `parquet-wasm/esm/arrow1`                       | `parquet` and `arrow`   | ESM, to be used directly from the Web as an ES Module   | [Link][esm-arrow1-docs]     |
-|                                                 |                         |                                                         |                             |
-| `parquet-wasm` or `parquet-wasm/bundler/arrow2` | `parquet2` and `arrow2` | "Bundler" build, to be used in bundlers such as Webpack | [Link][bundler-arrow2-docs] |
-| `parquet-wasm/node/arrow2`                      | `parquet2` and `arrow2` | Node build, to be used with `require` in NodeJS         | [Link][node-arrow2-docs]    |
-| `parquet-wasm/esm/arrow2`                       | `parquet2` and `arrow2` | ESM, to be used directly from the Web as an ES Module   | [Link][esm-arrow2-docs]     |
-
-[bundler-arrow1-docs]: https://kylebarron.dev/parquet-wasm/modules/bundler_arrow1.html
-[node-arrow1-docs]: https://kylebarron.dev/parquet-wasm/modules/node_arrow1.html
-[esm-arrow1-docs]: https://kylebarron.dev/parquet-wasm/modules/esm_arrow1.html
-[bundler-arrow2-docs]: https://kylebarron.dev/parquet-wasm/modules/bundler_arrow2.html
-[node-arrow2-docs]: https://kylebarron.dev/parquet-wasm/modules/node_arrow2.html
-[esm-arrow2-docs]: https://kylebarron.dev/parquet-wasm/modules/esm_arrow2.html
+[bundler-docs]: https://kylebarron.dev/parquet-wasm/modules/bundler_parquet_wasm.html
+[node-docs]: https://kylebarron.dev/parquet-wasm/modules/node_parquet_wasm.html
+[esm-docs]: https://kylebarron.dev/parquet-wasm/modules/esm_parquet_wasm.html
 
 **Note that when using the `esm` bundles, the default export must be awaited**. Otherwise, you'll get an error `TypeError: Cannot read properties of undefined`. See [here](https://rustwasm.github.io/docs/wasm-bindgen/examples/without-a-bundler.html) for an example.
-
-### `arrow2` API
-
-This implementation uses the [`arrow2`](https://crates.io/crates/arrow2) and [`parquet2`](https://crates.io/crates/parquet2) Rust crates.
-
-This is the default implementation and is more full-featured, including metadata handling and async reading. Refer to the [API documentation](https://kylebarron.dev/parquet-wasm/modules/bundler_arrow2.html) for more details and examples.
-
-### `arrow` API
-
-This implementation uses the [`arrow`](https://crates.io/crates/arrow) and [`parquet`](https://crates.io/crates/parquet) Rust crates.
-
-Refer to the [API documentation](https://kylebarron.dev/parquet-wasm/modules/bundler_arrow1.html) for more details and examples.
 
 ### Debug functions
 
@@ -74,13 +47,22 @@ These functions are not present in normal builds to cut down on bundle size. To 
 
 Sets [`console_error_panic_hook`](https://github.com/rustwasm/console_error_panic_hook) in Rust, which provides better debugging of panics by having more informative `console.error` messages. Initialize this first if you're getting errors such as `RuntimeError: Unreachable executed`.
 
-The WASM bundle must be compiled with the `console_error_panic_hook` for this function to exist.
+The WASM bundle must be compiled with the `console_error_panic_hook` feature for this function to exist.
 
 ## Example
 
 ```js
 import * as arrow from "apache-arrow";
-import * as parquet from "parquet-wasm";
+import initWasm, {
+  Compression,
+  readParquet,
+  Table,
+  writeParquet,
+  WriterPropertiesBuilder,
+} from "parquet-wasm";
+
+// Instantiate the WebAssembly context
+await initWasm();
 
 // Create Arrow Table in JS
 const LENGTH = 2000;
@@ -101,15 +83,15 @@ const rainfall = arrow.tableFromArrays({
 // Write Arrow Table to Parquet
 
 // wasmTable is an Arrow table in WebAssembly memory
-const wasmTable = parquet.Table.fromIPCStream(arrow.tableToIPC(rainfall, "stream"));
-const writerProperties = new parquet.WriterPropertiesBuilder()
-  .setCompression(parquet.Compression.ZSTD)
+const wasmTable = Table.fromIPCStream(arrow.tableToIPC(rainfall, "stream"));
+const writerProperties = new WriterPropertiesBuilder()
+  .setCompression(Compression.ZSTD)
   .build();
-const parquetUint8Array = parquet.writeParquet(wasmTable, writerProperties);
+const parquetUint8Array = writeParquet(wasmTable, writerProperties);
 
 // Read Parquet buffer back to Arrow Table
 // arrowWasmTable is an Arrow table in WebAssembly memory
-const arrowWasmTable = parquet.readParquet(parquetUint8Array);
+const arrowWasmTable = readParquet(parquetUint8Array);
 
 // table is now an Arrow table in JS memory
 const table = arrow.tableFromIPC(arrowWasmTable.intoIPCStream());
@@ -126,11 +108,11 @@ console.log(table.schema.toString());
 
 ## Performance considerations
 
-> Tl;dr: When you have a `Table` object (resulting from `readParquet`), try the new
-  [`Table.intoFFI`](https://kylebarron.dev/parquet-wasm/classes/bundler_arrow2.Table.html#intoFFI)
-  API to move it to JavaScript memory. This API is less well tested than the [`Table.intoIPCStream`](https://kylebarron.dev/parquet-wasm/classes/bundler_arrow2.Table.html#intoIPCStream) API, but should be
-  faster and have **much** less memory overhead (by a factor of 2). If you hit any bugs, please
-  [create a reproducible issue](https://github.com/kylebarron/parquet-wasm/issues/new).
+Tl;dr: When you have a `Table` object (resulting from `readParquet`), try the new
+[`Table.intoFFI`](https://kylebarron.dev/parquet-wasm/classes/esm_parquet_wasm.Table.html#intoFFI)
+API to move it to JavaScript memory. This API is less well tested than the [`Table.intoIPCStream`](https://kylebarron.dev/parquet-wasm/classes/esm_parquet_wasm.Table.html#intoIPCStream) API, but should be
+faster and have **much** less memory overhead (by a factor of 2). If you hit any bugs, please
+[create a reproducible issue](https://github.com/kylebarron/parquet-wasm/issues/new).
 
 Under the hood, `parquet-wasm` first decodes a Parquet file into Arrow _in WebAssembly memory_. But
 then that WebAssembly memory needs to be copied into JavaScript for use by Arrow JS. The "normal"
@@ -155,9 +137,11 @@ and the Arrow C Data Interface if you want to read more!
 
 ```js
 import * as arrow from "apache-arrow";
-import { parseRecordBatch } from "arrow-js-ffi";
-// Edit the `parquet-wasm` import as necessary
-import { readParquet, wasmMemory } from "parquet-wasm/node2";
+import { parseTable } from "arrow-js-ffi";
+import initWasm, { wasmMemory, readParquet } from "parquet-wasm";
+
+// Instantiate the WebAssembly context
+await initWasm();
 
 // A reference to the WebAssembly memory object.
 const WASM_MEMORY = wasmMemory();
@@ -166,21 +150,12 @@ const resp = await fetch("https://example.com/file.parquet");
 const parquetUint8Array = new Uint8Array(await resp.arrayBuffer());
 const wasmArrowTable = readParquet(parquetUint8Array).intoFFI();
 
-const recordBatches: arrow.RecordBatch[] = [];
-for (let i = 0; i < wasmArrowTable.numBatches(); i++) {
-  // Note: Unless you know what you're doing, setting `true` below is recommended to _copy_
-  // table data from WebAssembly into JavaScript memory. This may become the default in the
-  // future.
-  const recordBatch = parseRecordBatch(
-    WASM_MEMORY.buffer,
-    wasmArrowTable.arrayAddr(i),
-    wasmArrowTable.schemaAddr(),
-    true
-  );
-  recordBatches.push(recordBatch);
-}
-
-const table = new arrow.Table(recordBatches);
+// Arrow JS table that was directly copied from Wasm memory
+const table: arrow.Table = parseTable(
+  WASM_MEMORY.buffer,
+  wasmArrowTable.arrayAddrs(),
+  wasmArrowTable.schemaAddr()
+);
 
 // VERY IMPORTANT! You must call `drop` on the Wasm table object when you're done using it
 // to release the Wasm memory.
@@ -211,50 +186,46 @@ It's currently unknown how widespread the ecosystem support is for `LZ4_RAW`. As
 
 In some cases, you may know ahead of time that your Parquet files will only include a single compression codec, say Snappy, or even no compression at all. In these cases, you may want to create a custom build of `parquet-wasm` to keep bundle size at a minimum. If you install the Rust toolchain and `wasm-pack` (see [Development](DEVELOP.md)), you can create a custom build with only the compression codecs you require.
 
-Note that this project uses Cargo syntax newly released in version **1.60**. So you need version 1.60 or higher to compile this project. To upgrade your toolchain, use `rustup update stable`.
+The minimum supported Rust version in this project is 1.60. To upgrade your toolchain, use `rustup update stable`.
 
 ### Example custom builds
 
-Reader-only bundle with Snappy compression using the `arrow` and `parquet` crates:
+Reader-only bundle with Snappy compression:
 
 ```
-wasm-pack build --no-default-features --features arrow1 --features snappy --features reader
+wasm-pack build --no-default-features --features snappy --features reader
 ```
 
-Writer-only bundle with no compression support using the `arrow2` and `parquet2` crates, targeting Node:
+Writer-only bundle with no compression support, targeting Node:
 
 ```
-wasm-pack build --target nodejs --no-default-features --features arrow2 --features writer
+wasm-pack build --target nodejs --no-default-features --features writer
 ```
 
-Debug bundle with reader and writer support, targeting Node, using `arrow` and `parquet` crates with all their supported compressions, with `console_error_panic_hook` enabled:
+Bundle with reader and writer support, targeting Node, using `arrow` and `parquet` crates with all their supported compressions, with `console_error_panic_hook` enabled:
 
 ```bash
 wasm-pack build \
-  --dev \
   --target nodejs \
   --no-default-features \
-  --features arrow1 \
   --features reader \
   --features writer \
   --features all_compressions \
   --features debug
 # Or, given the fact that the default feature includes several of these features, a shorter version:
-wasm-pack build --dev --target nodejs --features debug
+wasm-pack build --target nodejs --features debug
 ```
 
 Refer to the [`wasm-pack` documentation](https://rustwasm.github.io/docs/wasm-pack/commands/build.html) for more info on flags such as `--release`, `--dev`, `target`, and to the [Cargo documentation](https://doc.rust-lang.org/cargo/reference/features.html) for more info on how to use features.
 
 ### Available features
 
-By default, `arrow`, `all_compressions`, `reader`, and `writer` features are enabled. Use `--no-default-features` to remove these defaults.
+By default, `all_compressions`, `reader`, `writer`, and `async` features are enabled. Use `--no-default-features` to remove these defaults.
 
-- `arrow1`: Use the `arrow` and `parquet` crates
-- `arrow2`: Use the `arrow2` and `parquet2` crates
 - `reader`: Activate read support.
 - `writer`: Activate write support.
-- `async`: Activate asynchronous read support (only applies to the `arrow2` endpoints).
-- `all_compressions`: Activate all supported compressions for the crate(s) in use.
+- `async`: Activate asynchronous read support.
+- `all_compressions`: Activate all supported compressions.
 - `brotli`: Activate Brotli compression.
 - `gzip`: Activate Gzip compression.
 - `snappy`: Activate Snappy compression.

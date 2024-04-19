@@ -10,18 +10,12 @@ updates:
         patterns:
           - "arrow"
           - "parquet"
-      arrow2:
-        patterns:
-          - "arrow2"
-          - "parquet2"
       other:
         patterns:
           - "*"
         exclude-patterns:
           - "arrow"
           - "parquet"
-          - "arrow2"
-          - "parquet2"
   - package-ecosystem: npm
     directory: "/"
     schedule:

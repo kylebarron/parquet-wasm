@@ -4,9 +4,13 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen(typescript_custom_section)]
 const TS_ReaderOptions: &'static str = r#"
 export type ReaderOptions = {
-    batch_size?: number;
-    row_groups?: number[];
+    /* The number of rows in each batch. If not provided, the upstream parquet default is 1024. */
+    batchSize?: number;
+    /* Only read data from the provided row group indexes. */
+    rowGroups?: number[];
+    /* Provide a limit to the number of rows to be read. */
     limit?: number;
+    /* Provide an offset to skip over the given number of rows. */
     offset?: number;
 };
 "#;
@@ -20,7 +24,7 @@ extern "C" {
 #[derive(Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct JsReaderOptions {
-    /// The number of rows in each batch. If not provided, the upstream [parquet] default is 1024.
+    /// The number of rows in each batch. If not provided, the upstream parquet default is 1024.
     pub batch_size: Option<usize>,
 
     /// Only read data from the provided row group indexes

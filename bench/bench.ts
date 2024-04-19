@@ -1,6 +1,5 @@
 import b from "benny";
-import * as arrow1 from "../pkg/node/arrow1";
-import * as arrow2 from "../pkg/node/arrow2";
+import * as parquet from "../pkg/node";
 import { readFileSync } from "fs";
 
 const dataDir = `${__dirname}/data`;
@@ -9,15 +8,10 @@ const dataDir = `${__dirname}/data`;
 const cartesian = (...a) =>
   a.reduce((a, b) => a.flatMap((d) => b.map((e) => [d, e].flat())));
 
-const apis = ["arrow1", "arrow2"];
 const partitions = [1, 5, 20];
 const compressions = ["brotli", "gzip", "none", "snappy"];
 
-const testCases: [number, string, "arrow1" | "arrow2"][] = cartesian(
-  partitions,
-  compressions,
-  apis
-);
+const testCases: [number, string][] = cartesian(partitions, compressions);
 
 const createReadTests = () =>
   testCases.map(([partitions, compression, api]) => {
@@ -25,11 +19,7 @@ const createReadTests = () =>
     const testName = `${api} ${file}`;
     return b.add(testName, () => {
       const arr = loadFile(file);
-      if (api === "arrow1") {
-        return () => arrow1.readParquet(arr);
-      }
-
-      return () => arrow2.readParquet2(arr);
+      return () => parquet.readParquet2(arr);
     });
   });
 
