@@ -53,12 +53,16 @@ use wasm_bindgen::prelude::*;
 /// ```
 ///
 /// @param parquet_file Uint8Array containing Parquet data
-/// @param options Options for reading Parquet data. Optional keys include:
-///     - batchSize: The number of rows in each batch. If not provided, the upstream parquet
-///       default is 1024.
-///     - rowGroups: Only read data from the provided row group indexes.
-///     - limit: Provide a limit to the number of rows to be read.
-///     - offset: Provide an offset to skip over the given number of rows.
+/// @param options
+///
+///    Options for reading Parquet data. Optional keys include:
+///
+///    - `batchSize`: The number of rows in each batch. If not provided, the upstream parquet
+///           default is 1024.
+///    - `rowGroups`: Only read data from the provided row group indexes.
+///    - `limit`: Provide a limit to the number of rows to be read.
+///    - `offset`: Provide an offset to skip over the given number of rows.
+///    - `columns`: The column names from the file to read.
 #[wasm_bindgen(js_name = readParquet)]
 #[cfg(feature = "reader")]
 pub fn read_parquet(parquet_file: Vec<u8>, options: Option<ReaderOptions>) -> WasmResult<Table> {
@@ -230,7 +234,7 @@ pub fn write_parquet(
 /// const table = new arrow.Table(batches);
 /// ```
 ///
-/// @param parquet_file Uint8Array containing Parquet data
+/// @param url URL to Parquet file
 #[wasm_bindgen(js_name = readParquetStream)]
 #[cfg(all(feature = "reader", feature = "async"))]
 pub async fn read_parquet_stream(
