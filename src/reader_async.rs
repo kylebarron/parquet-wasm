@@ -89,13 +89,9 @@ pub struct ParquetFile {
 impl ParquetFile {
     /// Construct a ParquetFile from a new URL.
     ///
-    /// @param options The options to pass into `object-store`'s [`parse_url_opts`]
+    /// @param options The options to pass into `object-store`'s [`parse_url_opts`][parse_url_opts]
     ///
     /// [parse_url_opts]: https://docs.rs/object_store/latest/object_store/fn.parse_url_opts.html
-    /// [File]: https://developer.mozilla.org/en-US/docs/Web/API/File
-    ///
-    /// Safety: Do not use this in a multi-threaded environment,
-    /// (transitively depends on !Send web_sys::File)
     #[wasm_bindgen(js_name = fromUrl)]
     pub async fn from_url(url: String, options: Option<js_sys::Map>) -> WasmResult<ParquetFile> {
         let parsed_url = Url::parse(&url)?;
@@ -121,7 +117,7 @@ impl ParquetFile {
     /// [File]: https://developer.mozilla.org/en-US/docs/Web/API/File
     ///
     /// Safety: Do not use this in a multi-threaded environment,
-    /// (transitively depends on !Send web_sys::File)
+    /// (transitively depends on `!Send` `web_sys::File`)
     #[wasm_bindgen(js_name = fromFile)]
     pub async fn from_file(handle: web_sys::File) -> WasmResult<ParquetFile> {
         let mut reader = JsFileReader::new(handle, 1024);
@@ -139,13 +135,16 @@ impl ParquetFile {
 
     /// Read from the Parquet file in an async fashion.
     ///
-    /// @param options Options for reading Parquet data. Optional keys include:
-    ///     - batchSize: The number of rows in each batch. If not provided, the upstream parquet
-    ///       default is 1024.
-    ///     - rowGroups: Only read data from the provided row group indexes.
-    ///     - limit: Provide a limit to the number of rows to be read.
-    ///     - offset: Provide an offset to skip over the given number of rows.
-    ///     - columns: The column names from the file to read.
+    /// @param options
+    ///
+    ///    Options for reading Parquet data. Optional keys include:
+    ///
+    ///    - `batchSize`: The number of rows in each batch. If not provided, the upstream parquet
+    ///           default is 1024.
+    ///    - `rowGroups`: Only read data from the provided row group indexes.
+    ///    - `limit`: Provide a limit to the number of rows to be read.
+    ///    - `offset`: Provide an offset to skip over the given number of rows.
+    ///    - `columns`: The column names from the file to read.
     #[wasm_bindgen]
     pub async fn read(&self, options: Option<ReaderOptions>) -> WasmResult<Table> {
         let options = options
@@ -165,14 +164,17 @@ impl ParquetFile {
     ///
     /// Each item in the stream will be a {@linkcode RecordBatch}.
     ///
-    /// @param options Options for reading Parquet data. Optional keys include:
-    ///     - batchSize: The number of rows in each batch. If not provided, the upstream parquet
-    ///       default is 1024.
-    ///     - rowGroups: Only read data from the provided row group indexes.
-    ///     - limit: Provide a limit to the number of rows to be read.
-    ///     - offset: Provide an offset to skip over the given number of rows.
-    ///     - columns: The column names from the file to read.
-    ///     - concurrency: The number of concurrent requests to make
+    /// @param options
+    ///
+    ///    Options for reading Parquet data. Optional keys include:
+    ///
+    ///    - `batchSize`: The number of rows in each batch. If not provided, the upstream parquet
+    ///           default is 1024.
+    ///    - `rowGroups`: Only read data from the provided row group indexes.
+    ///    - `limit`: Provide a limit to the number of rows to be read.
+    ///    - `offset`: Provide an offset to skip over the given number of rows.
+    ///    - `columns`: The column names from the file to read.
+    ///    - `concurrency`: The number of concurrent requests to make
     #[wasm_bindgen]
     pub async fn stream(
         &self,
