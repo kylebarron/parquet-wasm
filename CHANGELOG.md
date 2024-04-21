@@ -6,6 +6,7 @@
 
 - Class-based API + concurrent streams + column selections + File reader by @H-Plus-Time in https://github.com/kylebarron/parquet-wasm/pull/407. This added a new `ParquetFile` API for working with files at remote URLs without downloading them first.
 - Conditional exports in `package.json`. This should make it easier to use across Node and browser.
+- Improved documentation for how to use different entry points.
 
 ### Breaking Changes:
 
