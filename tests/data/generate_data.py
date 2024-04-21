@@ -1,3 +1,4 @@
+import pandas as pd
 import pyarrow as pa
 import pyarrow.feather as feather
 import pyarrow.parquet as pq
@@ -30,9 +31,14 @@ def write_data(table):
             )
 
 
+def write_empty_table():
+    pd.DataFrame().to_parquet("empty.parquet")
+
+
 def main():
     table = create_data()
     write_data(table)
+    write_empty_table()
 
 
 if __name__ == "__main__":

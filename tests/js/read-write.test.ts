@@ -77,3 +77,11 @@ it("error produced trying to read file with arrayBuffer", (t) => {
     );
   }
 });
+
+it("reads empty file", async (t) => {
+  const dataPath = `${dataDir}/empty.parquet`;
+  const buffer = readFileSync(dataPath);
+  const arr = new Uint8Array(buffer);
+  const table = tableFromIPC(wasm.readParquet(arr).intoIPCStream());
+  // console.log("empty table schema", table.schema);
+});
