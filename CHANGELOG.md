@@ -14,7 +14,7 @@
 - Layout of files has changed. Your import may need to change.
 - Imports are now `parquet-wasm`, `parquet-wasm/esm`, `parquet-wasm/bundler`, and `parquet-wasm/node`.
 
-## What's Changed
+### What's Changed
 
 - Add conditional exports by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/382
 - CI production build size summary by @H-Plus-Time in https://github.com/kylebarron/parquet-wasm/pull/401
@@ -32,7 +32,7 @@
 - Add test to read empty file by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/512
 - bump arrow libraries to version 51 by @jdoig in https://github.com/kylebarron/parquet-wasm/pull/496
 
-## New Contributors
+### New Contributors
 
 - @fspoettel made their first contribution in https://github.com/kylebarron/parquet-wasm/pull/466
 - @jdoig made their first contribution in https://github.com/kylebarron/parquet-wasm/pull/496
@@ -41,13 +41,13 @@
 
 ## [0.5.0] - 2023-10-21
 
-## What's Changed
+### What's Changed
 
 - Switch to an API based on table abstractions from [arrow-wasm](https://github.com/kylebarron/arrow-wasm).
 - Update docs
 - Initial implementation of reading to a stream of Arrow batches. By @H-Plus-Time in https://github.com/kylebarron/parquet-wasm/pull/296
 
-## New Contributors
+### New Contributors
 
 - @H-Plus-Time made their first contribution in https://github.com/kylebarron/parquet-wasm/pull/296
 
@@ -55,7 +55,7 @@
 
 ## [0.4.0] - 2023-08-15
 
-## What's Changed
+### What's Changed
 
 - Async reader support in the arrow2 bindings
 - Improved memory usage via `readParquetFFI` in conjunction with `arrow-js-ffi`.
@@ -68,7 +68,7 @@
 
 ## [0.4.0-beta.1] - 2022-08-08
 
-## What's Changed
+### What's Changed
 
 - Add lz4_raw and zstd compressions for parquet2 by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/114
 - Simplify cargo features by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/117
@@ -88,7 +88,7 @@
 
 ## [0.3.1] - 2022-04-26
 
-## What's Changed
+### What's Changed
 
 - Bump arrow from 11.0.0 to 11.1.0 by @dependabot in https://github.com/kylebarron/parquet-wasm/pull/77
 - Update lockfile by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/76
@@ -110,7 +110,7 @@
 
 ## [0.3.0] - 2022-04-04
 
-## What's Changed
+### What's Changed
 
 - Debug cli by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/64
 - Bump to arrow 11.0 to support zstd compression by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/66
@@ -119,7 +119,7 @@
 - Bump clap from 3.1.6 to 3.1.8 by @dependabot in https://github.com/kylebarron/parquet-wasm/pull/71
 - Bump getrandom from 0.2.5 to 0.2.6 by @dependabot in https://github.com/kylebarron/parquet-wasm/pull/72
 
-## New Contributors
+### New Contributors
 
 - @dependabot made their first contribution in https://github.com/kylebarron/parquet-wasm/pull/71
 
