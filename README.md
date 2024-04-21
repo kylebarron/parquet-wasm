@@ -22,20 +22,107 @@ npm install parquet-wasm
 
 ## API
 
-### Choice of bundles
+Parquet-wasm has both a synchronous and asynchronous API. The sync API is simpler but requires fetching the entire Parquet buffer in advance, which is often prohibitive.
 
-| Entry point            | Description                                             | Documentation        |
-| ---------------------- | ------------------------------------------------------- | -------------------- |
-| `parquet-wasm`         | ESM, to be used directly from the Web as an ES Module   | [Link][esm-docs]     |
-| `parquet-wasm/esm`     | ESM, to be used directly from the Web as an ES Module   | [Link][esm-docs]     |
-| `parquet-wasm/bundler` | "Bundler" build, to be used in bundlers such as Webpack | [Link][bundler-docs] |
-| `parquet-wasm/node`    | Node build, to be used with `require` in NodeJS         | [Link][node-docs]    |
+### Sync API
+
+Refer to these functions:
+
+- [`readParquet`](https://kylebarron.dev/parquet-wasm/functions/esm_parquet_wasm.readParquet.html): Read a Parquet file synchronously.
+- [`readSchema`](https://kylebarron.dev/parquet-wasm/functions/esm_parquet_wasm.readSchema.html): Read an Arrow schema from a Parquet file synchronously.
+- [`writeParquet`](https://kylebarron.dev/parquet-wasm/functions/esm_parquet_wasm.writeParquet.html): Write a Parquet file synchronously.
+
+### Async API
+
+- [`readParquetStream`](https://kylebarron.dev/parquet-wasm/functions/esm_parquet_wasm.readParquetStream.html): Create a [ReadableStream](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream) that emits Arrow RecordBatches from a Parquet file.
+- [`ParquetFile`](https://kylebarron.dev/parquet-wasm/classes/esm_parquet_wasm.ParquetFile.html): A class for reading portions of a remote Parquet file. Use [`fromUrl`](https://kylebarron.dev/parquet-wasm/classes/esm_parquet_wasm.ParquetFile.html#fromUrl) to construct from a remote URL or [`fromFile`](https://kylebarron.dev/parquet-wasm/classes/esm_parquet_wasm.ParquetFile.html#fromFile) to construct from a [`File`](https://developer.mozilla.org/en-US/docs/Web/API/File) handle. Note that when you're done using this class, you'll need to call [`free`](https://kylebarron.dev/parquet-wasm/classes/esm_parquet_wasm.ParquetFile.html#free) to release any memory held by the ParquetFile instance itself.
+
+
+Both sync and async functions return or accept a [`Table`](https://kylebarron.dev/parquet-wasm/classes/bundler_parquet_wasm.Table.html) class, an Arrow table in WebAssembly memory. Refer to its documentation for moving data into/out of WebAssembly.
+
+## Entry Points
+
+
+| Entry point                                                               | Description                                             | Documentation        |
+| ------------------------------------------------------------------------- | ------------------------------------------------------- | -------------------- |
+| `parquet-wasm`, `parquet-wasm/esm`, or `parquet-wasm/esm/parquet_wasm.js` | ESM, to be used directly from the Web as an ES Module   | [Link][esm-docs]     |
+| `parquet-wasm/bundler`                                                    | "Bundler" build, to be used in bundlers such as Webpack | [Link][bundler-docs] |
+| `parquet-wasm/node`                                                       | Node build, to be used with synchronous `require` in NodeJS         | [Link][node-docs]    |
 
 [bundler-docs]: https://kylebarron.dev/parquet-wasm/modules/bundler_parquet_wasm.html
 [node-docs]: https://kylebarron.dev/parquet-wasm/modules/node_parquet_wasm.html
 [esm-docs]: https://kylebarron.dev/parquet-wasm/modules/esm_parquet_wasm.html
 
-**Note that when using the `esm` bundles, the default export must be awaited**. Otherwise, you'll get an error `TypeError: Cannot read properties of undefined`. See [here](https://rustwasm.github.io/docs/wasm-bindgen/examples/without-a-bundler.html) for an example.
+### ESM
+
+The `esm` entry point is the primary entry point. It is the default export from `parquet-wasm`, and is also accessible at `parquet-wasm/esm` and `parquet-wasm/esm/parquet_wasm.js` (for symmetric imports [directly from a browser](#using-directly-from-a-browser)).
+
+**Note that when using the `esm` bundles, you must manually initialize the WebAssembly module before using any APIs**. Otherwise, you'll get an error `TypeError: Cannot read properties of undefined`. There are multiple ways to initialize the WebAssembly code:
+
+#### Asynchronous initialization
+
+The primary way to initialize is by awaiting the default export.
+
+```js
+import wasmInit, {readParquet} from "parquet-wasm";
+
+await wasmInit();
+```
+
+Without any parameter, this will try to fetch a file named `'parquet_wasm_bg.wasm'` at the same location as `parquet-wasm`. (E.g. this snippet `input = new URL('parquet_wasm_bg.wasm', import.meta.url);`).
+
+Note that you can also pass in a custom URL if you want to host the `.wasm` file on your own servers.
+
+```js
+import wasmInit, {readParquet} from "parquet-wasm";
+
+// Update this version to match the version you're using.
+const wasmUrl = "https://cdn.jsdelivr.net/npm/parquet-wasm@0.6.0/esm/parquet_wasm_bg.wasm";
+await wasmInit(wasmUrl);
+```
+
+#### Synchronous initialization
+
+The `initSync` named export allows for
+
+```js
+import {initSync, readParquet} from "parquet-wasm";
+
+// The contents of esm/parquet_wasm_bg.wasm in an ArrayBuffer
+const wasmBuffer = new ArrayBuffer(...);
+
+// Initialize the Wasm synchronously
+initSync(wasmBuffer)
+```
+
+Async initialization should be preferred over downloading the Wasm buffer and then initializing it synchronously, as [`WebAssembly.instantiateStreaming`](https://developer.mozilla.org/en-US/docs/WebAssembly/JavaScript_interface/instantiateStreaming_static) is the most efficient way to both download and initialize Wasm code.
+
+### Bundler
+
+The `bundler` entry point doesn't require manual initialization of the WebAssembly blob, but needs setup with whatever bundler you're using. [Refer to the Rust Wasm documentation for more info](https://rustwasm.github.io/docs/wasm-bindgen/reference/deployment.html#bundlers).
+
+### Node
+
+The `node` entry point can be loaded synchronously from Node.
+
+```js
+const {readParquet} = require("parquet-wasm");
+
+const wasmTable = readParquet(...);
+```
+
+### Using directly from a browser
+
+You can load the `esm/parquet_wasm.js` file directly from a CDN
+
+```js
+const parquet = await import(
+  "https://cdn.jsdelivr.net/npm/parquet-wasm@0.6.0/esm/parquet_wasm.js"
+)
+await parquet.default();
+
+const wasmTable = parquet.readParquet(...);
+```
 
 ### Debug functions
 

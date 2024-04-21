@@ -1,5 +1,44 @@
 # Changelog
 
+## [0.6.0] - 2024-04-21
+
+### New! :sparkles:
+
+- Class-based API + concurrent streams + column selections + File reader by @H-Plus-Time in https://github.com/kylebarron/parquet-wasm/pull/407. This added a new `ParquetFile` API for working with files at remote URLs without downloading them first.
+- Conditional exports in `package.json`. This should make it easier to use across Node and browser.
+- Improved documentation for how to use different entry points.
+
+### Breaking Changes:
+
+- arrow2 and parquet2-based implementation has been removed.
+- Layout of files has changed. Your import may need to change.
+- Imports are now `parquet-wasm`, `parquet-wasm/esm`, `parquet-wasm/bundler`, and `parquet-wasm/node`.
+
+## What's Changed
+
+- Add conditional exports by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/382
+- CI production build size summary by @H-Plus-Time in https://github.com/kylebarron/parquet-wasm/pull/401
+- Remove arrow2 implementation by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/446
+- feat: add lz4_raw support for `arrow1` by @fspoettel in https://github.com/kylebarron/parquet-wasm/pull/466
+- Highlight that esm entry point needs await of default export by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/487
+- Fixes for both report builds and PR comment workflow by @H-Plus-Time in https://github.com/kylebarron/parquet-wasm/pull/495
+- fix package exports by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/414
+- Object store wasm usage by @H-Plus-Time in https://github.com/kylebarron/parquet-wasm/pull/490
+- Set Parquet key-value metadata by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/503
+- Read parquet with options by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/506
+- Documentation updates for 0.6 by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/507
+- Avoid bigint for metadata queries by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/508
+- Update async API by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/510
+- Add test to read empty file by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/512
+- bump arrow libraries to version 51 by @jdoig in https://github.com/kylebarron/parquet-wasm/pull/496
+
+## New Contributors
+
+- @fspoettel made their first contribution in https://github.com/kylebarron/parquet-wasm/pull/466
+- @jdoig made their first contribution in https://github.com/kylebarron/parquet-wasm/pull/496
+
+**Full Changelog**: https://github.com/kylebarron/parquet-wasm/compare/v0.5.0...v0.6.0
+
 ## [0.5.0] - 2023-10-21
 
 ## What's Changed

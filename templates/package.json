@@ -20,6 +20,7 @@
     "webassembly",
     "arrow"
   ],
+  "$comment": "We export ./esm/parquet_wasm.js so that code can work the same bundled and directly on the frontend",
   "exports": {
     "./bundler": {
       "types": "./bundler/parquet_wasm.d.ts",
@@ -32,6 +33,10 @@
     "./node": {
       "types": "./node/parquet_wasm.d.ts",
       "default": "./node/parquet_wasm.js"
+    },
+    "./esm/parquet_wasm.js": {
+      "types": "./esm/parquet_wasm.d.ts",
+      "default": "./esm/parquet_wasm.js"
     },
     ".": {
       "node": {
