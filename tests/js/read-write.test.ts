@@ -83,5 +83,9 @@ it("reads empty file", async (t) => {
   const buffer = readFileSync(dataPath);
   const arr = new Uint8Array(buffer);
   const table = tableFromIPC(wasm.readParquet(arr).intoIPCStream());
+
+  expect(table.schema.fields.length).toStrictEqual(0);
+  expect(table.numRows).toStrictEqual(0);
+  expect(table.numCols).toStrictEqual(0);
   // console.log("empty table schema", table.schema);
 });
