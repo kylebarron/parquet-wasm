@@ -117,12 +117,14 @@ You can load the `esm/parquet_wasm.js` file directly from a CDN
 
 ```js
 const parquet = await import(
-  "https://cdn.jsdelivr.net/npm/parquet-wasm@0.6.0/esm/parquet_wasm.js"
+  "https://cdn.jsdelivr.net/npm/parquet-wasm@0.6.0/esm/+esm"
 )
 await parquet.default();
 
 const wasmTable = parquet.readParquet(...);
 ```
+
+This specific endpoint will minify the ESM before you receive it.
 
 ### Debug functions
 
