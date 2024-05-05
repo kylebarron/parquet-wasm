@@ -22,6 +22,9 @@
   ],
   "$comment": "We export ./esm/parquet_wasm.js so that code can work the same bundled and directly on the frontend",
   "exports": {
+    "./bundler/parquet_wasm_bg.wasm": "./bundler/parquet_wasm_bg.wasm",
+    "./esm/parquet_wasm_bg.wasm": "./esm/parquet_wasm_bg.wasm",
+    "./node/parquet_wasm_bg.wasm": "./node/parquet_wasm_bg.wasm",
     "./bundler": {
       "types": "./bundler/parquet_wasm.d.ts",
       "default": "./bundler/parquet_wasm.js"

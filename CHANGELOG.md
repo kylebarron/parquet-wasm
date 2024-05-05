@@ -5,6 +5,7 @@
 ### What's Changed
 
 - Use Blob instead of File for input in `ParquetFile.fromFile`.
+- Export wasm paths from `package.json`.
 
 ## [0.6.0] - 2024-04-21
 
