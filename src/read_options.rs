@@ -26,6 +26,7 @@ export type ReaderOptions = {
 
 #[wasm_bindgen]
 extern "C" {
+    /// Reader options
     #[wasm_bindgen(typescript_type = "ReaderOptions")]
     pub type ReaderOptions;
 }
