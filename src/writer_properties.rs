@@ -53,6 +53,7 @@ export type KeyValueMetadata = Map<string, string>;
 
 #[wasm_bindgen]
 extern "C" {
+    /// Key value metadata
     #[wasm_bindgen(typescript_type = "KeyValueMetadata")]
     pub type KeyValueMetadata;
 }

@@ -110,14 +110,15 @@ impl ParquetFile {
         })
     }
 
-    /// Construct a ParquetFile from a new [File] handle.
+    /// Construct a ParquetFile from a new [Blob] or [File] handle.
     ///
+    /// [Blob]: https://developer.mozilla.org/en-US/docs/Web/API/Blob
     /// [File]: https://developer.mozilla.org/en-US/docs/Web/API/File
     ///
     /// Safety: Do not use this in a multi-threaded environment,
-    /// (transitively depends on `!Send` `web_sys::File`)
+    /// (transitively depends on `!Send` `web_sys::Blob`)
     #[wasm_bindgen(js_name = fromFile)]
-    pub async fn from_file(handle: web_sys::File) -> WasmResult<ParquetFile> {
+    pub async fn from_file(handle: web_sys::Blob) -> WasmResult<ParquetFile> {
         let mut reader = JsFileReader::new(handle, 1024);
         let meta = ArrowReaderMetadata::load_async(&mut reader, Default::default()).await?;
         Ok(Self {
@@ -288,20 +289,20 @@ impl AsyncFileReader for HTTPFileReader {
 
 #[derive(Debug, Clone)]
 struct WrappedFile {
-    inner: web_sys::File,
+    inner: web_sys::Blob,
     pub size: f64,
 }
 /// Safety: This is not in fact thread-safe. Do not attempt to use this in work-stealing
 /// async runtimes / multi-threaded environments
 ///
-/// web_sys::File objects, like all JSValues, are !Send (even in JS, there's
+/// web_sys::Blob objects, like all JSValues, are !Send (even in JS, there's
 /// maybe ~5 Transferable types), and eventually boil down to PhantomData<*mut u8>.
 /// Any struct that holds one is inherently !Send, which disqualifies it from being used
 /// with the AsyncFileReader trait.
 unsafe impl Send for WrappedFile {}
 
 impl WrappedFile {
-    pub fn new(inner: web_sys::File) -> Self {
+    pub fn new(inner: web_sys::Blob) -> Self {
         let size = inner.size();
         Self { inner, size }
     }
@@ -333,7 +334,7 @@ pub struct JsFileReader {
 }
 
 impl JsFileReader {
-    pub fn new(file: web_sys::File, coalesce_byte_size: usize) -> Self {
+    pub fn new(file: web_sys::Blob, coalesce_byte_size: usize) -> Self {
         Self {
             file: WrappedFile::new(file),
             coalesce_byte_size,
