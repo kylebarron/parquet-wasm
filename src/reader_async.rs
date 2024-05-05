@@ -295,7 +295,7 @@ struct WrappedFile {
 /// Safety: This is not in fact thread-safe. Do not attempt to use this in work-stealing
 /// async runtimes / multi-threaded environments
 ///
-/// web_sys::File objects, like all JSValues, are !Send (even in JS, there's
+/// web_sys::Blob objects, like all JSValues, are !Send (even in JS, there's
 /// maybe ~5 Transferable types), and eventually boil down to PhantomData<*mut u8>.
 /// Any struct that holds one is inherently !Send, which disqualifies it from being used
 /// with the AsyncFileReader trait.

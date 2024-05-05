@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.6.1] - 2024-05-04
+
+### What's Changed
+
+- Use Blob instead of File for input in `ParquetFile.fromFile`.
+
 ## [0.6.0] - 2024-04-21
 
 ### New! :sparkles:
