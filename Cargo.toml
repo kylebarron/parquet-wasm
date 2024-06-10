@@ -43,7 +43,7 @@ full = ["async", "debug", "all_compressions", "reader", "writer"]
 
 [dependencies]
 wasm-bindgen = { version = "0.2.88", features = ["serde-serialize"] }
-serde = "1.0.198"
+serde = "1.0.203"
 serde-wasm-bindgen = { version = "0.6.5" }
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
@@ -58,7 +58,7 @@ console_error_panic_hook = { version = "0.1.6", optional = true }
 # wee_alloc = "0.4.5"
 
 js-sys = "0.3.60"
-getrandom = { version = "0.2.6", features = ["js"] }
+getrandom = { version = "0.2.15", features = ["js"] }
 thiserror = "1.0"
 
 arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "dc564f6ebd37c1f5f60ebd45c7e281829ba223dc", default-features = false, features = [
@@ -78,7 +78,7 @@ bytes = "1"
 wasm-bindgen-futures = { version = "0.4.30", optional = true }
 futures = { version = "0.3", optional = true }
 range-reader = { version = "0.2", optional = true }
-reqwest = { version = "0.12.3", optional = true, default-features = false }
+reqwest = { version = "0.12.4", optional = true, default-features = false }
 
 # Pass "wasm" and "thin" down to the transitive zstd dependency
 zstd = { version = "*", features = [
@@ -92,8 +92,8 @@ async-compat = { version = "=0.2.2", optional = true }
 async-stream = { version = "0.3.5", optional = true }
 wasm-streams = { version = "0.4.0", optional = true }
 async-trait = "0.1.74"
-object_store = { version = "0.9.0", default-features = false }
-url = "2.5.0"
+object_store = { version = "0.10.1", default-features = false }
+url = "2.5.1"
 object-store-wasm = { version = "0.0.3" }
 
 [dependencies.web-sys]
