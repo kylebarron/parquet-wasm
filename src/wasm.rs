@@ -249,3 +249,25 @@ pub async fn read_parquet_stream(
     });
     Ok(wasm_streams::ReadableStream::from_stream(stream).into_raw())
 }
+
+#[wasm_bindgen(js_name = "transformParquetStream")]
+#[cfg(all(feature = "writer", feature = "async"))]
+pub fn transform_parquet_stream(
+    stream: wasm_streams::readable::sys::ReadableStream,
+    writer_properties: Option<crate::writer_properties::WriterProperties>,
+) -> WasmResult<wasm_streams::readable::sys::ReadableStream> {
+    use futures::StreamExt;
+    use wasm_bindgen::convert::TryFromJsValue;
+    let batches = wasm_streams::ReadableStream::from_raw(stream)
+        .into_stream()
+        .map(|maybe_chunk| {
+            let chunk = maybe_chunk.unwrap();
+            let transformed = arrow_wasm::RecordBatch::try_from_js_value(chunk).unwrap();
+            transformed
+        });
+    let output_stream = super::writer_async::transform_parquet_stream(
+        batches,
+        writer_properties.unwrap_or_default(),
+    );
+    Ok(output_stream.unwrap())
+}
