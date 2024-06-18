@@ -262,8 +262,7 @@ pub fn transform_parquet_stream(
         .into_stream()
         .map(|maybe_chunk| {
             let chunk = maybe_chunk.unwrap();
-            let transformed = arrow_wasm::RecordBatch::try_from_js_value(chunk).unwrap();
-            transformed
+            arrow_wasm::RecordBatch::try_from_js_value(chunk).unwrap()
         });
     let output_stream = super::writer_async::transform_parquet_stream(
         batches,

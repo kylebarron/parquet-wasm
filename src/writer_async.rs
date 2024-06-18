@@ -1,5 +1,5 @@
-use crate::error::Result;
 use crate::common::stream::WrappedWritableStream;
+use crate::error::Result;
 use async_compat::CompatExt;
 use futures::StreamExt;
 use parquet::arrow::async_writer::AsyncArrowWriter;
