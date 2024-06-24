@@ -889,10 +889,10 @@ fastify-plugin@^4.0.0:
   resolved "https://registry.yarnpkg.com/fastify-plugin/-/fastify-plugin-4.5.1.tgz#44dc6a3cc2cce0988bc09e13f160120bbd91dbee"
   integrity sha512-stRHYGeuqpEZTL1Ef0Ovr2ltazUT9g844X5z/zEBFLG8RYlpDiOCIG+ATvYEp+/zmc7sN29mcIMp8gvYplYPIQ==
 
-fastify@^4.27.0:
-  version "4.27.0"
-  resolved "https://registry.yarnpkg.com/fastify/-/fastify-4.27.0.tgz#e4a9b2a0a7b9efaeaf1140d47fdd4f91b5fcacb1"
-  integrity sha512-ci9IXzbigB8dyi0mSy3faa3Bsj0xWAPb9JeT4KRzubdSb6pNhcADRUaXCBml6V1Ss/a05kbtQls5LBmhHydoTA==
+fastify@^4.28.0:
+  version "4.28.0"
+  resolved "https://registry.yarnpkg.com/fastify/-/fastify-4.28.0.tgz#322152722e2ed207cbef73ed177214bb3284058c"
+  integrity sha512-HhW7UHW07YlqH5qpS0af8d2Gl/o98DhJ8ZDQWHRNDnzeOhZvtreWsX8xanjGgXmkYerGbo8ax/n40Dpwqkot8Q==
   dependencies:
     "@fastify/ajv-compiler" "^3.5.0"
     "@fastify/error" "^3.4.0"
