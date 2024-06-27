@@ -17,6 +17,9 @@ pub mod writer;
 #[cfg(feature = "writer")]
 pub mod writer_properties;
 
+#[cfg(all(feature = "writer", feature = "async"))]
+pub mod writer_async;
+
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
 /*#[cfg(feature = "wee_alloc")]
