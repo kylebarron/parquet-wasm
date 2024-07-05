@@ -266,7 +266,7 @@ pub async fn transform_parquet_stream(
             let chunk = maybe_chunk?;
             arrow_wasm::RecordBatch::try_from_js_value(chunk)
         })
-        .map_err(|x| ParquetWasmError::DynCastingError(x));
+        .map_err(ParquetWasmError::DynCastingError);
     let output_stream = super::writer_async::transform_parquet_stream(
         batches,
         writer_properties.unwrap_or_default(),
