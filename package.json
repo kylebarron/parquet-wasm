@@ -17,7 +17,7 @@
     "fastify": "^4.27.0",
     "gh-pages": "^6.1.1",
     "typedoc": "^0.26.2",
-    "typescript": "^5.4.5",
+    "typescript": "^5.5.3",
     "vitest": "^2.0.1"
   },
   "volta": {
