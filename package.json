@@ -16,7 +16,7 @@
     "benny": "^3.7.1",
     "fastify": "^4.28.1",
     "gh-pages": "^6.1.1",
-    "typedoc": "^0.26.2",
+    "typedoc": "^0.26.3",
     "typescript": "^5.5.3",
     "vitest": "^2.0.1"
   },
