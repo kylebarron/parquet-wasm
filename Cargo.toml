@@ -61,7 +61,7 @@ js-sys = "0.3.60"
 getrandom = { version = "0.2.6", features = ["js"] }
 thiserror = "1.0"
 
-arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "dc564f6ebd37c1f5f60ebd45c7e281829ba223dc", default-features = false, features = [
+arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "6700c1d5fd8aed350265281761fce48232ff72a9", default-features = false, features = [
   "table",
   "record_batch",
   "schema",
@@ -94,7 +94,7 @@ wasm-streams = { version = "0.4.0", optional = true }
 async-trait = "0.1.74"
 object_store = { version = "0.9.0", default-features = false }
 url = "2.5.0"
-object-store-wasm = { version = "0.0.3" }
+object-store-wasm = { version = "0.0.4" }
 
 [dependencies.web-sys]
 version = "0.3.4"
