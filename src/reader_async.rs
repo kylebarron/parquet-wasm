@@ -8,7 +8,6 @@ use crate::error::{Result, WasmResult};
 use crate::read_options::{JsReaderOptions, ReaderOptions};
 use futures::channel::oneshot;
 use futures::future::BoxFuture;
-use object_store::ObjectStore;
 use object_store_wasm::parse::{parse_url, parse_url_opts};
 use std::collections::HashMap;
 use std::ops::Range;
