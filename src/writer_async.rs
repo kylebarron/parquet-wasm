@@ -48,7 +48,6 @@ pub async fn transform_parquet_stream(
                         let _ = sender.send(Err(ParquetWasmError::ParquetError(Box::new(err))));
                     }
                 }
-                // TODO: handle failed to create arrow writer
             } else if let Some(Err(err)) = first_batch {
                 let _ = sender.send(Err(ParquetWasmError::DynCastingError(
                     err.to_string().into(),
