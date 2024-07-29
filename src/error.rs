@@ -1,7 +1,7 @@
 use arrow::error::ArrowError;
 use parquet::errors::ParquetError;
 use thiserror::Error;
-use wasm_bindgen::JsError;
+use wasm_bindgen::{JsError, JsValue};
 
 #[derive(Error, Debug)]
 pub enum ParquetWasmError {
@@ -15,6 +15,10 @@ pub enum ParquetWasmError {
     #[cfg(feature = "async")]
     #[error("HTTP error: `{0}`")]
     HTTPError(Box<reqwest::Error>),
+    #[error("Platform error: `{0}`")]
+    PlatformSupportError(String),
+    #[error("Dyn casting error")]
+    DynCastingError(JsValue),
 }
 
 pub type Result<T> = std::result::Result<T, ParquetWasmError>;

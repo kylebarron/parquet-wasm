@@ -249,3 +249,94 @@ pub async fn read_parquet_stream(
     });
     Ok(wasm_streams::ReadableStream::from_stream(stream).into_raw())
 }
+
+/// Transform a ReadableStream of RecordBatches to a ReadableStream of bytes
+///
+/// Browser example with piping to a file via the File System API:
+///
+/// ```js
+/// import initWasm, {ParquetFile, transformParquetStream} from "parquet-wasm";
+///
+/// // Instantiate the WebAssembly context
+/// await initWasm();
+///
+/// const fileInstance = await ParquetFile.fromUrl("https://example.com/file.parquet");
+/// const recordBatchStream = await fileInstance.stream();
+/// const serializedParquetStream = await transformParquetStream(recordBatchStream);
+/// // NB: requires transient user activation - you would typically do this before ☝️
+/// const handle = await window.showSaveFilePicker();
+/// const writable = await handle.createWritable();
+/// await serializedParquetStream.pipeTo(writable);
+/// ```
+///
+/// NodeJS (ESM) example with piping to a file:
+/// ```js
+/// import { open } from "node:fs/promises";
+/// import { Writable } from "node:stream";
+/// import initWasm, {ParquetFile, transformParquetStream} from "parquet-wasm";
+///
+/// // Instantiate the WebAssembly context
+/// await initWasm();
+///
+/// const fileInstance = await ParquetFile.fromUrl("https://example.com/file.parquet");
+/// const recordBatchStream = await fileInstance.stream();
+/// const serializedParquetStream = await transformParquetStream(recordBatchStream);
+///
+/// // grab a file handle via fsPromises
+/// const handle = await open("file.parquet");
+/// const destinationStream = Writable.toWeb(handle.createWriteStream());
+/// await serializedParquetStream.pipeTo(destinationStream);
+///
+/// ```
+/// NB: the above is a little contrived - `await writeFile("file.parquet", serializedParquetStream)`
+/// is enough for most use cases.
+///
+/// Browser kitchen sink example - teeing to the Cache API, using as a streaming post body, transferring
+/// to a Web Worker:
+/// ```js
+/// // prelude elided - see above
+/// const serializedParquetStream = await transformParquetStream(recordBatchStream);
+/// const [cacheStream, bodyStream] = serializedParquetStream.tee();
+/// const postProm = fetch(targetUrl, {
+///     method: "POST",
+///     duplex: "half",
+///     body: bodyStream
+/// });
+/// const targetCache = await caches.open("foobar");
+/// await targetCache.put("https://example.com/file.parquet", new Response(cacheStream));
+/// // this could have been done with another tee, but beware of buffering
+/// const workerStream = await targetCache.get("https://example.com/file.parquet").body;
+/// const worker = new Worker("worker.js");
+/// worker.postMessage(workerStream, [workerStream]);
+/// await postProm;
+/// ```
+///
+/// @param stream A {@linkcode ReadableStream} of {@linkcode RecordBatch} instances
+/// @param writer_properties (optional) Configuration for writing to Parquet. Use the {@linkcode
+/// WriterPropertiesBuilder} to build a writing configuration, then call `.build()` to create an
+/// immutable writer properties to pass in here.
+/// @returns ReadableStream containing serialized Parquet data.
+#[wasm_bindgen(js_name = "transformParquetStream")]
+#[cfg(all(feature = "writer", feature = "async"))]
+pub async fn transform_parquet_stream(
+    stream: wasm_streams::readable::sys::ReadableStream,
+    writer_properties: Option<crate::writer_properties::WriterProperties>,
+) -> WasmResult<wasm_streams::readable::sys::ReadableStream> {
+    use futures::{StreamExt, TryStreamExt};
+    use wasm_bindgen::convert::TryFromJsValue;
+
+    use crate::error::ParquetWasmError;
+    let batches = wasm_streams::ReadableStream::from_raw(stream)
+        .into_stream()
+        .map(|maybe_chunk| {
+            let chunk = maybe_chunk?;
+            arrow_wasm::RecordBatch::try_from_js_value(chunk)
+        })
+        .map_err(ParquetWasmError::DynCastingError);
+    let output_stream = super::writer_async::transform_parquet_stream(
+        batches,
+        writer_properties.unwrap_or_default(),
+    )
+    .await;
+    Ok(output_stream?)
+}
