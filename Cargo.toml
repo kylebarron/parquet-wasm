@@ -43,7 +43,7 @@ full = ["async", "debug", "all_compressions", "reader", "writer"]
 
 [dependencies]
 wasm-bindgen = { version = "0.2.93", features = ["serde-serialize"] }
-serde = "1.0.208"
+serde = "1.0.209"
 serde-wasm-bindgen = { version = "0.6.5" }
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
@@ -78,7 +78,7 @@ bytes = "1"
 wasm-bindgen-futures = { version = "0.4.43", optional = true }
 futures = { version = "0.3", optional = true }
 range-reader = { version = "0.2", optional = true }
-reqwest = { version = "0.12.6", optional = true, default-features = false }
+reqwest = { version = "0.12.7", optional = true, default-features = false }
 
 # Pass "wasm" and "thin" down to the transitive zstd dependency
 zstd = { version = "*", features = [
