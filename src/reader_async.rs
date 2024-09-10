@@ -131,6 +131,11 @@ impl ParquetFile {
         Ok(self.meta.metadata().as_ref().to_owned().into())
     }
 
+    #[wasm_bindgen]
+    pub fn schema(&self) -> WasmResult<arrow_wasm::Schema> {
+        Ok(self.meta.schema().as_ref().to_owned().into())
+    }
+
     /// Read from the Parquet file in an async fashion.
     ///
     /// @param options
