@@ -134,7 +134,7 @@ import wasmInit, {readParquet} from 'parquet-wasm';
 import wasmUrl from 'parquet-wasm/wasm?url';
 await wasmInit(wasmUrl);
 ```
-
+See https://vitejs.dev/guide/assets#explicit-url-imports
 ### Debug functions
 
 These functions are not present in normal builds to cut down on bundle size. To create a custom build, see [Custom Builds](#custom-builds) below.
