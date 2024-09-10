@@ -249,7 +249,7 @@ dependencies = [
 [[package]]
 name = "arrow-wasm"
 version = "0.1.0"
-source = "git+https://github.com/kylebarron/arrow-wasm?rev=e39edcdd6e2463126a7f3a5d80d392276eb3230f#e39edcdd6e2463126a7f3a5d80d392276eb3230f"
+source = "git+https://github.com/kylebarron/arrow-wasm?rev=5c43bb0c3209738dd6620243b1d84d90833e92c9#5c43bb0c3209738dd6620243b1d84d90833e92c9"
 dependencies = [
  "arrow",
  "arrow-schema",
