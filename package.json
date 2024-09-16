@@ -18,7 +18,7 @@
     "gh-pages": "^6.1.1",
     "typedoc": "^0.26.7",
     "typescript": "^5.5.4",
-    "vitest": "^2.0.5"
+    "vitest": "^2.1.1"
   },
   "volta": {
     "node": "20.12.2",
