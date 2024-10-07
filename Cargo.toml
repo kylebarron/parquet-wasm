@@ -89,7 +89,7 @@ zstd-sys = { version = "=2.0.9", optional = true, default-features = false }
 # 0.2.3 crashes the Node tests. See
 # https://github.com/kylebarron/parquet-wasm/pull/496#issuecomment-2057374608
 async-compat = { version = "=0.2.2", optional = true }
-async-stream = { version = "0.3.5", optional = true }
+async-stream = { version = "0.3.6", optional = true }
 wasm-streams = { version = "0.4.1", optional = true }
 async-trait = "0.1.83"
 object_store = { version = "0.11.0", default-features = false }
