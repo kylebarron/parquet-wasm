@@ -27,8 +27,7 @@ use parquet::arrow::async_reader::{
 };
 
 use async_compat::{Compat, CompatExt};
-use parquet::file::footer::{decode_footer, decode_metadata};
-use parquet::file::metadata::{FileMetaData, ParquetMetaData};
+use parquet::file::metadata::{FileMetaData, ParquetMetaData, ParquetMetaDataReader};
 use range_reader::RangedAsyncReader;
 use reqwest::Client;
 
@@ -408,7 +407,7 @@ impl AsyncFileReader for JsFileReader {
 
             let mut footer = [0; 8];
             footer.copy_from_slice(&suffix[suffix_len - 8..suffix_len]);
-            let metadata_byte_length = decode_footer(&footer)?;
+            let metadata_byte_length = ParquetMetaDataReader::decode_footer(&footer)?;
             // Did not fetch the entire file metadata in the initial read, need to make a second request
             let meta = if metadata_byte_length > suffix_len - 8 {
                 // might want to figure out how to get get_bytes to accept a one-sided range
@@ -416,12 +415,12 @@ impl AsyncFileReader for JsFileReader {
 
                 let meta_bytes = self.get_bytes(meta_range).await.unwrap();
 
-                decode_metadata(&meta_bytes[0..meta_bytes.len() - 8])?
+                ParquetMetaDataReader::decode_metadata(&meta_bytes[0..meta_bytes.len() - 8])?
             } else {
                 let metadata_start = suffix_len - metadata_byte_length - 8;
 
                 let slice = &suffix[metadata_start..suffix_len - 8];
-                decode_metadata(slice)?
+                ParquetMetaDataReader::decode_metadata(slice)?
             };
             Ok(Arc::new(meta))
         }
@@ -513,7 +512,7 @@ pub async fn fetch_parquet_metadata(
     let mut footer = [0; 8];
     footer.copy_from_slice(&suffix[suffix_len - 8..suffix_len]);
 
-    let metadata_byte_length = decode_footer(&footer)?;
+    let metadata_byte_length = ParquetMetaDataReader::decode_footer(&footer)?;
 
     // Did not fetch the entire file metadata in the initial read, need to make a second request
     let metadata = if metadata_byte_length > suffix_len - 8 {
@@ -524,12 +523,12 @@ pub async fn fetch_parquet_metadata(
                 .await
                 .unwrap();
 
-        decode_metadata(&meta_bytes[0..meta_bytes.len() - 8])?
+        ParquetMetaDataReader::decode_metadata(&meta_bytes[0..meta_bytes.len() - 8])?
     } else {
         let metadata_start = suffix_len - metadata_byte_length - 8;
 
         let slice = &suffix[metadata_start..suffix_len - 8];
-        decode_metadata(slice)?
+        ParquetMetaDataReader::decode_metadata(slice)?
     };
 
     Ok(metadata)
