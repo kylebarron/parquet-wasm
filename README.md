@@ -126,6 +126,15 @@ const wasmTable = parquet.readParquet(...);
 
 This specific endpoint will minify the ESM before you receive it.
 
+### Vite
+
+You can load the esm (default for vite) entrypoint via:
+```js
+import wasmInit, {readParquet} from 'parquet-wasm';
+import wasmUrl from 'parquet-wasm/wasm?url';
+await wasmInit(wasmUrl);
+```
+See https://vitejs.dev/guide/assets#explicit-url-imports
 ### Debug functions
 
 These functions are not present in normal builds to cut down on bundle size. To create a custom build, see [Custom Builds](#custom-builds) below.
