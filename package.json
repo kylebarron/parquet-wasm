@@ -15,7 +15,7 @@
     "arrow-js-ffi": "^0.4.2",
     "benny": "^3.7.1",
     "fastify": "^4.28.1",
-    "gh-pages": "^6.1.1",
+    "gh-pages": "^6.2.0",
     "typedoc": "^0.26.9",
     "typescript": "^5.6.2",
     "vitest": "^2.1.3"
