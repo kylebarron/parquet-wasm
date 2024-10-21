@@ -92,7 +92,7 @@ async-compat = { version = "=0.2.2", optional = true }
 async-stream = { version = "0.3.6", optional = true }
 wasm-streams = { version = "0.4.1", optional = true }
 async-trait = "0.1.83"
-object_store = { version = "0.11.0", default-features = false }
+object_store = { version = "0.11.1", default-features = false }
 url = "2.5.0"
 object-store-wasm = { git = "https://github.com/H-Plus-Time/object-store-wasm", rev = "b296d680fc67f3213a3f8de445b8fc5f590dc7e1" }
 
