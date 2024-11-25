@@ -43,7 +43,7 @@ full = ["async", "debug", "all_compressions", "reader", "writer"]
 
 [dependencies]
 wasm-bindgen = { version = "0.2.95", features = ["serde-serialize"] }
-serde = "1.0.214"
+serde = "1.0.215"
 serde-wasm-bindgen = { version = "0.6.5" }
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
@@ -59,7 +59,7 @@ console_error_panic_hook = { version = "0.1.6", optional = true }
 
 js-sys = "0.3.72"
 getrandom = { version = "0.2.6", features = ["js"] }
-thiserror = "1.0"
+thiserror = "2.0"
 
 arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "5c43bb0c3209738dd6620243b1d84d90833e92c9", default-features = false, features = [
   "table",
@@ -93,7 +93,7 @@ async-stream = { version = "0.3.6", optional = true }
 wasm-streams = { version = "0.4.2", optional = true }
 async-trait = "0.1.83"
 object_store = { version = "0.11.1", default-features = false }
-url = "2.5.0"
+url = "2.5.4"
 object-store-wasm = { git = "https://github.com/H-Plus-Time/object-store-wasm", rev = "b296d680fc67f3213a3f8de445b8fc5f590dc7e1" }
 
 [dependencies.web-sys]
