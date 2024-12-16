@@ -42,8 +42,8 @@ all_compressions = ["brotli", "gzip", "snappy", "zstd", "lz4"]
 full = ["async", "debug", "all_compressions", "reader", "writer"]
 
 [dependencies]
-wasm-bindgen = { version = "0.2.95", features = ["serde-serialize"] }
-serde = "1.0.214"
+wasm-bindgen = { version = "0.2.99", features = ["serde-serialize"] }
+serde = "1.0.216"
 serde-wasm-bindgen = { version = "0.6.5" }
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
@@ -57,7 +57,7 @@ console_error_panic_hook = { version = "0.1.6", optional = true }
 # if wee_alloc only saves 10KB, might not be worth the slower allocation speed?
 # wee_alloc = "0.4.5"
 
-js-sys = "0.3.72"
+js-sys = "0.3.76"
 getrandom = { version = "0.2.6", features = ["js"] }
 thiserror = "1.0"
 
@@ -75,7 +75,7 @@ parquet = { version = "53", default-features = false, features = [
 ] }
 bytes = "1"
 
-wasm-bindgen-futures = { version = "0.4.45", optional = true }
+wasm-bindgen-futures = { version = "0.4.49", optional = true }
 futures = { version = "0.3", optional = true }
 range-reader = { version = "0.2", optional = true }
 reqwest = { version = "0.12.9", optional = true, default-features = false }
@@ -93,7 +93,7 @@ async-stream = { version = "0.3.6", optional = true }
 wasm-streams = { version = "0.4.2", optional = true }
 async-trait = "0.1.83"
 object_store = { version = "0.11.1", default-features = false }
-url = "2.5.0"
+url = "2.5.4"
 object-store-wasm = { git = "https://github.com/H-Plus-Time/object-store-wasm", rev = "b296d680fc67f3213a3f8de445b8fc5f590dc7e1" }
 
 [dependencies.web-sys]
@@ -112,7 +112,7 @@ features = [
 ]
 
 [dev-dependencies]
-wasm-bindgen-test = "0.3.45"
+wasm-bindgen-test = "0.3.49"
 
 [package.metadata.cargo-all-features]
 
