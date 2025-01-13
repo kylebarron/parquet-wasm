@@ -170,13 +170,6 @@ impl WriterPropertiesBuilder {
         Self(self.0.set_statistics_enabled(value.into()))
     }
 
-    /// Sets max statistics size for any column.
-    /// Applicable only if statistics are enabled.
-    #[wasm_bindgen(js_name = setMaxStatisticsSize)]
-    pub fn set_max_statistics_size(self, value: usize) -> Self {
-        Self(self.0.set_max_statistics_size(value))
-    }
-
     // ----------------------------------------------------------------------
     // Setters for a specific column
 
@@ -221,14 +214,6 @@ impl WriterPropertiesBuilder {
             self.0
                 .set_column_statistics_enabled(column_path, value.into()),
         )
-    }
-
-    /// Sets max size for statistics for a column.
-    /// Takes precedence over globally defined settings.
-    #[wasm_bindgen(js_name = setColumnMaxStatisticsSize)]
-    pub fn set_column_max_statistics_size(self, col: String, value: usize) -> Self {
-        let column_path = parquet::schema::types::ColumnPath::from(col);
-        Self(self.0.set_column_max_statistics_size(column_path, value))
     }
 }
 
