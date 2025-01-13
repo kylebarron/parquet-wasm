@@ -4,7 +4,7 @@ pub struct WrappedWritableStream<'writer> {
     pub stream: wasm_streams::writable::IntoAsyncWrite<'writer>,
 }
 
-impl<'writer> AsyncWrite for WrappedWritableStream<'writer> {
+impl AsyncWrite for WrappedWritableStream<'_> {
     fn poll_write(
         self: std::pin::Pin<&mut Self>,
         cx: &mut std::task::Context<'_>,
@@ -28,4 +28,4 @@ impl<'writer> AsyncWrite for WrappedWritableStream<'writer> {
     }
 }
 
-unsafe impl<'writer> Send for WrappedWritableStream<'writer> {}
+unsafe impl Send for WrappedWritableStream<'_> {}
