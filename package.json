@@ -9,7 +9,7 @@
     "test": "vitest run ./tests/js/index.test.ts"
   },
   "devDependencies": {
-    "@fastify/static": "^7.0.4",
+    "@fastify/static": "^8.0.4",
     "@types/node": "^22",
     "apache-arrow": "^17.0.0",
     "arrow-js-ffi": "^0.4.2",
