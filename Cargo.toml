@@ -91,7 +91,7 @@ zstd-sys = { version = "=2.0.9", optional = true, default-features = false }
 async-compat = { version = "=0.2.2", optional = true }
 async-stream = { version = "0.3.6", optional = true }
 wasm-streams = { version = "0.4.2", optional = true }
-async-trait = "0.1.83"
+async-trait = "0.1.86"
 object_store = { version = "0.11.1", default-features = false }
 url = "2.5.0"
 object-store-wasm = { git = "https://github.com/H-Plus-Time/object-store-wasm", rev = "b296d680fc67f3213a3f8de445b8fc5f590dc7e1" }
