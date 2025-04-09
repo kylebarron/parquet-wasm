@@ -271,7 +271,7 @@ impl AsyncFileReader for HTTPFileReader {
             coalesce_ranges(
                 &ranges,
                 |range| get_bytes_http(self.url.clone(), self.client.clone(), range),
-                OBJECT_STORE_COALESCE_DEFAULT,
+                self.coalesce_byte_size,
             )
             .await
         }
