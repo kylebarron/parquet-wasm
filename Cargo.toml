@@ -131,7 +131,16 @@ wasm-bindgen-test = "0.3.45"
 skip_optional_dependencies = true
 
 # Exclude certain features from the build matrix
-denylist = ["full", "all_compressions", "default"]
+denylist = [
+  "full",
+  "all_compressions",
+  "default",
+  "brotli",
+  "gzip",
+  "snappy",
+  "zstd",
+  "lz4",
+]
 
 [profile.release]
 # Tell `rustc` to optimize for small code size.
