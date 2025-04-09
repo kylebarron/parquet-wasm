@@ -58,7 +58,6 @@ console_error_panic_hook = { version = "0.1.6", optional = true }
 # wee_alloc = "0.4.5"
 
 js-sys = "0.3.72"
-getrandom = { version = "0.2.6", features = ["js"] }
 thiserror = "2.0"
 
 arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "5c43bb0c3209738dd6620243b1d84d90833e92c9", default-features = false, features = [
@@ -95,6 +94,18 @@ async-trait = "0.1.83"
 object_store = { version = "0.11.1", default-features = false }
 url = "2.5.0"
 object-store-wasm = { git = "https://github.com/H-Plus-Time/object-store-wasm", rev = "b296d680fc67f3213a3f8de445b8fc5f590dc7e1" }
+
+# https://github.com/kylebarron/arrow-wasm/issues/8#issuecomment-2790469295
+[dependencies.getrandom_v03]
+package = "getrandom"
+version = "0.3"
+features = ["wasm_js"]
+
+# https://github.com/kylebarron/arrow-wasm/issues/8#issuecomment-2790469295
+[dependencies.getrandom_v02]
+package = "getrandom"
+version = "0.2"
+features = ["js"]
 
 [dependencies.web-sys]
 version = "0.3.72"
