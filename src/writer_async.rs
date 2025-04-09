@@ -1,8 +1,8 @@
 use crate::common::stream::WrappedWritableStream;
 use crate::error::{ParquetWasmError, Result};
 use async_compat::CompatExt;
-use futures::channel::oneshot;
 use futures::StreamExt;
+use futures::channel::oneshot;
 use parquet::arrow::async_writer::AsyncArrowWriter;
 use wasm_bindgen_futures::spawn_local;
 

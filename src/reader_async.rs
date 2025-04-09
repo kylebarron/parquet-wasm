@@ -20,7 +20,7 @@ use arrow::ipc::writer::StreamWriter;
 use arrow_wasm::{RecordBatch, Table};
 use bytes::Bytes;
 use futures::TryStreamExt;
-use futures::{stream, FutureExt, StreamExt};
+use futures::{FutureExt, StreamExt, stream};
 use parquet::arrow::arrow_reader::ArrowReaderMetadata;
 use parquet::arrow::async_reader::{
     AsyncFileReader, ParquetObjectReader, ParquetRecordBatchStream, ParquetRecordBatchStreamBuilder,

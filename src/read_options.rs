@@ -1,5 +1,5 @@
-use parquet::arrow::arrow_reader::ArrowReaderBuilder;
 use parquet::arrow::ProjectionMask;
+use parquet::arrow::arrow_reader::ArrowReaderBuilder;
 use parquet::schema::types::SchemaDescriptor;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
