@@ -8,6 +8,7 @@ use crate::error::{Result, WasmResult};
 use crate::read_options::{JsReaderOptions, ReaderOptions};
 use futures::channel::oneshot;
 use futures::future::BoxFuture;
+use object_store::coalesce_ranges;
 use std::ops::Range;
 use std::sync::Arc;
 use wasm_bindgen::prelude::*;
@@ -240,55 +241,39 @@ impl MetadataSuffixFetch for &mut HTTPFileReader {
     }
 }
 
+async fn get_bytes_http(
+    url: String,
+    client: Client,
+    range: Range<u64>,
+) -> parquet::errors::Result<Bytes> {
+    let range_str = range_from_start_and_length(range.start, range.end - range.start);
+
+    // Map reqwest error to parquet error
+    // let map_err = |err| parquet::errors::ParquetError::External(Box::new(err));
+
+    let bytes = make_range_request_with_client(url, client, range_str)
+        .await
+        .unwrap();
+
+    Ok(bytes)
+}
+
 impl AsyncFileReader for HTTPFileReader {
     fn get_bytes(&mut self, range: Range<u64>) -> BoxFuture<'_, parquet::errors::Result<Bytes>> {
-        async move {
-            let range_str = range_from_start_and_length(range.start, range.end - range.start);
-
-            // Map reqwest error to parquet error
-            // let map_err = |err| parquet::errors::ParquetError::External(Box::new(err));
-
-            let bytes = make_range_request_with_client(
-                self.url.to_string(),
-                self.client.clone(),
-                range_str,
-            )
-            .await
-            .unwrap();
-
-            Ok(bytes)
-        }
-        .boxed()
+        get_bytes_http(self.url.clone(), self.client.clone(), range).boxed()
     }
 
     fn get_byte_ranges(
         &mut self,
         ranges: Vec<Range<u64>>,
     ) -> BoxFuture<'_, parquet::errors::Result<Vec<Bytes>>> {
-        let fetch_ranges = merge_ranges(&ranges, self.coalesce_byte_size);
-
-        // NOTE: This still does _sequential_ requests, but it should be _fewer_ requests if they
-        // can be merged.
         async move {
-            let mut fetched = Vec::with_capacity(ranges.len());
-
-            for range in fetch_ranges.iter() {
-                let data = self.get_bytes(range.clone()).await?;
-                fetched.push(data);
-            }
-
-            Ok(ranges
-                .iter()
-                .map(|range| {
-                    let idx = fetch_ranges.partition_point(|v| v.start <= range.start) - 1;
-                    let fetch_range = &fetch_ranges[idx];
-                    let fetch_bytes = &fetched[idx];
-
-                    let start = range.start - fetch_range.start;
-                    let end = range.end - fetch_range.start;
-                    fetch_bytes.slice(start as usize..end as usize)
-                })
-                .collect())
+            coalesce_ranges(
+                &ranges,
+                |range| get_bytes_http(self.url.clone(), self.client.clone(), range),
+                OBJECT_STORE_COALESCE_DEFAULT,
+            )
+            .await
         }
         .boxed()
     }
@@ -327,6 +312,7 @@ impl WrappedFile {
         let size = inner.size() as u64;
         Self { inner, size }
     }
+
     pub async fn get_bytes(&mut self, range: Range<u64>) -> Vec<u8> {
         use js_sys::Uint8Array;
         use wasm_bindgen_futures::JsFuture;
