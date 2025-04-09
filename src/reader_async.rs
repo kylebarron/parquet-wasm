@@ -8,10 +8,8 @@ use crate::error::{Result, WasmResult};
 use crate::read_options::{JsReaderOptions, ReaderOptions};
 use futures::channel::oneshot;
 use futures::future::BoxFuture;
-use std::collections::HashMap;
 use std::ops::Range;
 use std::sync::Arc;
-use url::Url;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 
@@ -22,14 +20,17 @@ use futures::TryStreamExt;
 use futures::{FutureExt, StreamExt, stream};
 use parquet::arrow::arrow_reader::{ArrowReaderMetadata, ArrowReaderOptions};
 use parquet::arrow::async_reader::{
-    AsyncFileReader, MetadataSuffixFetch, ParquetObjectReader, ParquetRecordBatchStream,
-    ParquetRecordBatchStreamBuilder,
+    AsyncFileReader, MetadataSuffixFetch, ParquetRecordBatchStream, ParquetRecordBatchStreamBuilder,
 };
 
 use async_compat::{Compat, CompatExt};
 use parquet::file::metadata::{FileMetaData, ParquetMetaData, ParquetMetaDataReader};
 use range_reader::RangedAsyncReader;
 use reqwest::Client;
+
+/// Range requests with a gap less than or equal to this,
+/// will be coalesced into a single request by [`coalesce_ranges`]
+const OBJECT_STORE_COALESCE_DEFAULT: u64 = 1024 * 1024;
 
 fn create_builder<T: AsyncFileReader + Unpin + Clone + 'static>(
     reader: &T,
@@ -46,14 +47,14 @@ fn create_builder<T: AsyncFileReader + Unpin + Clone + 'static>(
 #[derive(Clone)]
 enum InnerParquetFile {
     File(JsFileReader),
-    ObjectStore(ParquetObjectReader),
+    Http(HTTPFileReader),
 }
 
 impl AsyncFileReader for InnerParquetFile {
     fn get_bytes(&mut self, range: Range<u64>) -> BoxFuture<'_, parquet::errors::Result<Bytes>> {
         match self {
             Self::File(reader) => reader.get_bytes(range),
-            Self::ObjectStore(reader) => reader.get_bytes(range),
+            Self::Http(reader) => reader.get_bytes(range),
         }
     }
 
@@ -63,7 +64,7 @@ impl AsyncFileReader for InnerParquetFile {
     ) -> BoxFuture<'_, parquet::errors::Result<Vec<Bytes>>> {
         match self {
             Self::File(reader) => reader.get_byte_ranges(ranges),
-            Self::ObjectStore(reader) => reader.get_byte_ranges(ranges),
+            Self::Http(reader) => reader.get_byte_ranges(ranges),
         }
     }
 
@@ -73,7 +74,7 @@ impl AsyncFileReader for InnerParquetFile {
     ) -> BoxFuture<'a, parquet::errors::Result<Arc<ParquetMetaData>>> {
         match self {
             Self::File(reader) => reader.get_metadata(options),
-            Self::ObjectStore(reader) => reader.get_metadata(options),
+            Self::Http(reader) => reader.get_metadata(options),
         }
     }
 }
@@ -87,26 +88,13 @@ pub struct ParquetFile {
 #[wasm_bindgen]
 impl ParquetFile {
     /// Construct a ParquetFile from a new URL.
-    ///
-    /// @param options The options to pass into `object-store`'s [`parse_url_opts`][parse_url_opts]
-    ///
-    /// [parse_url_opts]: https://docs.rs/object_store/latest/object_store/fn.parse_url_opts.html
     #[wasm_bindgen(js_name = fromUrl)]
-    pub async fn from_url(url: String, options: Option<js_sys::Map>) -> WasmResult<ParquetFile> {
-        let parsed_url = Url::parse(&url)?;
-        let (storage_container, path) = match options {
-            Some(options) => {
-                let deserialized_options: HashMap<String, String> =
-                    serde_wasm_bindgen::from_value(options.into())?;
-                parse_url_opts(&parsed_url, deserialized_options.iter())?
-            }
-            None => parse_url(&parsed_url)?,
-        };
-        let file_meta = storage_container.head(&path).await?;
-        let mut reader = ParquetObjectReader::new(storage_container.into(), file_meta);
+    pub async fn from_url(url: String) -> WasmResult<ParquetFile> {
+        let client = Client::new();
+        let mut reader = HTTPFileReader::new(url, client, OBJECT_STORE_COALESCE_DEFAULT);
         let meta = ArrowReaderMetadata::load_async(&mut reader, Default::default()).await?;
         Ok(Self {
-            reader: InnerParquetFile::ObjectStore(reader),
+            reader: InnerParquetFile::Http(reader),
             meta,
         })
     }

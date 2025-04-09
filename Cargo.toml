@@ -73,7 +73,6 @@ arrow = { git = "https://github.com/apache/arrow-rs", rev = "9322547590ab32efeff
 parquet = { git = "https://github.com/apache/arrow-rs", rev = "9322547590ab32efeff8c0486e4a3a2cb5887a26", default-features = false, features = [
   "arrow",
   "base64",
-  "object_store",
 ] }
 bytes = "1"
 
