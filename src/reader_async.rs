@@ -306,6 +306,7 @@ struct WrappedFile {
 /// Any struct that holds one is inherently !Send, which disqualifies it from being used
 /// with the AsyncFileReader trait.
 unsafe impl Send for WrappedFile {}
+unsafe impl Sync for WrappedFile {}
 
 impl WrappedFile {
     pub fn new(inner: web_sys::Blob) -> Self {
@@ -332,6 +333,19 @@ impl WrappedFile {
 
         receiver.await.unwrap()
     }
+}
+
+async fn get_bytes_file(
+    mut file: WrappedFile,
+    range: Range<u64>,
+) -> parquet::errors::Result<Bytes> {
+    let (sender, receiver) = oneshot::channel();
+    spawn_local(async move {
+        let result: Bytes = file.get_bytes(range).await.into();
+        sender.send(result).unwrap()
+    });
+    let data = receiver.await.unwrap();
+    Ok(data)
 }
 
 #[derive(Debug, Clone)]
@@ -368,34 +382,13 @@ impl AsyncFileReader for JsFileReader {
         &mut self,
         ranges: Vec<Range<u64>>,
     ) -> BoxFuture<'_, parquet::errors::Result<Vec<Bytes>>> {
-        let fetch_ranges = merge_ranges(&ranges, self.coalesce_byte_size);
-
-        // NOTE: This still does _sequential_ requests, but it should be _fewer_ requests if they
-        // can be merged.
-        // Assuming that we have a file on the local file system, these fetches should be
-        // _relatively_ fast
         async move {
-            let mut fetched = Vec::with_capacity(ranges.len());
-
-            for range in fetch_ranges.iter() {
-                let data = self.get_bytes(range.clone()).await?;
-                fetched.push(data);
-            }
-
-            Ok(ranges
-                .iter()
-                .map(|range| {
-                    // a given range CAN span two coalesced row group sets.
-                    // log!("Range: {:?} Actual length: {:?}", range.end - range.start, res.len());
-                    let idx = fetch_ranges.partition_point(|v| v.start <= range.start) - 1;
-                    let fetch_range = &fetch_ranges[idx];
-                    let fetch_bytes = &fetched[idx];
-
-                    let start = range.start - fetch_range.start;
-                    let end = range.end - fetch_range.start;
-                    fetch_bytes.slice(start as usize..end as usize)
-                })
-                .collect())
+            coalesce_ranges(
+                &ranges,
+                |range| get_bytes_file(self.file.clone(), range),
+                self.coalesce_byte_size,
+            )
+            .await
         }
         .boxed()
     }
@@ -436,47 +429,6 @@ pub async fn make_range_request_with_client(
     });
     let data = receiver.await.unwrap();
     Ok(data)
-}
-
-/// Returns a sorted list of ranges that cover `ranges`
-///
-/// Copied from object-store
-/// https://github.com/apache/arrow-rs/blob/61da64a0557c80af5bb43b5f15c6d8bb6a314cb2/object_store/src/util.rs#L132C1-L169C1
-fn merge_ranges(ranges: &[Range<u64>], coalesce: u64) -> Vec<Range<u64>> {
-    if ranges.is_empty() {
-        return vec![];
-    }
-
-    let mut ranges = ranges.to_vec();
-    ranges.sort_unstable_by_key(|range| range.start);
-
-    let mut ret = Vec::with_capacity(ranges.len());
-    let mut start_idx = 0;
-    let mut end_idx = 1;
-
-    while start_idx != ranges.len() {
-        let mut range_end = ranges[start_idx].end;
-
-        while end_idx != ranges.len()
-            && ranges[end_idx]
-                .start
-                .checked_sub(range_end)
-                .map(|delta| delta <= coalesce)
-                .unwrap_or(true)
-        {
-            range_end = range_end.max(ranges[end_idx].end);
-            end_idx += 1;
-        }
-
-        let start = ranges[start_idx].start;
-        let end = range_end;
-        ret.push(start..end);
-
-        start_idx = end_idx;
-        end_idx += 1;
-    }
-
-    ret
 }
 
 pub async fn read_metadata_async(
