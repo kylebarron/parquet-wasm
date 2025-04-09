@@ -8,7 +8,6 @@ use crate::error::{Result, WasmResult};
 use crate::read_options::{JsReaderOptions, ReaderOptions};
 use futures::channel::oneshot;
 use futures::future::BoxFuture;
-use object_store_wasm::parse::{parse_url, parse_url_opts};
 use std::collections::HashMap;
 use std::ops::Range;
 use std::sync::Arc;
@@ -21,9 +20,10 @@ use arrow_wasm::{RecordBatch, Table};
 use bytes::Bytes;
 use futures::TryStreamExt;
 use futures::{FutureExt, StreamExt, stream};
-use parquet::arrow::arrow_reader::ArrowReaderMetadata;
+use parquet::arrow::arrow_reader::{ArrowReaderMetadata, ArrowReaderOptions};
 use parquet::arrow::async_reader::{
-    AsyncFileReader, ParquetObjectReader, ParquetRecordBatchStream, ParquetRecordBatchStreamBuilder,
+    AsyncFileReader, MetadataSuffixFetch, ParquetObjectReader, ParquetRecordBatchStream,
+    ParquetRecordBatchStreamBuilder,
 };
 
 use async_compat::{Compat, CompatExt};
@@ -50,7 +50,7 @@ enum InnerParquetFile {
 }
 
 impl AsyncFileReader for InnerParquetFile {
-    fn get_bytes(&mut self, range: Range<usize>) -> BoxFuture<'_, parquet::errors::Result<Bytes>> {
+    fn get_bytes(&mut self, range: Range<u64>) -> BoxFuture<'_, parquet::errors::Result<Bytes>> {
         match self {
             Self::File(reader) => reader.get_bytes(range),
             Self::ObjectStore(reader) => reader.get_bytes(range),
@@ -59,7 +59,7 @@ impl AsyncFileReader for InnerParquetFile {
 
     fn get_byte_ranges(
         &mut self,
-        ranges: Vec<Range<usize>>,
+        ranges: Vec<Range<u64>>,
     ) -> BoxFuture<'_, parquet::errors::Result<Vec<Bytes>>> {
         match self {
             Self::File(reader) => reader.get_byte_ranges(ranges),
@@ -67,10 +67,13 @@ impl AsyncFileReader for InnerParquetFile {
         }
     }
 
-    fn get_metadata(&mut self) -> BoxFuture<'_, parquet::errors::Result<Arc<ParquetMetaData>>> {
+    fn get_metadata<'a>(
+        &'a mut self,
+        options: Option<&'a ArrowReaderOptions>,
+    ) -> BoxFuture<'a, parquet::errors::Result<Arc<ParquetMetaData>>> {
         match self {
-            Self::File(reader) => reader.get_metadata(),
-            Self::ObjectStore(reader) => reader.get_metadata(),
+            Self::File(reader) => reader.get_metadata(options),
+            Self::ObjectStore(reader) => reader.get_metadata(options),
         }
     }
 }
@@ -214,11 +217,11 @@ impl ParquetFile {
 pub struct HTTPFileReader {
     url: String,
     client: Client,
-    coalesce_byte_size: usize,
+    coalesce_byte_size: u64,
 }
 
 impl HTTPFileReader {
-    pub fn new(url: String, client: Client, coalesce_byte_size: usize) -> Self {
+    pub fn new(url: String, client: Client, coalesce_byte_size: u64) -> Self {
         Self {
             url,
             client,
@@ -227,11 +230,32 @@ impl HTTPFileReader {
     }
 }
 
-impl AsyncFileReader for HTTPFileReader {
-    fn get_bytes(&mut self, range: Range<usize>) -> BoxFuture<'_, parquet::errors::Result<Bytes>> {
+impl MetadataSuffixFetch for &mut HTTPFileReader {
+    fn fetch_suffix(&mut self, suffix: usize) -> BoxFuture<'_, parquet::errors::Result<Bytes>> {
         async move {
-            let range_str =
-                range_from_start_and_length(range.start as u64, (range.end - range.start) as u64);
+            let range_str = range_from_end(suffix);
+
+            // Map reqwest error to parquet error
+            // let map_err = |err| parquet::errors::ParquetError::External(Box::new(err));
+
+            let bytes = make_range_request_with_client(
+                self.url.to_string(),
+                self.client.clone(),
+                range_str,
+            )
+            .await
+            .unwrap();
+
+            Ok(bytes)
+        }
+        .boxed()
+    }
+}
+
+impl AsyncFileReader for HTTPFileReader {
+    fn get_bytes(&mut self, range: Range<u64>) -> BoxFuture<'_, parquet::errors::Result<Bytes>> {
+        async move {
+            let range_str = range_from_start_and_length(range.start, range.end - range.start);
 
             // Map reqwest error to parquet error
             // let map_err = |err| parquet::errors::ParquetError::External(Box::new(err));
@@ -251,7 +275,7 @@ impl AsyncFileReader for HTTPFileReader {
 
     fn get_byte_ranges(
         &mut self,
-        ranges: Vec<Range<usize>>,
+        ranges: Vec<Range<u64>>,
     ) -> BoxFuture<'_, parquet::errors::Result<Vec<Bytes>>> {
         let fetch_ranges = merge_ranges(&ranges, self.coalesce_byte_size);
 
@@ -274,17 +298,23 @@ impl AsyncFileReader for HTTPFileReader {
 
                     let start = range.start - fetch_range.start;
                     let end = range.end - fetch_range.start;
-                    fetch_bytes.slice(start..end)
+                    fetch_bytes.slice(start as usize..end as usize)
                 })
                 .collect())
         }
         .boxed()
     }
 
-    fn get_metadata(&mut self) -> BoxFuture<'_, parquet::errors::Result<Arc<ParquetMetaData>>> {
+    fn get_metadata<'a>(
+        &'a mut self,
+        _options: Option<&'a ArrowReaderOptions>,
+    ) -> BoxFuture<'a, parquet::errors::Result<Arc<ParquetMetaData>>> {
         async move {
-            let meta = fetch_parquet_metadata(self.url.as_str(), &self.client, None).await?;
-            Ok(Arc::new(meta))
+            let metadata = ParquetMetaDataReader::new()
+                .with_page_indexes(true)
+                .load_via_suffix_and_finish(self)
+                .await?;
+            Ok(Arc::new(metadata))
         }
         .boxed()
     }
@@ -293,7 +323,7 @@ impl AsyncFileReader for HTTPFileReader {
 #[derive(Debug, Clone)]
 struct WrappedFile {
     inner: web_sys::Blob,
-    pub size: f64,
+    pub size: u64,
 }
 /// Safety: This is not in fact thread-safe. Do not attempt to use this in work-stealing
 /// async runtimes / multi-threaded environments
@@ -306,10 +336,10 @@ unsafe impl Send for WrappedFile {}
 
 impl WrappedFile {
     pub fn new(inner: web_sys::Blob) -> Self {
-        let size = inner.size();
+        let size = inner.size() as u64;
         Self { inner, size }
     }
-    pub async fn get_bytes(&mut self, range: Range<usize>) -> Vec<u8> {
+    pub async fn get_bytes(&mut self, range: Range<u64>) -> Vec<u8> {
         use js_sys::Uint8Array;
         use wasm_bindgen_futures::JsFuture;
         let (sender, receiver) = oneshot::channel();
@@ -333,11 +363,11 @@ impl WrappedFile {
 #[derive(Debug, Clone)]
 pub struct JsFileReader {
     file: WrappedFile,
-    coalesce_byte_size: usize,
+    coalesce_byte_size: u64,
 }
 
 impl JsFileReader {
-    pub fn new(file: web_sys::Blob, coalesce_byte_size: usize) -> Self {
+    pub fn new(file: web_sys::Blob, coalesce_byte_size: u64) -> Self {
         Self {
             file: WrappedFile::new(file),
             coalesce_byte_size,
@@ -346,7 +376,7 @@ impl JsFileReader {
 }
 
 impl AsyncFileReader for JsFileReader {
-    fn get_bytes(&mut self, range: Range<usize>) -> BoxFuture<'_, parquet::errors::Result<Bytes>> {
+    fn get_bytes(&mut self, range: Range<u64>) -> BoxFuture<'_, parquet::errors::Result<Bytes>> {
         async move {
             let (sender, receiver) = oneshot::channel();
             let mut file = self.file.clone();
@@ -362,7 +392,7 @@ impl AsyncFileReader for JsFileReader {
 
     fn get_byte_ranges(
         &mut self,
-        ranges: Vec<Range<usize>>,
+        ranges: Vec<Range<u64>>,
     ) -> BoxFuture<'_, parquet::errors::Result<Vec<Bytes>>> {
         let fetch_ranges = merge_ranges(&ranges, self.coalesce_byte_size);
 
@@ -389,40 +419,24 @@ impl AsyncFileReader for JsFileReader {
 
                     let start = range.start - fetch_range.start;
                     let end = range.end - fetch_range.start;
-                    fetch_bytes.slice(start..end)
+                    fetch_bytes.slice(start as usize..end as usize)
                 })
                 .collect())
         }
         .boxed()
     }
 
-    fn get_metadata(&mut self) -> BoxFuture<'_, parquet::errors::Result<Arc<ParquetMetaData>>> {
+    fn get_metadata<'a>(
+        &'a mut self,
+        _options: Option<&'a ArrowReaderOptions>,
+    ) -> BoxFuture<'a, parquet::errors::Result<Arc<ParquetMetaData>>> {
+        let file_size = self.file.size;
         async move {
-            // we only *really* need the last 8 bytes to determine the location of the metadata bytes
-            let file_size: usize = (self.file.size as i64).try_into().unwrap();
-            // we already know the size of the file!
-            let suffix_range: Range<usize> = (file_size - 8)..file_size;
-            let suffix = self.get_bytes(suffix_range).await.unwrap();
-            let suffix_len = suffix.len();
-
-            let mut footer = [0; 8];
-            footer.copy_from_slice(&suffix[suffix_len - 8..suffix_len]);
-            let metadata_byte_length = ParquetMetaDataReader::decode_footer(&footer)?;
-            // Did not fetch the entire file metadata in the initial read, need to make a second request
-            let meta = if metadata_byte_length > suffix_len - 8 {
-                // might want to figure out how to get get_bytes to accept a one-sided range
-                let meta_range = (file_size - metadata_byte_length - 8)..file_size;
-
-                let meta_bytes = self.get_bytes(meta_range).await.unwrap();
-
-                ParquetMetaDataReader::decode_metadata(&meta_bytes[0..meta_bytes.len() - 8])?
-            } else {
-                let metadata_start = suffix_len - metadata_byte_length - 8;
-
-                let slice = &suffix[metadata_start..suffix_len - 8];
-                ParquetMetaDataReader::decode_metadata(slice)?
-            };
-            Ok(Arc::new(meta))
+            let metadata = ParquetMetaDataReader::new()
+                .with_page_indexes(true)
+                .load_and_finish(self, file_size)
+                .await?;
+            Ok(Arc::new(metadata))
         }
         .boxed()
     }
@@ -454,7 +468,7 @@ pub async fn make_range_request_with_client(
 ///
 /// Copied from object-store
 /// https://github.com/apache/arrow-rs/blob/61da64a0557c80af5bb43b5f15c6d8bb6a314cb2/object_store/src/util.rs#L132C1-L169C1
-fn merge_ranges(ranges: &[Range<usize>], coalesce: usize) -> Vec<Range<usize>> {
+fn merge_ranges(ranges: &[Range<u64>], coalesce: u64) -> Vec<Range<u64>> {
     if ranges.is_empty() {
         return vec![];
     }
@@ -489,49 +503,6 @@ fn merge_ranges(ranges: &[Range<usize>], coalesce: usize) -> Vec<Range<usize>> {
     }
 
     ret
-}
-
-// Derived from:
-// https://github.com/apache/arrow-rs/blob/61da64a0557c80af5bb43b5f15c6d8bb6a314cb2/parquet/src/arrow/async_reader/metadata.rs#L54-L57
-pub async fn fetch_parquet_metadata(
-    url: &str,
-    client: &Client,
-    prefetch: Option<usize>,
-) -> parquet::errors::Result<ParquetMetaData> {
-    let suffix_length = prefetch.unwrap_or(8);
-    let range_str = range_from_end(suffix_length as u64);
-
-    // Map reqwest error to parquet error
-    // let map_err = |err| parquet::errors::ParquetError::External(Box::new(err));
-
-    let suffix = make_range_request_with_client(url.to_string(), client.clone(), range_str)
-        .await
-        .unwrap();
-    let suffix_len = suffix.len();
-
-    let mut footer = [0; 8];
-    footer.copy_from_slice(&suffix[suffix_len - 8..suffix_len]);
-
-    let metadata_byte_length = ParquetMetaDataReader::decode_footer(&footer)?;
-
-    // Did not fetch the entire file metadata in the initial read, need to make a second request
-    let metadata = if metadata_byte_length > suffix_len - 8 {
-        let metadata_range_str = range_from_end((metadata_byte_length + 8) as u64);
-
-        let meta_bytes =
-            make_range_request_with_client(url.to_string(), client.clone(), metadata_range_str)
-                .await
-                .unwrap();
-
-        ParquetMetaDataReader::decode_metadata(&meta_bytes[0..meta_bytes.len() - 8])?
-    } else {
-        let metadata_start = suffix_len - metadata_byte_length - 8;
-
-        let slice = &suffix[metadata_start..suffix_len - 8];
-        ParquetMetaDataReader::decode_metadata(slice)?
-    };
-
-    Ok(metadata)
 }
 
 pub async fn read_metadata_async(
