@@ -246,7 +246,7 @@ jobs:
               ...lineFragments
             ]).write();
             fs.cpSync(process.env.GITHUB_STEP_SUMMARY, './pr/step_summary.md')
-      - uses: actions/upload-artifact@v4
-        with:
-          name: pr
-          path: pr/
+      # - uses: actions/upload-artifact@v4
+      #   with:
+      #     name: pr
+      #     path: pr/
