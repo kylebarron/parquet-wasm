@@ -31,7 +31,7 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-            targets: wasm32-unknown-unknown
+          targets: wasm32-unknown-unknown
 
       - uses: Swatinem/rust-cache@v2
 
@@ -75,7 +75,7 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-            components: rustfmt
+          components: rustfmt
 
       - uses: Swatinem/rust-cache@v2
 
@@ -91,7 +91,7 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-            components: clippy
+          components: clippy
 
       - uses: Swatinem/rust-cache@v2
 
@@ -106,7 +106,7 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-            targets: wasm32-unknown-unknown
+          targets: wasm32-unknown-unknown
 
       - name: Install
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
@@ -140,7 +140,7 @@ jobs:
           if [[ "${{ github.event_type }}" != "pull_request" ]]; then
             cat ./pr/step_summary.md > $GITHUB_STEP_SUMMARY
           fi;
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: pr
           path: pr/
@@ -150,11 +150,11 @@ jobs:
       github.event_name == 'pull_request'
     needs: node-build-report
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: pr
           path: pr/
-      - name: 'Generate size deltas'
+      - name: "Generate size deltas"
         uses: actions/github-script@v7
         with:
           script: |
@@ -186,10 +186,10 @@ jobs:
                 artifact_id: matchArtifact.id,
                 archive_format: 'zip',
               });
-                
+
               fs.writeFileSync('${{github.workspace}}/base.zip', Buffer.from(download.data));
               execSync(`unzip -p base.zip asset_manifest.json >base_asset_manifest.json || true`);
-            } 
+            }
             // now, read in the asset manifests, for the head and base
             let baseAssets = {};
             try {
@@ -246,7 +246,7 @@ jobs:
               ...lineFragments
             ]).write();
             fs.cpSync(process.env.GITHUB_STEP_SUMMARY, './pr/step_summary.md')
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: pr
           path: pr/
