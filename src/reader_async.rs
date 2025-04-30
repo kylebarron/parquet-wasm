@@ -8,11 +8,9 @@ use crate::error::{Result, WasmResult};
 use crate::read_options::{JsReaderOptions, ReaderOptions};
 use futures::channel::oneshot;
 use futures::future::BoxFuture;
-use object_store_wasm::parse::{parse_url, parse_url_opts};
-use std::collections::HashMap;
+use object_store::coalesce_ranges;
 use std::ops::Range;
 use std::sync::Arc;
-use url::Url;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 
@@ -21,15 +19,19 @@ use arrow_wasm::{RecordBatch, Table};
 use bytes::Bytes;
 use futures::TryStreamExt;
 use futures::{FutureExt, StreamExt, stream};
-use parquet::arrow::arrow_reader::ArrowReaderMetadata;
+use parquet::arrow::arrow_reader::{ArrowReaderMetadata, ArrowReaderOptions};
 use parquet::arrow::async_reader::{
-    AsyncFileReader, ParquetObjectReader, ParquetRecordBatchStream, ParquetRecordBatchStreamBuilder,
+    AsyncFileReader, MetadataSuffixFetch, ParquetRecordBatchStream, ParquetRecordBatchStreamBuilder,
 };
 
 use async_compat::{Compat, CompatExt};
 use parquet::file::metadata::{FileMetaData, ParquetMetaData, ParquetMetaDataReader};
 use range_reader::RangedAsyncReader;
 use reqwest::Client;
+
+/// Range requests with a gap less than or equal to this,
+/// will be coalesced into a single request by [`coalesce_ranges`]
+const OBJECT_STORE_COALESCE_DEFAULT: u64 = 1024 * 1024;
 
 fn create_builder<T: AsyncFileReader + Unpin + Clone + 'static>(
     reader: &T,
@@ -46,31 +48,34 @@ fn create_builder<T: AsyncFileReader + Unpin + Clone + 'static>(
 #[derive(Clone)]
 enum InnerParquetFile {
     File(JsFileReader),
-    ObjectStore(ParquetObjectReader),
+    Http(HTTPFileReader),
 }
 
 impl AsyncFileReader for InnerParquetFile {
-    fn get_bytes(&mut self, range: Range<usize>) -> BoxFuture<'_, parquet::errors::Result<Bytes>> {
+    fn get_bytes(&mut self, range: Range<u64>) -> BoxFuture<'_, parquet::errors::Result<Bytes>> {
         match self {
             Self::File(reader) => reader.get_bytes(range),
-            Self::ObjectStore(reader) => reader.get_bytes(range),
+            Self::Http(reader) => reader.get_bytes(range),
         }
     }
 
     fn get_byte_ranges(
         &mut self,
-        ranges: Vec<Range<usize>>,
+        ranges: Vec<Range<u64>>,
     ) -> BoxFuture<'_, parquet::errors::Result<Vec<Bytes>>> {
         match self {
             Self::File(reader) => reader.get_byte_ranges(ranges),
-            Self::ObjectStore(reader) => reader.get_byte_ranges(ranges),
+            Self::Http(reader) => reader.get_byte_ranges(ranges),
         }
     }
 
-    fn get_metadata(&mut self) -> BoxFuture<'_, parquet::errors::Result<Arc<ParquetMetaData>>> {
+    fn get_metadata<'a>(
+        &'a mut self,
+        options: Option<&'a ArrowReaderOptions>,
+    ) -> BoxFuture<'a, parquet::errors::Result<Arc<ParquetMetaData>>> {
         match self {
-            Self::File(reader) => reader.get_metadata(),
-            Self::ObjectStore(reader) => reader.get_metadata(),
+            Self::File(reader) => reader.get_metadata(options),
+            Self::Http(reader) => reader.get_metadata(options),
         }
     }
 }
@@ -84,26 +89,13 @@ pub struct ParquetFile {
 #[wasm_bindgen]
 impl ParquetFile {
     /// Construct a ParquetFile from a new URL.
-    ///
-    /// @param options The options to pass into `object-store`'s [`parse_url_opts`][parse_url_opts]
-    ///
-    /// [parse_url_opts]: https://docs.rs/object_store/latest/object_store/fn.parse_url_opts.html
     #[wasm_bindgen(js_name = fromUrl)]
-    pub async fn from_url(url: String, options: Option<js_sys::Map>) -> WasmResult<ParquetFile> {
-        let parsed_url = Url::parse(&url)?;
-        let (storage_container, path) = match options {
-            Some(options) => {
-                let deserialized_options: HashMap<String, String> =
-                    serde_wasm_bindgen::from_value(options.into())?;
-                parse_url_opts(&parsed_url, deserialized_options.iter())?
-            }
-            None => parse_url(&parsed_url)?,
-        };
-        let file_meta = storage_container.head(&path).await?;
-        let mut reader = ParquetObjectReader::new(storage_container.into(), file_meta);
+    pub async fn from_url(url: String) -> WasmResult<ParquetFile> {
+        let client = Client::new();
+        let mut reader = HTTPFileReader::new(url, client, OBJECT_STORE_COALESCE_DEFAULT);
         let meta = ArrowReaderMetadata::load_async(&mut reader, Default::default()).await?;
         Ok(Self {
-            reader: InnerParquetFile::ObjectStore(reader),
+            reader: InnerParquetFile::Http(reader),
             meta,
         })
     }
@@ -214,11 +206,11 @@ impl ParquetFile {
 pub struct HTTPFileReader {
     url: String,
     client: Client,
-    coalesce_byte_size: usize,
+    coalesce_byte_size: u64,
 }
 
 impl HTTPFileReader {
-    pub fn new(url: String, client: Client, coalesce_byte_size: usize) -> Self {
+    pub fn new(url: String, client: Client, coalesce_byte_size: u64) -> Self {
         Self {
             url,
             client,
@@ -227,11 +219,10 @@ impl HTTPFileReader {
     }
 }
 
-impl AsyncFileReader for HTTPFileReader {
-    fn get_bytes(&mut self, range: Range<usize>) -> BoxFuture<'_, parquet::errors::Result<Bytes>> {
+impl MetadataSuffixFetch for &mut HTTPFileReader {
+    fn fetch_suffix(&mut self, suffix: usize) -> BoxFuture<'_, parquet::errors::Result<Bytes>> {
         async move {
-            let range_str =
-                range_from_start_and_length(range.start as u64, (range.end - range.start) as u64);
+            let range_str = range_from_end(suffix);
 
             // Map reqwest error to parquet error
             // let map_err = |err| parquet::errors::ParquetError::External(Box::new(err));
@@ -248,43 +239,55 @@ impl AsyncFileReader for HTTPFileReader {
         }
         .boxed()
     }
+}
+
+async fn get_bytes_http(
+    url: String,
+    client: Client,
+    range: Range<u64>,
+) -> parquet::errors::Result<Bytes> {
+    let range_str = range_from_start_and_length(range.start, range.end - range.start);
+
+    // Map reqwest error to parquet error
+    // let map_err = |err| parquet::errors::ParquetError::External(Box::new(err));
+
+    let bytes = make_range_request_with_client(url, client, range_str)
+        .await
+        .unwrap();
+
+    Ok(bytes)
+}
+
+impl AsyncFileReader for HTTPFileReader {
+    fn get_bytes(&mut self, range: Range<u64>) -> BoxFuture<'_, parquet::errors::Result<Bytes>> {
+        get_bytes_http(self.url.clone(), self.client.clone(), range).boxed()
+    }
 
     fn get_byte_ranges(
         &mut self,
-        ranges: Vec<Range<usize>>,
+        ranges: Vec<Range<u64>>,
     ) -> BoxFuture<'_, parquet::errors::Result<Vec<Bytes>>> {
-        let fetch_ranges = merge_ranges(&ranges, self.coalesce_byte_size);
-
-        // NOTE: This still does _sequential_ requests, but it should be _fewer_ requests if they
-        // can be merged.
         async move {
-            let mut fetched = Vec::with_capacity(ranges.len());
-
-            for range in fetch_ranges.iter() {
-                let data = self.get_bytes(range.clone()).await?;
-                fetched.push(data);
-            }
-
-            Ok(ranges
-                .iter()
-                .map(|range| {
-                    let idx = fetch_ranges.partition_point(|v| v.start <= range.start) - 1;
-                    let fetch_range = &fetch_ranges[idx];
-                    let fetch_bytes = &fetched[idx];
-
-                    let start = range.start - fetch_range.start;
-                    let end = range.end - fetch_range.start;
-                    fetch_bytes.slice(start..end)
-                })
-                .collect())
+            coalesce_ranges(
+                &ranges,
+                |range| get_bytes_http(self.url.clone(), self.client.clone(), range),
+                self.coalesce_byte_size,
+            )
+            .await
         }
         .boxed()
     }
 
-    fn get_metadata(&mut self) -> BoxFuture<'_, parquet::errors::Result<Arc<ParquetMetaData>>> {
+    fn get_metadata<'a>(
+        &'a mut self,
+        _options: Option<&'a ArrowReaderOptions>,
+    ) -> BoxFuture<'a, parquet::errors::Result<Arc<ParquetMetaData>>> {
         async move {
-            let meta = fetch_parquet_metadata(self.url.as_str(), &self.client, None).await?;
-            Ok(Arc::new(meta))
+            let metadata = ParquetMetaDataReader::new()
+                .with_page_indexes(true)
+                .load_via_suffix_and_finish(self)
+                .await?;
+            Ok(Arc::new(metadata))
         }
         .boxed()
     }
@@ -293,7 +296,7 @@ impl AsyncFileReader for HTTPFileReader {
 #[derive(Debug, Clone)]
 struct WrappedFile {
     inner: web_sys::Blob,
-    pub size: f64,
+    pub size: u64,
 }
 /// Safety: This is not in fact thread-safe. Do not attempt to use this in work-stealing
 /// async runtimes / multi-threaded environments
@@ -303,13 +306,15 @@ struct WrappedFile {
 /// Any struct that holds one is inherently !Send, which disqualifies it from being used
 /// with the AsyncFileReader trait.
 unsafe impl Send for WrappedFile {}
+unsafe impl Sync for WrappedFile {}
 
 impl WrappedFile {
     pub fn new(inner: web_sys::Blob) -> Self {
-        let size = inner.size();
+        let size = inner.size() as u64;
         Self { inner, size }
     }
-    pub async fn get_bytes(&mut self, range: Range<usize>) -> Vec<u8> {
+
+    pub async fn get_bytes(&mut self, range: Range<u64>) -> Vec<u8> {
         use js_sys::Uint8Array;
         use wasm_bindgen_futures::JsFuture;
         let (sender, receiver) = oneshot::channel();
@@ -330,14 +335,27 @@ impl WrappedFile {
     }
 }
 
+async fn get_bytes_file(
+    mut file: WrappedFile,
+    range: Range<u64>,
+) -> parquet::errors::Result<Bytes> {
+    let (sender, receiver) = oneshot::channel();
+    spawn_local(async move {
+        let result: Bytes = file.get_bytes(range).await.into();
+        sender.send(result).unwrap()
+    });
+    let data = receiver.await.unwrap();
+    Ok(data)
+}
+
 #[derive(Debug, Clone)]
 pub struct JsFileReader {
     file: WrappedFile,
-    coalesce_byte_size: usize,
+    coalesce_byte_size: u64,
 }
 
 impl JsFileReader {
-    pub fn new(file: web_sys::Blob, coalesce_byte_size: usize) -> Self {
+    pub fn new(file: web_sys::Blob, coalesce_byte_size: u64) -> Self {
         Self {
             file: WrappedFile::new(file),
             coalesce_byte_size,
@@ -346,7 +364,7 @@ impl JsFileReader {
 }
 
 impl AsyncFileReader for JsFileReader {
-    fn get_bytes(&mut self, range: Range<usize>) -> BoxFuture<'_, parquet::errors::Result<Bytes>> {
+    fn get_bytes(&mut self, range: Range<u64>) -> BoxFuture<'_, parquet::errors::Result<Bytes>> {
         async move {
             let (sender, receiver) = oneshot::channel();
             let mut file = self.file.clone();
@@ -362,67 +380,30 @@ impl AsyncFileReader for JsFileReader {
 
     fn get_byte_ranges(
         &mut self,
-        ranges: Vec<Range<usize>>,
+        ranges: Vec<Range<u64>>,
     ) -> BoxFuture<'_, parquet::errors::Result<Vec<Bytes>>> {
-        let fetch_ranges = merge_ranges(&ranges, self.coalesce_byte_size);
-
-        // NOTE: This still does _sequential_ requests, but it should be _fewer_ requests if they
-        // can be merged.
-        // Assuming that we have a file on the local file system, these fetches should be
-        // _relatively_ fast
         async move {
-            let mut fetched = Vec::with_capacity(ranges.len());
-
-            for range in fetch_ranges.iter() {
-                let data = self.get_bytes(range.clone()).await?;
-                fetched.push(data);
-            }
-
-            Ok(ranges
-                .iter()
-                .map(|range| {
-                    // a given range CAN span two coalesced row group sets.
-                    // log!("Range: {:?} Actual length: {:?}", range.end - range.start, res.len());
-                    let idx = fetch_ranges.partition_point(|v| v.start <= range.start) - 1;
-                    let fetch_range = &fetch_ranges[idx];
-                    let fetch_bytes = &fetched[idx];
-
-                    let start = range.start - fetch_range.start;
-                    let end = range.end - fetch_range.start;
-                    fetch_bytes.slice(start..end)
-                })
-                .collect())
+            coalesce_ranges(
+                &ranges,
+                |range| get_bytes_file(self.file.clone(), range),
+                self.coalesce_byte_size,
+            )
+            .await
         }
         .boxed()
     }
 
-    fn get_metadata(&mut self) -> BoxFuture<'_, parquet::errors::Result<Arc<ParquetMetaData>>> {
+    fn get_metadata<'a>(
+        &'a mut self,
+        _options: Option<&'a ArrowReaderOptions>,
+    ) -> BoxFuture<'a, parquet::errors::Result<Arc<ParquetMetaData>>> {
+        let file_size = self.file.size;
         async move {
-            // we only *really* need the last 8 bytes to determine the location of the metadata bytes
-            let file_size: usize = (self.file.size as i64).try_into().unwrap();
-            // we already know the size of the file!
-            let suffix_range: Range<usize> = (file_size - 8)..file_size;
-            let suffix = self.get_bytes(suffix_range).await.unwrap();
-            let suffix_len = suffix.len();
-
-            let mut footer = [0; 8];
-            footer.copy_from_slice(&suffix[suffix_len - 8..suffix_len]);
-            let metadata_byte_length = ParquetMetaDataReader::decode_footer(&footer)?;
-            // Did not fetch the entire file metadata in the initial read, need to make a second request
-            let meta = if metadata_byte_length > suffix_len - 8 {
-                // might want to figure out how to get get_bytes to accept a one-sided range
-                let meta_range = (file_size - metadata_byte_length - 8)..file_size;
-
-                let meta_bytes = self.get_bytes(meta_range).await.unwrap();
-
-                ParquetMetaDataReader::decode_metadata(&meta_bytes[0..meta_bytes.len() - 8])?
-            } else {
-                let metadata_start = suffix_len - metadata_byte_length - 8;
-
-                let slice = &suffix[metadata_start..suffix_len - 8];
-                ParquetMetaDataReader::decode_metadata(slice)?
-            };
-            Ok(Arc::new(meta))
+            let metadata = ParquetMetaDataReader::new()
+                .with_page_indexes(true)
+                .load_and_finish(self, file_size)
+                .await?;
+            Ok(Arc::new(metadata))
         }
         .boxed()
     }
@@ -448,90 +429,6 @@ pub async fn make_range_request_with_client(
     });
     let data = receiver.await.unwrap();
     Ok(data)
-}
-
-/// Returns a sorted list of ranges that cover `ranges`
-///
-/// Copied from object-store
-/// https://github.com/apache/arrow-rs/blob/61da64a0557c80af5bb43b5f15c6d8bb6a314cb2/object_store/src/util.rs#L132C1-L169C1
-fn merge_ranges(ranges: &[Range<usize>], coalesce: usize) -> Vec<Range<usize>> {
-    if ranges.is_empty() {
-        return vec![];
-    }
-
-    let mut ranges = ranges.to_vec();
-    ranges.sort_unstable_by_key(|range| range.start);
-
-    let mut ret = Vec::with_capacity(ranges.len());
-    let mut start_idx = 0;
-    let mut end_idx = 1;
-
-    while start_idx != ranges.len() {
-        let mut range_end = ranges[start_idx].end;
-
-        while end_idx != ranges.len()
-            && ranges[end_idx]
-                .start
-                .checked_sub(range_end)
-                .map(|delta| delta <= coalesce)
-                .unwrap_or(true)
-        {
-            range_end = range_end.max(ranges[end_idx].end);
-            end_idx += 1;
-        }
-
-        let start = ranges[start_idx].start;
-        let end = range_end;
-        ret.push(start..end);
-
-        start_idx = end_idx;
-        end_idx += 1;
-    }
-
-    ret
-}
-
-// Derived from:
-// https://github.com/apache/arrow-rs/blob/61da64a0557c80af5bb43b5f15c6d8bb6a314cb2/parquet/src/arrow/async_reader/metadata.rs#L54-L57
-pub async fn fetch_parquet_metadata(
-    url: &str,
-    client: &Client,
-    prefetch: Option<usize>,
-) -> parquet::errors::Result<ParquetMetaData> {
-    let suffix_length = prefetch.unwrap_or(8);
-    let range_str = range_from_end(suffix_length as u64);
-
-    // Map reqwest error to parquet error
-    // let map_err = |err| parquet::errors::ParquetError::External(Box::new(err));
-
-    let suffix = make_range_request_with_client(url.to_string(), client.clone(), range_str)
-        .await
-        .unwrap();
-    let suffix_len = suffix.len();
-
-    let mut footer = [0; 8];
-    footer.copy_from_slice(&suffix[suffix_len - 8..suffix_len]);
-
-    let metadata_byte_length = ParquetMetaDataReader::decode_footer(&footer)?;
-
-    // Did not fetch the entire file metadata in the initial read, need to make a second request
-    let metadata = if metadata_byte_length > suffix_len - 8 {
-        let metadata_range_str = range_from_end((metadata_byte_length + 8) as u64);
-
-        let meta_bytes =
-            make_range_request_with_client(url.to_string(), client.clone(), metadata_range_str)
-                .await
-                .unwrap();
-
-        ParquetMetaDataReader::decode_metadata(&meta_bytes[0..meta_bytes.len() - 8])?
-    } else {
-        let metadata_start = suffix_len - metadata_byte_length - 8;
-
-        let slice = &suffix[metadata_start..suffix_len - 8];
-        ParquetMetaDataReader::decode_metadata(slice)?
-    };
-
-    Ok(metadata)
 }
 
 pub async fn read_metadata_async(
