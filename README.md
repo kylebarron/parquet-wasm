@@ -77,7 +77,7 @@ Note that you can also pass in a custom URL if you want to host the `.wasm` file
 import wasmInit, {readParquet} from "parquet-wasm";
 
 // Update this version to match the version you're using.
-const wasmUrl = "https://cdn.jsdelivr.net/npm/parquet-wasm@0.6.0/esm/parquet_wasm_bg.wasm";
+const wasmUrl = "https://cdn.jsdelivr.net/npm/parquet-wasm@0.6.1/esm/parquet_wasm_bg.wasm";
 await wasmInit(wasmUrl);
 ```
 
@@ -117,7 +117,7 @@ You can load the `esm/parquet_wasm.js` file directly from a CDN
 
 ```js
 const parquet = await import(
-  "https://cdn.jsdelivr.net/npm/parquet-wasm@0.6.0/esm/+esm"
+  "https://cdn.jsdelivr.net/npm/parquet-wasm@0.6.1/esm/+esm"
 )
 await parquet.default();
 
