@@ -192,7 +192,7 @@ pub fn write_parquet(
 /// Example with IPC stream:
 ///
 /// ```js
-/// import { tableFromIPC } from "apache-arrow";
+/// import { tableFromIPC, Table } from "apache-arrow";
 /// import initWasm, {readParquetStream} from "parquet-wasm";
 ///
 /// // Instantiate the WebAssembly context
@@ -205,12 +205,13 @@ pub fn write_parquet(
 ///   const arrowTable = tableFromIPC(wasmRecordBatch.intoIPCStream());
 ///   batches.push(...arrowTable.batches);
 /// }
-/// const table = new arrow.Table(batches);
+/// const table = new Table(batches);
 /// ```
 ///
 /// Example with `arrow-js-ffi`:
 ///
 /// ```js
+/// import { Table } from "apache-arrow";
 /// import { parseRecordBatch } from "arrow-js-ffi";
 /// import initWasm, {readParquetStream, wasmMemory} from "parquet-wasm";
 ///
@@ -231,7 +232,7 @@ pub fn write_parquet(
 ///   );
 ///   batches.push(recordBatch);
 /// }
-/// const table = new arrow.Table(batches);
+/// const table = new Table(batches);
 /// ```
 ///
 /// @param url URL to Parquet file
