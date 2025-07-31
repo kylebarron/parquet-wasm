@@ -198,7 +198,7 @@ pub fn write_parquet(
 /// // Instantiate the WebAssembly context
 /// await initWasm();
 ///
-/// const stream = await wasm.readParquetStream(url);
+/// const stream = await readParquetStream(url);
 ///
 /// const batches = [];
 /// for await (const wasmRecordBatch of stream) {
@@ -218,7 +218,7 @@ pub fn write_parquet(
 /// await initWasm();
 /// const WASM_MEMORY = wasmMemory();
 ///
-/// const stream = await wasm.readParquetStream(url);
+/// const stream = await readParquetStream(url);
 ///
 /// const batches = [];
 /// for await (const wasmRecordBatch of stream) {
