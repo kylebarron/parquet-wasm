@@ -27,7 +27,7 @@ pub async fn transform_parquet_stream(
         // Errors that occur during writing will have to fuse the stream.
         let (sender, receiver) = oneshot::channel::<Result<()>>();
         spawn_local(async move {
-            let mut adapted_stream = batches.peekable();
+            let adapted_stream = batches.peekable();
             let mut pinned_stream = std::pin::pin!(adapted_stream);
             let first_batch = pinned_stream.as_mut().peek().await;
             if let Some(Ok(first_batch)) = first_batch {
