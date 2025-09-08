@@ -625,10 +625,10 @@ array-union@^2.1.0:
   resolved "https://registry.yarnpkg.com/array-union/-/array-union-2.1.0.tgz#b798420adbeb1de828d84acd8a2e23d3efe85e8d"
   integrity sha512-HGyxoOTYUyCM6stUe6EJgnd4EoewAI7zMdfqO+kGjnlZmBDz/cR5pf8r/cR4Wq60sL/p0IkcjUEEPwS3GFrIyw==
 
-arrow-js-ffi@^0.4.2:
-  version "0.4.2"
-  resolved "https://registry.yarnpkg.com/arrow-js-ffi/-/arrow-js-ffi-0.4.2.tgz#c0e2fee02ea6378e07558c5780baba41e339858a"
-  integrity sha512-tD6jl4MYXjsMRoVVDX+po04fpd0bO8XaKqa3gtRerGSttS4Vh39NW3ELU0oLuIPNSkwM5In/G1aSSCHyVlrKjA==
+arrow-js-ffi@^0.4.3:
+  version "0.4.3"
+  resolved "https://registry.yarnpkg.com/arrow-js-ffi/-/arrow-js-ffi-0.4.3.tgz#e935894a0f89f8678eb4e1561ef97ca072935148"
+  integrity sha512-VVXvqkZVNLk7t/JbcXUUndERZM54uvJIAASQNovHCI/eWXX0axLISQ2USf01T/sLbNdI2NOTEZQMWvuUQFc41Q==
 
 assertion-error@^2.0.1:
   version "2.0.1"
