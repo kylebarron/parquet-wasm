@@ -19,19 +19,19 @@ default = ["all_compressions", "reader", "writer", "async"]
 reader = []
 writer = []
 async = [
-  "dep:wasm-bindgen-futures",
-  "dep:futures",
-  "dep:range-reader",
-  "dep:reqwest",
-  "dep:wasm-streams",
-  "dep:async-compat",
-  "dep:async-stream",
-  "parquet/async",
+    "dep:wasm-bindgen-futures",
+    "dep:futures",
+    "dep:range-reader",
+    "dep:reqwest",
+    "dep:wasm-streams",
+    "dep:async-compat",
+    "dep:async-stream",
+    "parquet/async",
 ]
 debug = ["console_error_panic_hook"]
 
 brotli = ["parquet/brotli"]
-gzip = ["parquet/flate2"]
+gzip = ["parquet/flate2", "parquet/flate2-zlib-rs"]
 snappy = ["parquet/snap"]
 zstd = ["parquet/zstd", "dep:zstd", "zstd-sys"]
 lz4 = ["parquet/lz4"]
@@ -60,19 +60,19 @@ console_error_panic_hook = { version = "0.1.6", optional = true }
 js-sys = "0.3.72"
 thiserror = "2.0"
 
-arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "012447cab019efbb051cbd43ea5ad55a7549a4d8", default-features = false, features = [
-  "table",
-  "record_batch",
-  "schema",
+arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "6da94ef0a1522a244984a7d3d58a0339d0851d96", default-features = false, features = [
+    "table",
+    "record_batch",
+    "schema",
 ] }
 
-arrow = { version = "55.1", default-features = false, features = [
-  "ipc",
-  "ffi",
+arrow = { version = "56.1", default-features = false, features = [
+    "ipc",
+    "ffi",
 ] }
-parquet = { version = "55.1", default-features = false, features = [
-  "arrow",
-  "base64",
+parquet = { version = "56.1", default-features = false, features = [
+    "arrow",
+    "base64",
 ] }
 bytes = "1"
 # We only bring this in for coalesce_ranges
@@ -85,8 +85,8 @@ reqwest = { version = "0.12.9", optional = true, default-features = false }
 
 # Pass "wasm" and "thin" down to the transitive zstd dependency
 zstd = { version = "*", features = [
-  "wasm",
-  "thin",
+    "wasm",
+    "thin",
 ], default-features = false, optional = true }
 zstd-sys = { version = "=2.0.9", optional = true, default-features = false }
 # 0.2.3 crashes the Node tests. See
@@ -112,16 +112,16 @@ features = ["js"]
 [dependencies.web-sys]
 version = "0.3.72"
 features = [
-  'console',
-  'Headers',
-  'Request',
-  'RequestInit',
-  'RequestMode',
-  'Response',
-  'Window',
-  "Document",
-  "Element",
-  "File",
+    'console',
+    'Headers',
+    'Request',
+    'RequestInit',
+    'RequestMode',
+    'Response',
+    'Window',
+    "Document",
+    "Element",
+    "File",
 ]
 
 [dev-dependencies]
@@ -134,14 +134,14 @@ skip_optional_dependencies = true
 
 # Exclude certain features from the build matrix
 denylist = [
-  "full",
-  "all_compressions",
-  "default",
-  "brotli",
-  "gzip",
-  "snappy",
-  "zstd",
-  "lz4",
+    "full",
+    "all_compressions",
+    "default",
+    "brotli",
+    "gzip",
+    "snappy",
+    "zstd",
+    "lz4",
 ]
 
 [profile.release]

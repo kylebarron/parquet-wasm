@@ -25,7 +25,9 @@ use parquet::arrow::async_reader::{
 };
 
 use async_compat::{Compat, CompatExt};
-use parquet::file::metadata::{FileMetaData, ParquetMetaData, ParquetMetaDataReader};
+use parquet::file::metadata::{
+    FileMetaData, PageIndexPolicy, ParquetMetaData, ParquetMetaDataReader,
+};
 use range_reader::RangedAsyncReader;
 use reqwest::Client;
 
@@ -284,7 +286,7 @@ impl AsyncFileReader for HTTPFileReader {
     ) -> BoxFuture<'a, parquet::errors::Result<Arc<ParquetMetaData>>> {
         async move {
             let metadata = ParquetMetaDataReader::new()
-                .with_page_indexes(true)
+                .with_page_index_policy(PageIndexPolicy::Optional)
                 .load_via_suffix_and_finish(self)
                 .await?;
             Ok(Arc::new(metadata))
@@ -400,7 +402,7 @@ impl AsyncFileReader for JsFileReader {
         let file_size = self.file.size;
         async move {
             let metadata = ParquetMetaDataReader::new()
-                .with_page_indexes(true)
+                .with_page_index_policy(PageIndexPolicy::Optional)
                 .load_and_finish(self, file_size)
                 .await?;
             Ok(Arc::new(metadata))
