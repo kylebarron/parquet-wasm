@@ -31,7 +31,7 @@ async = [
 debug = ["console_error_panic_hook"]
 
 brotli = ["parquet/brotli"]
-gzip = ["parquet/flate2"]
+gzip = ["parquet/flate2", "parquet/flate2-zlib-rs"]
 snappy = ["parquet/snap"]
 zstd = ["parquet/zstd", "dep:zstd", "zstd-sys"]
 lz4 = ["parquet/lz4"]
