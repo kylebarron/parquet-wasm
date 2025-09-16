@@ -1,12 +1,12 @@
-import * as wasm from "../../pkg/node/parquet_wasm";
+import { DataType, tableFromIPC, tableToIPC } from "apache-arrow";
 import { readFileSync } from "fs";
-import { tableFromIPC, tableToIPC } from "apache-arrow";
+import { describe, expect, it } from "vitest";
+import * as wasm from "../../pkg/node/parquet_wasm";
 import {
-  testArrowTablesEqual,
   readExpectedArrowData,
   temporaryServer,
+  testArrowTablesEqual,
 } from "./utils";
-import { describe, it, expect } from "vitest";
 
 // Path from repo root
 const dataDir = "tests/data";
@@ -116,9 +116,14 @@ it("read stream-write stream-read stream round trip (no writer properties provid
   await server.close();
 });
 
-describe("read string view file", async (t) => {
+it("read string view file", async (t) => {
   const dataPath = `${dataDir}/string_view.parquet`;
   const arr = new Uint8Array(readFileSync(dataPath));
   const table = tableFromIPC(wasm.readParquet(arr).intoIPCStream());
-  console.log(table.schema);
+
+  const stringCol = table.getChild("string_view")!;
+  expect(DataType.isUtf8(stringCol.type)).toBeTruthy();
+
+  const binaryCol = table.getChild("binary_view")!;
+  expect(DataType.isBinary(binaryCol.type)).toBeTruthy();
 });

@@ -70,6 +70,7 @@ arrow = { version = "56.1", default-features = false, features = [
     "ipc",
     "ffi",
 ] }
+arrow-schema = "56.1"
 parquet = { version = "56.1", default-features = false, features = [
     "arrow",
     "base64",
