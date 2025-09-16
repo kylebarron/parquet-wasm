@@ -1,8 +1,12 @@
-import * as wasm from "../../pkg/node/parquet_wasm";
+import { DataType, tableFromIPC, tableToIPC } from "apache-arrow";
 import { readFileSync } from "fs";
-import { tableFromIPC, tableToIPC } from "apache-arrow";
-import { testArrowTablesEqual, readExpectedArrowData, temporaryServer } from "./utils";
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
+import * as wasm from "../../pkg/node/parquet_wasm";
+import {
+  readExpectedArrowData,
+  temporaryServer,
+  testArrowTablesEqual,
+} from "./utils";
 
 // Path from repo root
 const dataDir = "tests/data";
@@ -101,9 +105,46 @@ it("read stream-write stream-read stream round trip (no writer properties provid
   const originalStream = await wasm.readParquetStream(url);
 
   const stream = await wasm.transformParquetStream(originalStream);
-  const accumulatedBuffer = new Uint8Array(await new Response(stream).arrayBuffer());
-  const roundtripTable = tableFromIPC(wasm.readParquet(accumulatedBuffer).intoIPCStream());
+  const accumulatedBuffer = new Uint8Array(
+    await new Response(stream).arrayBuffer()
+  );
+  const roundtripTable = tableFromIPC(
+    wasm.readParquet(accumulatedBuffer).intoIPCStream()
+  );
 
   testArrowTablesEqual(expectedTable, roundtripTable);
   await server.close();
-})
+});
+
+describe("read string view file", async (t) => {
+  it("synchronous read", async (t) => {
+    const dataPath = `${dataDir}/string_view.parquet`;
+    const arr = new Uint8Array(readFileSync(dataPath));
+    const table = tableFromIPC(wasm.readParquet(arr).intoIPCStream());
+
+    const stringCol = table.getChild("string_view")!;
+    expect(DataType.isUtf8(stringCol.type)).toBeTruthy();
+
+    const binaryCol = table.getChild("binary_view")!;
+    expect(DataType.isBinary(binaryCol.type)).toBeTruthy();
+  });
+
+  it("asynchronous read", async (t) => {
+    const server = await temporaryServer();
+    const listeningPort = server.addresses()[0].port;
+    const rootUrl = `http://localhost:${listeningPort}`;
+
+    const url = `${rootUrl}/string_view.parquet`;
+    let file = await wasm.ParquetFile.fromUrl(url);
+    let wasmTable = await file.read();
+    let jsTable = tableFromIPC(wasmTable.intoIPCStream());
+
+    const stringCol = jsTable.getChild("string_view")!;
+    expect(DataType.isUtf8(stringCol.type)).toBeTruthy();
+
+    const binaryCol = jsTable.getChild("binary_view")!;
+    expect(DataType.isBinary(binaryCol.type)).toBeTruthy();
+
+    await server.close();
+  });
+});

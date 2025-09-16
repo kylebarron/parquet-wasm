@@ -35,10 +35,24 @@ def write_empty_table():
     pd.DataFrame().to_parquet("empty.parquet")
 
 
+def create_string_view_table():
+    data = {
+        "string_view": pa.array(["a", "b", "c", "d"], type=pa.string_view()),
+        "binary_view": pa.array([b"a", b"b", b"c", b"d"], type=pa.binary_view()),
+    }
+    return pa.table(data)
+
+
+def write_string_view_table():
+    table = create_string_view_table()
+    pq.write_table(table, "string_view.parquet", compression="snappy")
+
+
 def main():
     table = create_data()
     write_data(table)
     write_empty_table()
+    write_string_view_table()
 
 
 if __name__ == "__main__":

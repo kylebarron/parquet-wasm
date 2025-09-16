@@ -1271,6 +1271,7 @@ name = "parquet-wasm"
 version = "0.7.0-beta.1"
 dependencies = [
  "arrow",
+ "arrow-schema",
  "arrow-wasm",
  "async-compat",
  "async-stream",
