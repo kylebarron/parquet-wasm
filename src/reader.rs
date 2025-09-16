@@ -15,7 +15,7 @@ pub fn read_parquet(parquet_file: Vec<u8>, options: JsReaderOptions) -> Result<T
     let cursor: Bytes = parquet_file.into();
 
     let metadata = ArrowReaderMetadata::load(&cursor, Default::default())?;
-    let metadata = cast_metadata_view_types(metadata)?;
+    let metadata = cast_metadata_view_types(&metadata)?;
 
     let mut builder = ParquetRecordBatchReaderBuilder::new_with_metadata(cursor, metadata);
 
@@ -60,7 +60,7 @@ pub fn read_schema(parquet_file: Vec<u8>) -> Result<Schema> {
 
 /// Cast any view types in the metadata's schema to non-view types
 pub(crate) fn cast_metadata_view_types(
-    metadata: ArrowReaderMetadata,
+    metadata: &ArrowReaderMetadata,
 ) -> Result<ArrowReaderMetadata> {
     let original_arrow_schema = metadata.schema();
     if has_view_types(original_arrow_schema.fields().iter()) {
@@ -71,7 +71,7 @@ pub(crate) fn cast_metadata_view_types(
             arrow_options,
         )?)
     } else {
-        Ok(metadata)
+        Ok(metadata.clone())
     }
 }
 

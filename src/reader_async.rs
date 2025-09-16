@@ -6,6 +6,7 @@ use crate::common::fetch::{
 };
 use crate::error::{Result, WasmResult};
 use crate::read_options::{JsReaderOptions, ReaderOptions};
+use crate::reader::cast_metadata_view_types;
 use futures::channel::oneshot;
 use futures::future::BoxFuture;
 use object_store::coalesce_ranges;
@@ -35,12 +36,15 @@ use reqwest::Client;
 /// will be coalesced into a single request by [`coalesce_ranges`]
 const OBJECT_STORE_COALESCE_DEFAULT: u64 = 1024 * 1024;
 
-fn create_builder<T: AsyncFileReader + Unpin + Clone + 'static>(
-    reader: &T,
+fn create_builder<T: AsyncFileReader + Unpin + 'static>(
+    reader: T,
     meta: &ArrowReaderMetadata,
     options: &JsReaderOptions,
 ) -> Result<ParquetRecordBatchStreamBuilder<T>> {
-    let builder = ParquetRecordBatchStreamBuilder::new_with_metadata(reader.clone(), meta.clone());
+    // Cast any view types to non-view types
+    let metadata = cast_metadata_view_types(meta)?;
+
+    let builder = ParquetRecordBatchStreamBuilder::new_with_metadata(reader, metadata);
     options.apply_to_builder(builder)
 }
 
@@ -147,7 +151,7 @@ impl ParquetFile {
             .map(|x| x.try_into())
             .transpose()?
             .unwrap_or_default();
-        let builder = create_builder(&self.reader, &self.meta, &options)?;
+        let builder = create_builder(self.reader.clone(), &self.meta, &options)?;
 
         let schema = builder.schema().clone();
         let stream = builder.build()?;
@@ -190,7 +194,7 @@ impl ParquetFile {
         let meta = self.meta.clone();
 
         let buffered_stream = stream::iter(row_groups.into_iter().map(move |i| {
-            let builder = create_builder(&reader.clone(), &meta.clone(), &options.clone())
+            let builder = create_builder(reader.clone(), &meta.clone(), &options.clone())
                 .unwrap()
                 .with_row_groups(vec![i]);
             builder.build().unwrap().try_collect::<Vec<_>>()
@@ -460,7 +464,11 @@ pub async fn _read_row_group(
         None => get_content_length(url.clone()).await?,
     };
     let reader = create_reader(url, content_length, None);
-    let builder = ParquetRecordBatchStreamBuilder::new(reader.compat()).await?;
+
+    let mut compat = reader.compat();
+    let metadata = ArrowReaderMetadata::load_async(&mut compat, Default::default()).await?;
+    let builder = create_builder(compat, &metadata, &Default::default())?;
+
     let arrow_schema = builder.schema().clone();
     let parquet_reader = builder.with_row_groups(vec![row_group]).build()?;
     Ok((parquet_reader, arrow_schema))
@@ -495,7 +503,9 @@ pub async fn read_record_batch_stream(
     };
     let reader = crate::common::fetch::create_reader(url, content_length, None);
 
-    let builder = ParquetRecordBatchStreamBuilder::new(reader.compat()).await?;
+    let mut compat = reader.compat();
+    let metadata = ArrowReaderMetadata::load_async(&mut compat, Default::default()).await?;
+    let builder = create_builder(compat, &metadata, &Default::default())?;
     let parquet_reader = builder.build()?;
     Ok(parquet_reader)
 }

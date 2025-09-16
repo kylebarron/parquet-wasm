@@ -116,14 +116,35 @@ it("read stream-write stream-read stream round trip (no writer properties provid
   await server.close();
 });
 
-it("read string view file", async (t) => {
-  const dataPath = `${dataDir}/string_view.parquet`;
-  const arr = new Uint8Array(readFileSync(dataPath));
-  const table = tableFromIPC(wasm.readParquet(arr).intoIPCStream());
+describe("read string view file", async (t) => {
+  it("synchronous read", async (t) => {
+    const dataPath = `${dataDir}/string_view.parquet`;
+    const arr = new Uint8Array(readFileSync(dataPath));
+    const table = tableFromIPC(wasm.readParquet(arr).intoIPCStream());
 
-  const stringCol = table.getChild("string_view")!;
-  expect(DataType.isUtf8(stringCol.type)).toBeTruthy();
+    const stringCol = table.getChild("string_view")!;
+    expect(DataType.isUtf8(stringCol.type)).toBeTruthy();
 
-  const binaryCol = table.getChild("binary_view")!;
-  expect(DataType.isBinary(binaryCol.type)).toBeTruthy();
+    const binaryCol = table.getChild("binary_view")!;
+    expect(DataType.isBinary(binaryCol.type)).toBeTruthy();
+  });
+
+  it("asynchronous read", async (t) => {
+    const server = await temporaryServer();
+    const listeningPort = server.addresses()[0].port;
+    const rootUrl = `http://localhost:${listeningPort}`;
+
+    const url = `${rootUrl}/string_view.parquet`;
+    let file = await wasm.ParquetFile.fromUrl(url);
+    let wasmTable = await file.read();
+    let jsTable = tableFromIPC(wasmTable.intoIPCStream());
+
+    const stringCol = jsTable.getChild("string_view")!;
+    expect(DataType.isUtf8(stringCol.type)).toBeTruthy();
+
+    const binaryCol = jsTable.getChild("binary_view")!;
+    expect(DataType.isBinary(binaryCol.type)).toBeTruthy();
+
+    await server.close();
+  });
 });
