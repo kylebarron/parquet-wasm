@@ -52,6 +52,7 @@ def main():
     table = create_data()
     write_data(table)
     write_empty_table()
+    write_string_view_table()
 
 
 if __name__ == "__main__":

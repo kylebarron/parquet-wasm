@@ -1,7 +1,11 @@
 import * as wasm from "../../pkg/node/parquet_wasm";
 import { readFileSync } from "fs";
 import { tableFromIPC, tableToIPC } from "apache-arrow";
-import { testArrowTablesEqual, readExpectedArrowData, temporaryServer } from "./utils";
+import {
+  testArrowTablesEqual,
+  readExpectedArrowData,
+  temporaryServer,
+} from "./utils";
 import { describe, it, expect } from "vitest";
 
 // Path from repo root
@@ -101,9 +105,20 @@ it("read stream-write stream-read stream round trip (no writer properties provid
   const originalStream = await wasm.readParquetStream(url);
 
   const stream = await wasm.transformParquetStream(originalStream);
-  const accumulatedBuffer = new Uint8Array(await new Response(stream).arrayBuffer());
-  const roundtripTable = tableFromIPC(wasm.readParquet(accumulatedBuffer).intoIPCStream());
+  const accumulatedBuffer = new Uint8Array(
+    await new Response(stream).arrayBuffer()
+  );
+  const roundtripTable = tableFromIPC(
+    wasm.readParquet(accumulatedBuffer).intoIPCStream()
+  );
 
   testArrowTablesEqual(expectedTable, roundtripTable);
   await server.close();
-})
+});
+
+describe("read string view file", async (t) => {
+  const dataPath = `${dataDir}/string_view.parquet`;
+  const arr = new Uint8Array(readFileSync(dataPath));
+  const table = tableFromIPC(wasm.readParquet(arr).intoIPCStream());
+  console.log(table.schema);
+});
