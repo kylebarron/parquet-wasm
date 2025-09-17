@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.7.0] - 2025-09-17
+
+### What's Changed
+
+- Streaming Writes implementation by @H-Plus-Time in https://github.com/kylebarron/parquet-wasm/pull/305
+- Expose schema on ParquetFile by @H-Plus-Time in https://github.com/kylebarron/parquet-wasm/pull/599
+- Small doc fixes by @severo in https://github.com/kylebarron/parquet-wasm/pull/762
+- Bump to arrow/parquet 56 by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/783
+- feat: Support reading Parquet data with embedded Arrow schema containing string view/binary view types by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/786
+- docs: Add section to docs about hyparquet comparison by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/790
+
+### New Contributors
+
+- @severo made their first contribution in https://github.com/kylebarron/parquet-wasm/pull/762
+
+**Full Changelog**: https://github.com/kylebarron/parquet-wasm/compare/v0.6.1...v0.7.0
+
 ## [0.6.1] - 2024-05-04
 
 ### What's Changed
