@@ -195,6 +195,36 @@ console.log(table.schema.toString());
 - [GeoParquet on the Web (Observable)](https://observablehq.com/@kylebarron/geoparquet-on-the-web)
 - [Hello, Parquet-WASM (Observable)](https://observablehq.com/@bmschmidt/hello-parquet-wasm)
 
+## Comparison to [`hyparquet`](https://github.com/hyparam/hyparquet)
+
+`hyparquet` is another Parquet reader for JavaScript. That project is written in pure JavaScript and has subtly different goals and comparing it to `parquet-wasm` provides benefits and costs.
+
+### Advantages of `hyparquet`:
+
+- Smaller bundle size
+- Pure JS, so easier to debug
+- No WebAssembly, so no initialization step
+- No WebAssembly, so no separate memory space.
+
+### Advantages of `parquet-wasm`:
+
+- Faster for large files, as it uses a very high-performance Rust Parquet library compiled to WebAssembly
+- Faster and more memory efficient because it loads data into Apache Arrow, a high-performance binary memory format. In comparison, hyparquet loads data to JS objects, which are _much_ less memory efficient than Arrow buffers. This is especially true for large files.
+- Even though `parquet-wasm` has a larger bundle size, the bandwidth savings of loading large amounts of Parquet can quickly make up for that overhead.
+
+### Conclusion
+
+- If you only need to load the _metadata_ of Parquet files, or if you have _very small_ Parquet files, using hyparquet could be a good choice as hyparquet is smaller, and thus the overhead before loading the file could be smaller.
+- If you need the _absolute smallest_ bundle size, hyparquet may be better for your use case.
+- Otherwise, since `parquet-wasm`:
+    1. Uses a really high performance Rust library
+    2. Is running in WebAssembly, and
+    3. Converts to a high-performance binary memory format
+
+    If you have large files and can use the resulting Arrow data directly without converting to JS objects, `parquet-wasm` should be significantly faster and more memory efficient.
+
+Feel free to open an issue to discuss more!
+
 ## Performance considerations
 
 Tl;dr: When you have a `Table` object (resulting from `readParquet`), try the new
