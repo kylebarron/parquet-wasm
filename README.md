@@ -199,6 +199,8 @@ console.log(table.schema.toString());
 
 `hyparquet` is another Parquet reader for JavaScript. That project is written in pure JavaScript and has subtly different goals and comparing it to `parquet-wasm` provides benefits and costs.
 
+**tl;dr**: if you can use [Arrow](https://arrow.apache.org/) in your app, use `parquet-wasm` for better performance and memory usage. Otherwise, or if you are latency-focused, hyparquet could be better for you.
+
 ### Advantages of `hyparquet`:
 
 - Smaller bundle size
