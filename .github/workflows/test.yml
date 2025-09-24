@@ -155,7 +155,7 @@ jobs:
           name: pr
           path: pr/
       - name: "Generate size deltas"
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
