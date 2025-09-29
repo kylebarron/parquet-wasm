@@ -66,12 +66,12 @@ arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "6da94ef0
     "schema",
 ] }
 
-arrow = { version = "56.1", default-features = false, features = [
+arrow = { version = "56.2", default-features = false, features = [
     "ipc",
     "ffi",
 ] }
 arrow-schema = "56.1"
-parquet = { version = "56.1", default-features = false, features = [
+parquet = { version = "56.2", default-features = false, features = [
     "arrow",
     "base64",
 ] }
