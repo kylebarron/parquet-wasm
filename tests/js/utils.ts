@@ -77,7 +77,7 @@ export async function temporaryServer() {
 }
 
 export function extractFooterBytes(parquetFile: Uint8Array): Uint8Array {
-  // Step 1: Fetch last 8 bytes to get footer length and magic number
+  // Step 1: Obtain the last 8 bytes to get footer length and magic number.
   const TAIL_LENGTH = 8;
   const tailStartIndex = parquetFile.length - TAIL_LENGTH;
   const tailBytes = parquetFile.subarray(tailStartIndex);
@@ -85,7 +85,7 @@ export function extractFooterBytes(parquetFile: Uint8Array): Uint8Array {
     throw new Error('Failed to load the Parquet footer length.');
   }
 
-  // Step 2: Extract footer length and magic number
+  // Step 2: Parse the footer length and magic number.
   // little-endian
   const footerLength = new DataView(tailBytes.buffer, tailBytes.byteOffset, tailBytes.byteLength).getInt32(0, true);
   const magic = new TextDecoder().decode(tailBytes.slice(4, 8));
@@ -93,9 +93,11 @@ export function extractFooterBytes(parquetFile: Uint8Array): Uint8Array {
     throw new Error('Invalid Parquet file: missing PAR1 magic number.');
   }
   
-  // Step 3. Fetch the full footer bytes
+  // Step 3. Extract the footer bytes.
   const footerStartIndex = parquetFile.length - (footerLength + TAIL_LENGTH);
-  const footerBytes = parquetFile.subarray(footerStartIndex);
+  // Use .slice here to ensure a fresh arrayBuffer is created,
+  // so that downstream usage is not "seeing" the full parquetFile buffer.
+  const footerBytes = parquetFile.slice(footerStartIndex);
   if (footerBytes.length !== footerLength + TAIL_LENGTH) {
     throw new Error('Failed to load the Parquet footer bytes.');
   }
