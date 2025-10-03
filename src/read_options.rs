@@ -77,6 +77,10 @@ impl JsReaderOptions {
             builder = builder.with_projection(projection_mask);
         }
 
+        if let Some(row_groups) = &self.row_groups {
+            builder = builder.with_row_groups(row_groups.clone());
+        }
+
         Ok(builder)
     }
 }
