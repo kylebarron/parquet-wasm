@@ -8,9 +8,7 @@ use bytes::Bytes;
 use parquet::arrow::arrow_reader::{
     ArrowReaderMetadata, ArrowReaderOptions, ParquetRecordBatchReaderBuilder,
 };
-use parquet::file::metadata::{
-    ParquetMetaData, ParquetMetaDataReader,
-};
+use parquet::file::metadata::{ParquetMetaData, ParquetMetaDataReader};
 
 /// Internal function to read a buffer with Parquet data into a buffer with Arrow IPC Stream data
 pub fn read_parquet(parquet_file: Vec<u8>, options: JsReaderOptions) -> Result<Table> {
