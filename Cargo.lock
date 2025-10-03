@@ -1268,7 +1268,7 @@ dependencies = [
 
 [[package]]
 name = "parquet-wasm"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "arrow",
  "arrow-schema",
