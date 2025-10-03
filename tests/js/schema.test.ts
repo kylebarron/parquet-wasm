@@ -47,13 +47,10 @@ it("read metadata from full file bytes", async (t) => {
   // TODO: test with footer bytes alone as well
   const metadata = wasm.readMetadata(arr);
 
-  // Convert the parquet file buffer from readFileSync to a Blob
+  // Convert the parquet file buffer from readFileSync to a Blob.
   const blob = new Blob([buffer], { type: "application/octet-stream" });
-  // Use the ParquetJS library to read the metadata from the Blob
-  // Note that ParquetJS currently only supports reading from a file or a Blob, not from a buffer directly
-  // So we have to use a Blob here
-  // See
   const pqFile = await wasm.ParquetFile.fromFile(blob);
+  // Test against the existing ParquetFile.metadata method.
   const expectedMetadata = pqFile.metadata();
 
   expect(metadata.fileMetadata().createdBy()).toStrictEqual(expectedMetadata.fileMetadata().createdBy());
@@ -69,16 +66,12 @@ it("read metadata from footer bytes only", async (t) => {
   const buffer = readFileSync(dataPath);
   const arr = new Uint8Array(buffer);
   const footerBytes = extractFooterBytes(arr);
-  // TODO: test with footer bytes alone as well
   const metadata = wasm.readMetadata(footerBytes);
 
-  // Convert the parquet file buffer from readFileSync to a Blob
+  // Convert the parquet file buffer from readFileSync to a Blob.
   const blob = new Blob([buffer], { type: "application/octet-stream" });
-  // Use the ParquetJS library to read the metadata from the Blob
-  // Note that ParquetJS currently only supports reading from a file or a Blob, not from a buffer directly
-  // So we have to use a Blob here
-  // See
   const pqFile = await wasm.ParquetFile.fromFile(blob);
+  // Test against the existing ParquetFile.metadata method.
   const expectedMetadata = pqFile.metadata();
 
   expect(metadata.fileMetadata().createdBy()).toStrictEqual(expectedMetadata.fileMetadata().createdBy());
