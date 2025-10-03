@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.7.1] - 2025-09-17
+
+### What's Changed
+
+- ci: Bump node version in docs publish CI by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/792
+- Readme edit for tl;dr in hyparquet comparison by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/793
+- Fix handling of `rowGroups` option in `ParquetFile.read` by @quidquid in https://github.com/kylebarron/parquet-wasm/pull/802
+
+### New Contributors
+
+- @quidquid made their first contribution in https://github.com/kylebarron/parquet-wasm/pull/802
+
+**Full Changelog**: https://github.com/kylebarron/parquet-wasm/compare/v0.7.0...v0.7.1
+
 ## [0.7.0] - 2025-09-17
 
 ### What's Changed
