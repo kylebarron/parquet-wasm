@@ -70,7 +70,7 @@ arrow = { version = "56.1", default-features = false, features = [
     "ipc",
     "ffi",
 ] }
-arrow-schema = "56.1"
+arrow-schema = "57.0"
 parquet = { version = "56.1", default-features = false, features = [
     "arrow",
     "base64",
@@ -82,7 +82,7 @@ object_store = { version = "0.12", default-features = false }
 wasm-bindgen-futures = { version = "0.4.45", optional = true }
 futures = { version = "0.3", optional = true }
 range-reader = { version = "0.2", optional = true }
-reqwest = { version = "0.12.23", optional = true, default-features = false }
+reqwest = { version = "0.12.24", optional = true, default-features = false }
 
 # Pass "wasm" and "thin" down to the transitive zstd dependency
 zstd = { version = "*", features = [
@@ -126,7 +126,7 @@ features = [
 ]
 
 [dev-dependencies]
-wasm-bindgen-test = "0.3.51"
+wasm-bindgen-test = "0.3.55"
 
 [package.metadata.cargo-all-features]
 
