@@ -140,7 +140,7 @@ jobs:
           if [[ "${{ github.event_type }}" != "pull_request" ]]; then
             cat ./pr/step_summary.md > $GITHUB_STEP_SUMMARY
           fi;
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: pr
           path: pr/
@@ -246,7 +246,7 @@ jobs:
               ...lineFragments
             ]).write();
             fs.cpSync(process.env.GITHUB_STEP_SUMMARY, './pr/step_summary.md')
-      # - uses: actions/upload-artifact@v4
+      # - uses: actions/upload-artifact@v5
       #   with:
       #     name: pr
       #     path: pr/
