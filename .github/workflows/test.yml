@@ -150,7 +150,7 @@ jobs:
       github.event_name == 'pull_request'
     needs: node-build-report
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           name: pr
           path: pr/
