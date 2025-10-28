@@ -153,8 +153,8 @@ impl ParquetFile {
             .unwrap_or_default();
         let builder = create_builder(self.reader.clone(), &self.meta, &options)?;
 
-        let schema = builder.schema().clone();
         let stream = builder.build()?;
+        let schema = stream.schema().clone();
         let batches = stream.try_collect::<Vec<_>>().await.unwrap();
 
         Ok(Table::new(schema, batches))
