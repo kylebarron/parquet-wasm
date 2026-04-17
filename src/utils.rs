@@ -1,5 +1,7 @@
 use wasm_bindgen::prelude::*;
 
+pub const MAX_EXACT_INTEGER: u64 = (1u64 << f64::MANTISSA_DIGITS) - 1;
+
 /// Call this function at least once during initialization to get better error
 // messages if the underlying Rust code ever panics (creates uncaught errors).
 #[cfg(feature = "console_error_panic_hook")]

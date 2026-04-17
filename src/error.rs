@@ -42,3 +42,20 @@ impl From<reqwest::Error> for ParquetWasmError {
         Self::HTTPError(Box::new(err))
     }
 }
+
+impl From<ParquetWasmError> for ParquetError {
+    fn from(value: ParquetWasmError) -> Self {
+        // We cannot use the `External` variant as it requires that `ParquetWasmError`
+        // be Send, which `JsValue` is not
+        match value {
+            ParquetWasmError::ArrowError(arrow_error) => {
+                ParquetError::ArrowError(arrow_error.to_string())
+            }
+            ParquetWasmError::ParquetError(parquet_error) => *parquet_error,
+            #[cfg(feature = "async")]
+            ParquetWasmError::HTTPError(error) => ParquetError::External(error),
+            ParquetWasmError::PlatformSupportError(x) => ParquetError::General(x),
+            e => ParquetError::General(e.to_string()),
+        }
+    }
+}
