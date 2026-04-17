@@ -8,6 +8,7 @@ use bytes::Bytes;
 use parquet::arrow::arrow_reader::{
     ArrowReaderMetadata, ArrowReaderOptions, ParquetRecordBatchReaderBuilder,
 };
+use parquet::file::metadata::{ParquetMetaData, ParquetMetaDataReader};
 
 /// Internal function to read a buffer with Parquet data into a buffer with Arrow IPC Stream data
 pub fn read_parquet(parquet_file: Vec<u8>, options: JsReaderOptions) -> Result<Table> {
@@ -56,6 +57,15 @@ pub fn read_schema(parquet_file: Vec<u8>) -> Result<Schema> {
     let builder = ParquetRecordBatchReaderBuilder::try_new(cursor)?;
     let schema = builder.schema().clone();
     Ok(schema.into())
+}
+
+/// Internal function to read a buffer with Parquet data into an Arrow schema
+pub fn read_metadata(parquet_file: Vec<u8>) -> Result<ParquetMetaData> {
+    // Create Parquet reader
+    let cursor: Bytes = parquet_file.into();
+    let reader = ParquetMetaDataReader::new();
+    let metadata = reader.parse_and_finish(&cursor)?;
+    Ok(metadata)
 }
 
 /// Cast any view types in the metadata's schema to non-view types

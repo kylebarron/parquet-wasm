@@ -130,6 +130,16 @@ pub fn read_schema(parquet_file: Vec<u8>) -> WasmResult<Schema> {
     Ok(crate::reader::read_schema(parquet_file)?)
 }
 
+/// Read Parquet metadata from a Parquet file (or footer-only) bytes in memory.
+#[wasm_bindgen(js_name = readMetadata)]
+#[cfg(feature = "reader")]
+pub fn read_metadata(parquet_file: Vec<u8>) -> WasmResult<crate::metadata::ParquetMetaData> {
+    assert_parquet_file_not_empty(parquet_file.as_slice())?;
+    let orig_metadata = crate::reader::read_metadata(parquet_file)?;
+    let metadata = crate::metadata::ParquetMetaData::from(orig_metadata);
+    Ok(metadata)
+}
+
 /// Write Arrow data to a Parquet file.
 ///
 /// For example, to create a Parquet file with Snappy compression:
