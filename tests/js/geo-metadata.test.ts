@@ -1,7 +1,8 @@
-import * as wasm from "../../pkg/node/parquet_wasm";
+import { tableFromArrays, tableFromIPC, tableToIPC } from "apache-arrow";
 import { readFileSync } from "fs";
-import { tableFromIPC } from "apache-arrow";
-import { it, expect } from "vitest";
+import { expect, it } from "vitest";
+import * as wasm from "../../pkg/node/parquet_wasm";
+import { testArrowTablesEqual } from "./utils";
 
 // Path from repo root
 const dataDir = "tests/data";
@@ -50,3 +51,15 @@ it.skip("test geo-arrow-spec (geoarrow encoding) metadata passed through", (t) =
 function isCloseEqual(a: number, b: number, eps: number = 0.0001): boolean {
   return Math.abs(a - b) < eps;
 }
+
+it("Should be able to write List column", () => {
+  const table = tableFromArrays({
+    column: [
+      [1, 2],
+      [3, 4],
+    ],
+  });
+  const wasmTable = wasm.Table.fromIPCStream(tableToIPC(table, "stream"));
+  const jsTable = tableFromIPC(wasmTable.intoIPCStream());
+  testArrowTablesEqual(table, jsTable);
+});
