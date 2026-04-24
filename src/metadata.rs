@@ -39,8 +39,11 @@ impl ParquetMetaData {
             .collect()
     }
 
-    /// Returns the column index for this column from this file if loaded
-    #[wasm_bindgen(js_name = columnIndexFor)]
+    /// Returns the column's page index from this file if available.
+    ///
+    /// The page index is useful for finding regions to select with `offset` and
+    /// `limit` on `ReaderOptions` when searching within a sorted column.
+    #[wasm_bindgen(js_name = columnIndexFor, unchecked_return_type="DataPage[]")]
     pub fn column_index_for(
         &self,
         column: usize,
@@ -428,7 +431,11 @@ impl ColumnChunkMetaData {
         self.0.uncompressed_size() as f64
     }
 
-    #[wasm_bindgen]
+    /// Read the row-group-level statistics for this column, if available.
+    ///
+    /// This is useful for checking if a row group is worth visiting if you
+    /// are searching for a value in a sorted column.
+    #[wasm_bindgen(unchecked_return_type = "ColumnChunkStatistic | null")]
     pub fn statistics(&self) -> wasm_bindgen::JsValue {
         let v = if let Some(stat) = self.0.statistics() {
             match stat {
@@ -595,3 +602,29 @@ impl<T: serde::Serialize> Page<T> {
         }
     }
 }
+
+
+#[wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = r#"
+
+export interface ColumnChunkStatistic {
+    min_value: any | null,
+    max_value: any | null,
+    // Distinct count could be omitted in some cases
+    distinct_count: number | null,
+    null_count: number | null,
+
+    // Whether or not the min or max values are exact, or truncated.
+    is_max_value_exact: boolean,
+    is_min_value_exact: boolean,
+}
+
+export interface DataPage {
+    min: any | null,
+    max: any | null,
+    start_row: number,
+    row_group_index: number,
+    end_row: number,
+    null_count: number | null,
+};
+"#;
