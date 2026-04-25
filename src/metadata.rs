@@ -1,3 +1,4 @@
+use parquet::data_type::AsBytes;
 use wasm_bindgen::prelude::*;
 
 use crate::common::properties::{Compression, Encoding};
@@ -38,10 +39,197 @@ impl ParquetMetaData {
             .collect()
     }
 
-    // /// Returns the column index for this file if loaded
-    // pub fn column_index(&self) -> Option<ParquetColumnIndex> {
-    //     self.0.column_index()
-    // }
+    /// Returns the column's page index from this file if available.
+    ///
+    /// The page index is useful for finding regions to select with `offset` and
+    /// `limit` on `ReaderOptions` when searching within a sorted column.
+    #[wasm_bindgen(js_name = columnIndexFor, unchecked_return_type="DataPage[]")]
+    pub fn column_index_for(
+        &self,
+        column: usize,
+    ) -> Result<Vec<JsValue>, serde_wasm_bindgen::Error> {
+        let col_indices = match self.0.column_index() {
+            Some(x) => x,
+            None => return Ok(Default::default()),
+        };
+        let offset_indices = match self.0.offset_index() {
+            Some(x) => x,
+            None => return Ok(Default::default()),
+        };
+        let mut pages_acc: Vec<JsValue> = Vec::new();
+        let mut total_rows = 0;
+        for ((rg_i, col_indices_rg), offset_indices_rg) in col_indices.iter().enumerate().zip(offset_indices.iter()) {
+            let col = col_indices_rg.get(column);
+            let offset = offset_indices_rg.get(column);
+            let rg_num_rows = self.0.row_group(rg_i).num_rows();
+            match (col, offset) {
+                (Some(col), Some(offset)) => match col {
+                    parquet::file::page_index::index::Index::NONE => continue,
+                    parquet::file::page_index::index::Index::BOOLEAN(native_index) => {
+                        for (pg_i, (page, loc)) in native_index.indexes.iter().zip(offset.page_locations()).enumerate()
+                        {
+                            let end_row =
+                            if let Some(next_loc) = offset.page_locations().get(pg_i + 1) {
+                                next_loc.first_row_index + total_rows
+                            } else {
+                                rg_num_rows + total_rows
+                            };
+                            pages_acc.push(serde_wasm_bindgen::to_value(&Page::new(
+                                page.min,
+                                page.max,
+                                loc.first_row_index,
+                                page.null_count(),
+                                rg_i,
+                                end_row
+                            ))?);
+                        }
+                    }
+                    parquet::file::page_index::index::Index::INT32(native_index) => {
+                        for (pg_i, (page, loc)) in native_index.indexes.iter().zip(offset.page_locations()).enumerate()
+                        {
+                            let end_row =
+                            if let Some(next_loc) = offset.page_locations().get(pg_i + 1) {
+                                next_loc.first_row_index + total_rows
+                            } else {
+                                rg_num_rows + total_rows
+                            };
+                            pages_acc.push(serde_wasm_bindgen::to_value(&Page::new(
+                                page.min,
+                                page.max,
+                                loc.first_row_index,
+                                page.null_count(),
+                                rg_i,
+                                end_row
+                            ))?);
+                        }
+                    }
+                    parquet::file::page_index::index::Index::INT64(native_index) => {
+                        for (pg_i, (page, loc)) in native_index.indexes.iter().zip(offset.page_locations()).enumerate()
+                        {
+                            let end_row =
+                            if let Some(next_loc) = offset.page_locations().get(pg_i + 1) {
+                                next_loc.first_row_index + total_rows
+                            } else {
+                                rg_num_rows + total_rows
+                            };
+                            pages_acc.push(serde_wasm_bindgen::to_value(&Page::new(
+                                page.min,
+                                page.max,
+                                loc.first_row_index,
+                                page.null_count(),
+                                rg_i,
+                                end_row
+                            ))?);
+                        }
+                    }
+                    parquet::file::page_index::index::Index::FLOAT(native_index) => {
+                        for (pg_i, (page, loc)) in native_index.indexes.iter().zip(offset.page_locations()).enumerate()
+                        {
+                            let end_row =
+                            if let Some(next_loc) = offset.page_locations().get(pg_i + 1) {
+                                next_loc.first_row_index + total_rows
+                            } else {
+                                rg_num_rows + total_rows
+                            };
+                            pages_acc.push(serde_wasm_bindgen::to_value(&Page::new(
+                                page.min,
+                                page.max,
+                                loc.first_row_index,
+                                page.null_count(),
+                                rg_i,
+                                end_row
+                            ))?);
+                        }
+                    }
+                    parquet::file::page_index::index::Index::DOUBLE(native_index) => {
+                        for (pg_i, (page, loc)) in native_index.indexes.iter().zip(offset.page_locations()).enumerate()
+                        {
+                            let end_row =
+                            if let Some(next_loc) = offset.page_locations().get(pg_i + 1) {
+                                next_loc.first_row_index + total_rows
+                            } else {
+                                rg_num_rows + total_rows
+                            };
+                            pages_acc.push(serde_wasm_bindgen::to_value(&Page::new(
+                                page.min,
+                                page.max,
+                                loc.first_row_index,
+                                page.null_count(),
+                                rg_i,
+                                end_row
+                            ))?);
+                        }
+                    }
+                    parquet::file::page_index::index::Index::INT96(native_index) => {
+                        for (pg_i, (page, loc)) in native_index.indexes.iter().zip(offset.page_locations()).enumerate()
+                        {
+                            let end_row =
+                            if let Some(next_loc) = offset.page_locations().get(pg_i + 1) {
+                                next_loc.first_row_index + total_rows
+                            } else {
+                                rg_num_rows + total_rows
+                            };
+                            pages_acc.push(serde_wasm_bindgen::to_value(&Page::new(
+                                page.min().map(|v| v.to_nanos()),
+                                page.max().map(|v| v.to_nanos()),
+                                loc.first_row_index,
+                                page.null_count(),
+                                rg_i,
+                                end_row
+                            ))?);
+                        }
+                    },
+                    parquet::file::page_index::index::Index::BYTE_ARRAY(native_index) => {
+                        for (pg_i, (page, loc)) in native_index.indexes.iter().zip(offset.page_locations()).enumerate()
+                        {
+                            let end_row =
+                            if let Some(next_loc) = offset.page_locations().get(pg_i + 1) {
+                                next_loc.first_row_index + total_rows
+                            } else {
+                                rg_num_rows + total_rows
+                            };
+                            pages_acc.push(serde_wasm_bindgen::to_value(&Page::new(
+                                page.min().map(|v| v.data().to_vec()),
+                                page.max().map(|v| v.data().to_vec()),
+                                loc.first_row_index,
+                                page.null_count(),
+                                rg_i,
+                                end_row
+                            ))?);
+                        }
+                    }
+                    parquet::file::page_index::index::Index::FIXED_LEN_BYTE_ARRAY(
+                        native_index,
+                    ) => {
+                        for (pg_i, (page, loc)) in native_index.indexes.iter().zip(offset.page_locations()).enumerate()
+                        {
+                            let end_row =
+                            if let Some(next_loc) = offset.page_locations().get(pg_i + 1) {
+                                next_loc.first_row_index + total_rows
+                            } else {
+                                rg_num_rows + total_rows
+                            };
+                            pages_acc.push(serde_wasm_bindgen::to_value(&Page::new(
+                                page.min().map(|v| v.data().to_vec()),
+                                page.max().map(|v| v.data().to_vec()),
+                                loc.first_row_index,
+                                page.null_count(),
+                                rg_i,
+                                end_row
+                            ))?);
+                        }
+                    },
+                },
+                (_, _) => {
+                    continue;
+                }
+            }
+
+            total_rows += rg_num_rows;
+        }
+
+        Ok(pages_acc)
+    }
 }
 
 impl From<parquet::file::metadata::ParquetMetaData> for ParquetMetaData {
@@ -242,6 +430,142 @@ impl ColumnChunkMetaData {
     pub fn uncompressed_size(&self) -> f64 {
         self.0.uncompressed_size() as f64
     }
+
+    /// Read the row-group-level statistics for this column, if available.
+    ///
+    /// This is useful for checking if a row group is worth visiting if you
+    /// are searching for a value in a sorted column.
+    #[wasm_bindgen(unchecked_return_type = "ColumnChunkStatistic | null")]
+    pub fn statistics(&self) -> wasm_bindgen::JsValue {
+        let v = if let Some(stat) = self.0.statistics() {
+            match stat {
+                parquet::file::statistics::Statistics::Boolean(value_statistics) => {
+                    serde_wasm_bindgen::to_value(&JsStatistics::new(
+                        value_statistics.min_opt().copied(),
+                        value_statistics.max_opt().copied(),
+                        value_statistics.distinct_count(),
+                        value_statistics.null_count_opt(),
+                        value_statistics.max_is_exact(),
+                        value_statistics.min_is_exact(),
+                    ))
+                    .ok()
+                }
+                parquet::file::statistics::Statistics::Int32(value_statistics) => {
+                    serde_wasm_bindgen::to_value(&JsStatistics::new(
+                        value_statistics.min_opt().copied(),
+                        value_statistics.max_opt().copied(),
+                        value_statistics.distinct_count(),
+                        value_statistics.null_count_opt(),
+                        value_statistics.max_is_exact(),
+                        value_statistics.min_is_exact(),
+                    ))
+                    .ok()
+                }
+                parquet::file::statistics::Statistics::Int64(value_statistics) => {
+                    serde_wasm_bindgen::to_value(&JsStatistics::new(
+                        value_statistics.min_opt().copied(),
+                        value_statistics.max_opt().copied(),
+                        value_statistics.distinct_count(),
+                        value_statistics.null_count_opt(),
+                        value_statistics.max_is_exact(),
+                        value_statistics.min_is_exact(),
+                    ))
+                    .ok()
+                }
+                parquet::file::statistics::Statistics::Int96(value_statistics) => {
+                    serde_wasm_bindgen::to_value(&JsStatistics::new(
+                        value_statistics.min_opt().copied().map(|v| v.to_seconds()),
+                        value_statistics.max_opt().copied().map(|v| v.to_seconds()),
+                        value_statistics.distinct_count(),
+                        value_statistics.null_count_opt(),
+                        value_statistics.max_is_exact(),
+                        value_statistics.min_is_exact(),
+                    ))
+                    .ok()
+                }
+                parquet::file::statistics::Statistics::Float(value_statistics) => {
+                    serde_wasm_bindgen::to_value(&JsStatistics::new(
+                        value_statistics.min_opt().copied(),
+                        value_statistics.max_opt().copied(),
+                        value_statistics.distinct_count(),
+                        value_statistics.null_count_opt(),
+                        value_statistics.max_is_exact(),
+                        value_statistics.min_is_exact(),
+                    ))
+                    .ok()
+                }
+                parquet::file::statistics::Statistics::Double(value_statistics) => {
+                    serde_wasm_bindgen::to_value(&JsStatistics::new(
+                        value_statistics.min_opt().copied(),
+                        value_statistics.max_opt().copied(),
+                        value_statistics.distinct_count(),
+                        value_statistics.null_count_opt(),
+                        value_statistics.max_is_exact(),
+                        value_statistics.min_is_exact(),
+                    ))
+                    .ok()
+                }
+                parquet::file::statistics::Statistics::ByteArray(value_statistics) => {
+                    serde_wasm_bindgen::to_value(&JsStatistics::new(
+                        value_statistics.min_opt().map(|v| v.as_bytes().to_vec()),
+                        value_statistics.max_opt().map(|v| v.as_bytes().to_vec()),
+                        value_statistics.distinct_count(),
+                        value_statistics.null_count_opt(),
+                        value_statistics.max_is_exact(),
+                        value_statistics.min_is_exact(),
+                    ))
+                    .ok()
+                }
+                parquet::file::statistics::Statistics::FixedLenByteArray(value_statistics) => {
+                    serde_wasm_bindgen::to_value(&JsStatistics::new(
+                        value_statistics.min_opt().map(|v| v.as_bytes().to_vec()),
+                        value_statistics.max_opt().map(|v| v.as_bytes().to_vec()),
+                        value_statistics.distinct_count(),
+                        value_statistics.null_count_opt(),
+                        value_statistics.max_is_exact(),
+                        value_statistics.min_is_exact(),
+                    ))
+                    .ok()
+                }
+            }
+        } else {
+            None
+        };
+        v.unwrap_or_else(|| JsValue::null())
+    }
+}
+
+#[derive(serde::Serialize)]
+pub struct JsStatistics<T: serde::Serialize> {
+    pub min_value: Option<T>,
+    pub max_value: Option<T>,
+    // Distinct count could be omitted in some cases
+    pub distinct_count: Option<u64>,
+    pub null_count: Option<u64>,
+
+    // Whether or not the min or max values are exact, or truncated.
+    pub is_max_value_exact: bool,
+    pub is_min_value_exact: bool,
+}
+
+impl<T: serde::Serialize> JsStatistics<T> {
+    pub fn new(
+        min_value: Option<T>,
+        max_value: Option<T>,
+        distinct_count: Option<u64>,
+        null_count: Option<u64>,
+        is_max_value_exact: bool,
+        is_min_value_exact: bool,
+    ) -> Self {
+        Self {
+            min_value,
+            max_value,
+            distinct_count,
+            null_count,
+            is_max_value_exact,
+            is_min_value_exact,
+        }
+    }
 }
 
 impl From<parquet::file::metadata::ColumnChunkMetaData> for ColumnChunkMetaData {
@@ -255,3 +579,76 @@ impl From<ColumnChunkMetaData> for parquet::file::metadata::ColumnChunkMetaData 
         value.0
     }
 }
+
+#[derive(Debug, serde::Serialize)]
+pub struct Page<T: serde::Serialize> {
+    pub min_value: Option<T>,
+    pub max_value: Option<T>,
+    pub start_row: i64,
+    pub null_count: Option<i64>,
+    pub row_group_index: usize,
+    pub end_row: i64,
+}
+
+impl<T: serde::Serialize> Page<T> {
+    pub fn new(min: Option<T>, max: Option<T>, start_row: i64, null_count: Option<i64>, row_group_index: usize, end_row: i64) -> Self {
+        Self {
+            min_value: min,
+            max_value: max,
+            start_row,
+            null_count,
+            row_group_index,
+            end_row
+        }
+    }
+}
+
+
+#[wasm_bindgen(typescript_custom_section)]
+const TS_APPEND_CONTENT: &'static str = r#"
+
+/**
+ * @type Column chunk statistics for a [column in a row group]{@link https://parquet.apache.org/docs/file-format/metadata/#file-metadata}.
+ */
+export interface ColumnChunkStatistic {
+    /**
+     * @property The minimum value in this column, if recorded. For non-numerical values, this may be truncated
+     */
+    min_value: any | null,
+    /**
+     * @property The maximum value in this column, if recorded. For non-numerical values, this may be truncated
+     */
+    max_value: any | null,
+    /** @property The number of unique values in this column, if recorded. */
+    distinct_count: number | null,
+    /** @property The number of null values in this column, if recorded. */
+    null_count: number | null,
+
+    /** @property Whether or not the max value is exact, or truncated. */
+    is_max_value_exact: boolean,
+    /** @property Whether or not the min value is exact, or truncated. */
+    is_min_value_exact: boolean,
+}
+
+/**
+ * @type Page metadata from the [page index]{@link https://parquet.apache.org/docs/file-format/pageindex/}
+ */
+export interface DataPage {
+    /**
+     * @property The minimum value in this page.
+     */
+    min_value: any | null,
+    /**
+     * @property The maximum value in this page.
+     */
+    max_value: any | null,
+    /** @property The row of the Parquet table this page starts on. */
+    start_row: number,
+    /** @property The row of the Parquet table this page ends on. */
+    end_row: number,
+    /** @property The row group this data page belongs to. */
+    row_group_index: number,
+    /** @property The number of null values present on this page, if included. */
+    null_count: number | null,
+};
+"#;
