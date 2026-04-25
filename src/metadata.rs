@@ -582,8 +582,8 @@ impl From<ColumnChunkMetaData> for parquet::file::metadata::ColumnChunkMetaData 
 
 #[derive(Debug, serde::Serialize)]
 pub struct Page<T: serde::Serialize> {
-    pub min: Option<T>,
-    pub max: Option<T>,
+    pub min_value: Option<T>,
+    pub max_value: Option<T>,
     pub start_row: i64,
     pub null_count: Option<i64>,
     pub row_group_index: usize,
@@ -593,8 +593,8 @@ pub struct Page<T: serde::Serialize> {
 impl<T: serde::Serialize> Page<T> {
     pub fn new(min: Option<T>, max: Option<T>, start_row: i64, null_count: Option<i64>, row_group_index: usize, end_row: i64) -> Self {
         Self {
-            min,
-            max,
+            min_value: min,
+            max_value: max,
             start_row,
             null_count,
             row_group_index,
@@ -607,24 +607,48 @@ impl<T: serde::Serialize> Page<T> {
 #[wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
 
+/**
+ * @type Column chunk statistics for a [column in a row group]{@link https://parquet.apache.org/docs/file-format/metadata/#file-metadata}.
+ */
 export interface ColumnChunkStatistic {
+    /**
+     * @property The minimum value in this column, if recorded. For non-numerical values, this may be truncated
+     */
     min_value: any | null,
+    /**
+     * @property The maximum value in this column, if recorded. For non-numerical values, this may be truncated
+     */
     max_value: any | null,
-    // Distinct count could be omitted in some cases
+    /** @property The number of unique values in this column, if recorded. */
     distinct_count: number | null,
+    /** @property The number of null values in this column, if recorded. */
     null_count: number | null,
 
-    // Whether or not the min or max values are exact, or truncated.
+    /** @property Whether or not the max value is exact, or truncated. */
     is_max_value_exact: boolean,
+    /** @property Whether or not the min value is exact, or truncated. */
     is_min_value_exact: boolean,
 }
 
+/**
+ * @type Page metadata from the [page index]{@link https://parquet.apache.org/docs/file-format/pageindex/}
+ */
 export interface DataPage {
-    min: any | null,
-    max: any | null,
+    /**
+     * @property The minimum value in this page.
+     */
+    min_value: any | null,
+    /**
+     * @property The maximum value in this page.
+     */
+    max_value: any | null,
+    /** @property The row of the Parquet table this page starts on. */
     start_row: number,
-    row_group_index: number,
+    /** @property The row of the Parquet table this page ends on. */
     end_row: number,
+    /** @property The row group this data page belongs to. */
+    row_group_index: number,
+    /** @property The number of null values present on this page, if included. */
     null_count: number | null,
 };
 "#;
