@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.7.2] - 2026-06-29
+
+### What's Changed
+
+* chore(deps): bump actions/upload-artifact from 4 to 5 by @dependabot[bot] in https://github.com/kylebarron/parquet-wasm/pull/823
+* chore(deps): bump actions/download-artifact from 5 to 6 by @dependabot[bot] in https://github.com/kylebarron/parquet-wasm/pull/822
+* feature: add support for slicing above i32 where u64 can safely be coerced to f64 losslessly by @mobiusklein in https://github.com/kylebarron/parquet-wasm/pull/861
+* fix: use correct module type for `node/` (cjs) by @IvanVishnevskiy in https://github.com/kylebarron/parquet-wasm/pull/865
+
+### New Contributors
+
+* @mobiusklein made their first contribution in https://github.com/kylebarron/parquet-wasm/pull/861
+* @IvanVishnevskiy made their first contribution in https://github.com/kylebarron/parquet-wasm/pull/865
+
+**Full Changelog**: https://github.com/kylebarron/parquet-wasm/compare/v0.7.1...v0.7.2
+
 ## [0.7.1] - 2025-09-17
 
 ### What's Changed
