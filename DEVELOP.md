@@ -38,7 +38,10 @@ There are good reasons to distribute as any of these... so why not distribute as
 
 To publish:
 
-```
-yarn build
-wasm-pack publish
-```
+1. Set environment paths as required above, if building on MacOS
+2. Build and publish
+    ```
+    yarn build
+    cd pkg
+    npm publish
+    ```
