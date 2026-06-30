@@ -41,6 +41,10 @@
       "types": "./esm/parquet_wasm.d.ts",
       "default": "./esm/parquet_wasm.js"
     },
+    "./wasm": {
+      "node": "./node/parquet_wasm_bg.wasm",
+      "default": "./esm/parquet_wasm_bg.wasm"
+    },
     ".": {
       "node": {
         "types": "./node/parquet_wasm.d.ts",
