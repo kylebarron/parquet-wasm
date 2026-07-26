@@ -55,6 +55,9 @@ jq -s '.[0] * .[1]' templates/package.json tmp_build/bundler/package.json > pkg/
 # Create minimal package.json in esm/ folder with type: module
 echo '{"type": "module"}' > pkg/esm/package.json
 
+# Create minimal package.json in node/ folder with type: commonjs
+echo '{"type": "commonjs"}' > pkg/node/package.json
+
 # Update files array in package.json using JQ
 jq '.files = ["*"] | .module="esm/parquet_wasm.js" | .types="esm/parquet_wasm.d.ts"' pkg/package.json > pkg/package.json.tmp
 
