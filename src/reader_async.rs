@@ -12,6 +12,7 @@ use futures::channel::oneshot;
 use futures::future::BoxFuture;
 use object_store::coalesce_ranges;
 use parquet::errors::ParquetError;
+use std::future::Future;
 use std::ops::Range;
 use std::sync::Arc;
 use wasm_bindgen::prelude::*;
@@ -456,104 +457,78 @@ impl JsClientReader {
             coalesce_byte_size,
         }
     }
-
 }
 
-/// Get bytes using JsClient - spawns the JS call in spawn_local and returns a Send-safe future
-fn get_bytes_js_client_internal(
-    url: String,
-    client: JsClient,
-    start: u64,
-    end: u64,
-) -> oneshot::Receiver<std::result::Result<Bytes, String>> {
+/// Run a JS `Promise<Uint8Array>` on the local event loop and return a `Send`
+/// future resolving to its bytes.
+///
+/// JS values (like the user-provided client) are `!Send`, but `AsyncFileReader`
+/// requires `Send` futures. To bridge the two, the JS interaction runs inside
+/// `spawn_local` (which doesn't require `Send`) and the result is passed back
+/// over a oneshot channel, whose receiver is `Send`.
+fn fetch_js_bytes(
+    make_promise: impl FnOnce() -> js_sys::Promise + 'static,
+    context: &'static str,
+) -> impl Future<Output = parquet::errors::Result<Bytes>> + Send {
     let (sender, receiver) = oneshot::channel::<std::result::Result<Bytes, String>>();
 
     spawn_local(async move {
         let result = async {
-            // Call the JsClient's getRange method (using f64 for JS number compatibility)
-            let promise = client.get_range_js(&url, start as f64, end as f64);
-            let js_result = wasm_bindgen_futures::JsFuture::from(promise)
+            let js_result = wasm_bindgen_futures::JsFuture::from(make_promise())
                 .await
-                .map_err(|e| format!("JsClient.getRange failed: {:?}", e))?;
-
-            // Convert Uint8Array to Bytes
-            let uint8_array = Uint8Array::new(&js_result);
-            let bytes: Bytes = uint8_array.to_vec().into();
-            Ok::<Bytes, String>(bytes)
+                .map_err(|e| format!("{context} failed: {e:?}"))?;
+            Ok::<Bytes, String>(Uint8Array::new(&js_result).to_vec().into())
         }
         .await;
 
         let _ = sender.send(result);
     });
 
-    receiver
+    async move {
+        receiver
+            .await
+            .map_err(|_| {
+                parquet::errors::ParquetError::External(Box::new(std::io::Error::other(format!(
+                    "Channel receive error in {context}"
+                ))))
+            })?
+            .map_err(|e| {
+                parquet::errors::ParquetError::External(Box::new(std::io::Error::other(e)))
+            })
+    }
 }
 
-/// Get bytes using JsClient
-async fn get_bytes_js_client(reader: JsClientReader, range: Range<u64>) -> parquet::errors::Result<Bytes> {
-    // Range is exclusive end, but HTTP Range header uses inclusive end
-    let receiver = get_bytes_js_client_internal(
-        reader.url.clone(),
-        reader.client.inner.clone(),
-        range.start,
-        range.end - 1,
-    );
-
-    let result = receiver.await.map_err(|_| {
-        parquet::errors::ParquetError::External(Box::new(std::io::Error::other(
-            "Channel receive error in JsClient",
-        )))
-    })?;
-
-    result.map_err(|e| {
-        parquet::errors::ParquetError::External(Box::new(std::io::Error::other(e)))
-    })
+/// Fetch a byte range through the user-provided JsClient
+fn get_bytes_js_client(
+    reader: &JsClientReader,
+    range: Range<u64>,
+) -> impl Future<Output = parquet::errors::Result<Bytes>> + Send {
+    let url = reader.url.clone();
+    let client = reader.client.inner.clone();
+    // `range` has an exclusive end; JsClient.getRange takes an inclusive end
+    // offset, matching HTTP Range header semantics. `f64` is used because JS
+    // numbers can represent integers exactly up to 2^53.
+    fetch_js_bytes(
+        move || client.get_range_js(&url, range.start as f64, (range.end - 1) as f64),
+        "JsClient.getRange",
+    )
 }
 
 impl MetadataSuffixFetch for &mut JsClientReader {
     fn fetch_suffix(&mut self, suffix: usize) -> BoxFuture<'_, parquet::errors::Result<Bytes>> {
         let url = self.url.clone();
         let client = self.client.inner.clone();
-        let suffix_size = suffix;
-
-        let (sender, receiver) = oneshot::channel::<std::result::Result<Bytes, String>>();
-
-        spawn_local(async move {
-            let result = async {
-                let promise = client.get_suffix_js(&url, suffix_size as f64);
-                let js_result = wasm_bindgen_futures::JsFuture::from(promise)
-                    .await
-                    .map_err(|e| format!("JsClient.getSuffix failed: {:?}", e))?;
-
-                let uint8_array = Uint8Array::new(&js_result);
-                let bytes: Bytes = uint8_array.to_vec().into();
-                Ok::<Bytes, String>(bytes)
-            }
-            .await;
-
-            let _ = sender.send(result);
-        });
-
-        async move {
-            receiver
-                .await
-                .map_err(|_| {
-                    parquet::errors::ParquetError::External(Box::new(std::io::Error::other(
-                        "Channel receive error in JsClient suffix fetch",
-                    )))
-                })?
-                .map_err(|e| {
-                    parquet::errors::ParquetError::External(Box::new(std::io::Error::other(e)))
-                })
-        }
+        fetch_js_bytes(
+            move || client.get_suffix_js(&url, suffix as f64),
+            "JsClient.getSuffix",
+        )
         .boxed()
     }
 }
 
 impl AsyncFileReader for JsClientReader {
     fn get_bytes(&mut self, range: Range<u64>) -> BoxFuture<'_, parquet::errors::Result<Bytes>> {
-        let reader = self.clone();
-        async move { get_bytes_js_client(reader, range).await }.boxed()
+        get_bytes_js_client(self, range).boxed()
     }
 
     fn get_byte_ranges(
@@ -564,7 +539,7 @@ impl AsyncFileReader for JsClientReader {
         async move {
             coalesce_ranges(
                 &ranges,
-                |range| get_bytes_js_client(reader.clone(), range),
+                |range| get_bytes_js_client(&reader, range),
                 reader.coalesce_byte_size,
             )
             .await

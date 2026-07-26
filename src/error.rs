@@ -19,9 +19,6 @@ pub enum ParquetWasmError {
     PlatformSupportError(String),
     #[error("Dyn casting error")]
     DynCastingError(JsValue),
-    #[cfg(feature = "async")]
-    #[error("Custom fetch error: `{0}`")]
-    JSFetchError(String),
 }
 
 pub type Result<T> = std::result::Result<T, ParquetWasmError>;
