@@ -60,18 +60,18 @@ console_error_panic_hook = { version = "0.1.6", optional = true }
 js-sys = "0.3.72"
 thiserror = "2.0"
 
-arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "6da94ef0a1522a244984a7d3d58a0339d0851d96", default-features = false, features = [
+arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "ee163ba9cfa1c5d078e7625ac8bcd3cd1e6bda8e", default-features = false, features = [
     "table",
     "record_batch",
     "schema",
 ] }
 
-arrow = { version = "56.1", default-features = false, features = [
+arrow = { version = "59", default-features = false, features = [
     "ipc",
     "ffi",
 ] }
-arrow-schema = "56.1"
-parquet = { version = "56.1", default-features = false, features = [
+arrow-schema = "59"
+parquet = { version = "59", default-features = false, features = [
     "arrow",
     "base64",
 ] }

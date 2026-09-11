@@ -81,6 +81,8 @@ pub(crate) fn cast_metadata_view_types(
 ///
 /// - StringView to String
 /// - BinaryView to Binary
+/// - ListView to List
+/// - LargeListView to LargeList
 ///
 /// Arrow JS does not currently support view types
 /// https://github.com/apache/arrow-js/issues/44
@@ -104,18 +106,20 @@ fn _cast_view_types_of_fields<'a>(fields: impl Iterator<Item = &'a FieldRef>) ->
                 DataType::Struct(struct_fields) => {
                     DataType::Struct(_cast_view_types_of_fields(struct_fields.iter()).into())
                 }
-                DataType::List(inner_field) => DataType::List(
+                DataType::List(inner_field) | DataType::ListView(inner_field) => DataType::List(
                     _cast_view_types_of_fields([inner_field].into_iter())
                         .into_iter()
                         .next()
                         .unwrap(),
                 ),
-                DataType::LargeList(inner_field) => DataType::LargeList(
-                    _cast_view_types_of_fields([inner_field].into_iter())
-                        .into_iter()
-                        .next()
-                        .unwrap(),
-                ),
+                DataType::LargeList(inner_field) | DataType::LargeListView(inner_field) => {
+                    DataType::LargeList(
+                        _cast_view_types_of_fields([inner_field].into_iter())
+                            .into_iter()
+                            .next()
+                            .unwrap(),
+                    )
+                }
                 DataType::FixedSizeList(inner_field, list_size) => DataType::FixedSizeList(
                     _cast_view_types_of_fields([inner_field].into_iter())
                         .into_iter()
@@ -132,7 +136,10 @@ fn _cast_view_types_of_fields<'a>(fields: impl Iterator<Item = &'a FieldRef>) ->
 
 fn has_view_types<'a>(mut fields: impl Iterator<Item = &'a FieldRef>) -> bool {
     fields.any(|field| match field.data_type() {
-        DataType::Utf8View | DataType::BinaryView => true,
+        DataType::Utf8View
+        | DataType::BinaryView
+        | DataType::ListView(_)
+        | DataType::LargeListView(_) => true,
         DataType::Struct(struct_fields) => has_view_types(struct_fields.iter()),
         DataType::List(inner_field) => has_view_types([inner_field].into_iter()),
         DataType::LargeList(inner_field) => has_view_types([inner_field].into_iter()),

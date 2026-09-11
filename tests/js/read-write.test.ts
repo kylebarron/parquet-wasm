@@ -148,3 +148,9 @@ describe("read string view file", async (t) => {
     await server.close();
   });
 });
+
+it("rewrites ListView to List", () => {
+  const arr = new Uint8Array(readFileSync(`${dataDir}/list_view.parquet`));
+  const table = tableFromIPC(wasm.readParquet(arr).intoIPCStream());
+  expect(DataType.isList(table.getChild("list_view")!.type)).toBeTruthy();
+});

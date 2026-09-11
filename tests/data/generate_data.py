@@ -48,11 +48,19 @@ def write_string_view_table():
     pq.write_table(table, "string_view.parquet", compression="snappy")
 
 
+def write_list_view_table():
+    table = pa.table({
+        "list_view": pa.array([[1, 2], [3], None, [4, 5, 6]], type=pa.list_view(pa.int32())),
+    })
+    pq.write_table(table, "list_view.parquet", compression="snappy")
+
+
 def main():
     table = create_data()
     write_data(table)
     write_empty_table()
     write_string_view_table()
+    write_list_view_table()
 
 
 if __name__ == "__main__":
