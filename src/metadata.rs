@@ -213,11 +213,7 @@ impl ColumnChunkMetaData {
     /// All encodings used for this column.
     #[wasm_bindgen]
     pub fn encodings(&self) -> Vec<Encoding> {
-        self.0
-            .encodings()
-            .iter()
-            .map(|encoding| (*encoding).into())
-            .collect()
+        self.0.encodings().map(|encoding| encoding.into()).collect()
     }
 
     /// Total number of values in this column chunk.
