@@ -77,24 +77,24 @@ parquet = { version = "59", default-features = false, features = [
 ] }
 bytes = "1"
 # We only bring this in for coalesce_ranges
-object_store = { version = "0.12", default-features = false }
+object_store = { version = "0.14", default-features = false }
 
 wasm-bindgen-futures = { version = "0.4.45", optional = true }
 futures = { version = "0.3", optional = true }
 range-reader = { version = "0.2", optional = true }
-reqwest = { version = "0.12.23", optional = true, default-features = false }
+reqwest = { version = "0.13.4", optional = true, default-features = false }
 
 # Pass "wasm" and "thin" down to the transitive zstd dependency
 zstd = { version = "*", features = [
     "wasm",
     "thin",
 ], default-features = false, optional = true }
-zstd-sys = { version = "=2.0.9", optional = true, default-features = false }
+zstd-sys = { version = "=2.1.0", optional = true, default-features = false }
 # 0.2.3 crashes the Node tests. See
 # https://github.com/kylebarron/parquet-wasm/pull/496#issuecomment-2057374608
 async-compat = { version = "=0.2.2", optional = true }
 async-stream = { version = "0.3.6", optional = true }
-wasm-streams = { version = "0.4.2", optional = true }
+wasm-streams = { version = "0.5.0", optional = true }
 async-trait = "0.1.89"
 url = "2.5.7"
 
