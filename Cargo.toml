@@ -1,6 +1,6 @@
 [package]
 name = "parquet-wasm"
-version = "0.7.2"
+version = "0.8.0"
 authors = ["Kyle Barron <kylebarron2@gmail.com>"]
 edition = "2024"
 description = "WebAssembly Parquet reader and writer."
@@ -66,10 +66,7 @@ arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "ee163ba9
     "schema",
 ] }
 
-arrow = { version = "59", default-features = false, features = [
-    "ipc",
-    "ffi",
-] }
+arrow = { version = "59", default-features = false, features = ["ipc", "ffi"] }
 arrow-schema = "59"
 parquet = { version = "59", default-features = false, features = [
     "arrow",
