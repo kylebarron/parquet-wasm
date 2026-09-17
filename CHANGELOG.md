@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.8.0] - 2026-09-17
+
+### What's Changed
+
+* update publishing docs by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/868
+* Feat: bump arrow/parquet to 59, add support for `max_row_group_bytes` by @IvanVishnevskiy in https://github.com/kylebarron/parquet-wasm/pull/896
+* fix: take schema from reader instead of builder by @cornhundred in https://github.com/kylebarron/parquet-wasm/pull/904
+
+### New Contributors
+
+* @cornhundred made their first contribution in https://github.com/kylebarron/parquet-wasm/pull/904
+
+**Full Changelog**: https://github.com/kylebarron/parquet-wasm/compare/v0.7.2...v0.8.0
+
 ## [0.7.2] - 2026-06-29
 
 ### What's Changed
