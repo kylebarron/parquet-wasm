@@ -149,6 +149,79 @@ describe("read string view file", async (t) => {
   });
 });
 
+describe("ParquetFile.fromUrlWithClient (custom client)", () => {
+  // A minimal JsClient implementation backed by plain fetch. In real usage
+  // this could be e.g. aws4fetch's AwsClient to sign requests for private S3.
+  const fetchClient = {
+    async getRange(
+      url: string,
+      start: number,
+      end: number
+    ): Promise<Uint8Array> {
+      const response = await fetch(url, {
+        headers: { Range: `bytes=${start}-${end}` },
+      });
+      return new Uint8Array(await response.arrayBuffer());
+    },
+    async getSuffix(url: string, length: number): Promise<Uint8Array> {
+      const response = await fetch(url, {
+        headers: { Range: `bytes=-${length}` },
+      });
+      return new Uint8Array(await response.arrayBuffer());
+    },
+  };
+
+  it("reads full file", async (t) => {
+    const server = await temporaryServer();
+    const listeningPort = server.addresses()[0].port;
+    const url = `http://localhost:${listeningPort}/2-partition-none.parquet`;
+
+    const expectedTable = readExpectedArrowData();
+
+    const file = await wasm.ParquetFile.fromUrlWithClient(url, fetchClient);
+    const wasmTable = await file.read();
+    const table = tableFromIPC(wasmTable.intoIPCStream());
+    testArrowTablesEqual(expectedTable, table);
+
+    await server.close();
+  });
+
+  it("reads a single row group", async (t) => {
+    const server = await temporaryServer();
+    const listeningPort = server.addresses()[0].port;
+    const url = `http://localhost:${listeningPort}/2-partition-none.parquet`;
+
+    const expectedTable = readExpectedArrowData();
+
+    const file = await wasm.ParquetFile.fromUrlWithClient(url, fetchClient);
+    expect(file.metadata().numRowGroups()).toStrictEqual(2);
+
+    const wasmTable = await file.read({ rowGroups: [0] });
+    const table = tableFromIPC(wasmTable.intoIPCStream());
+    expect(table.numRows).toStrictEqual(expectedTable.numRows / 2);
+
+    await server.close();
+  });
+
+  it("surfaces client errors", async (t) => {
+    const failingClient = {
+      async getRange(): Promise<Uint8Array> {
+        throw new Error("range fetch rejected");
+      },
+      async getSuffix(): Promise<Uint8Array> {
+        throw new Error("suffix fetch rejected");
+      },
+    };
+
+    await expect(
+      wasm.ParquetFile.fromUrlWithClient(
+        "http://example.com/nonexistent.parquet",
+        failingClient
+      )
+    ).rejects.toThrow(/getSuffix/);
+  });
+});
+
 // Regression tests for https://github.com/kylebarron/parquet-wasm/issues/810, where the projected
 // record batches were paired with the schema of the unprojected file.
 describe("read projected columns", async (t) => {
