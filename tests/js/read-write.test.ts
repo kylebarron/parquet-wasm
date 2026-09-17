@@ -149,6 +149,62 @@ describe("read string view file", async (t) => {
   });
 });
 
+// Regression tests for https://github.com/kylebarron/parquet-wasm/issues/810, where the projected
+// record batches were paired with the schema of the unprojected file.
+describe("read projected columns", async (t) => {
+  it("returns only the requested columns", async (t) => {
+    const server = await temporaryServer();
+    const listeningPort = server.addresses()[0].port;
+    const rootUrl = `http://localhost:${listeningPort}`;
+
+    const url = `${rootUrl}/2-partition-brotli.parquet`;
+    const file = await wasm.ParquetFile.fromUrl(url);
+    const wasmTable = await file.read({ columns: ["str", "int32"] });
+    const jsTable = tableFromIPC(wasmTable.intoIPCStream());
+
+    expect(jsTable.schema.fields.map((field) => field.name)).toStrictEqual([
+      "str",
+      "int32",
+    ]);
+    expect(jsTable.numRows).toStrictEqual(4);
+    expect(jsTable.getChild("str")!.toJSON()).toStrictEqual([
+      "a",
+      "b",
+      "c",
+      "d",
+    ]);
+    expect(jsTable.getChild("int32")!.toJSON()).toStrictEqual([
+      0, -2147483638, 2147483637, 1,
+    ]);
+
+    await server.close();
+  });
+
+  it("returns only the requested columns of the requested row groups", async (t) => {
+    const server = await temporaryServer();
+    const listeningPort = server.addresses()[0].port;
+    const rootUrl = `http://localhost:${listeningPort}`;
+
+    const url = `${rootUrl}/2-partition-brotli.parquet`;
+    const file = await wasm.ParquetFile.fromUrl(url);
+    const wasmTable = await file.read({
+      columns: ["str", "int32"],
+      rowGroups: [1],
+    });
+    const jsTable = tableFromIPC(wasmTable.intoIPCStream());
+
+    expect(jsTable.schema.fields.map((field) => field.name)).toStrictEqual([
+      "str",
+      "int32",
+    ]);
+    expect(jsTable.numRows).toStrictEqual(2);
+    expect(jsTable.getChild("str")!.toJSON()).toStrictEqual(["c", "d"]);
+    expect(jsTable.getChild("int32")!.toJSON()).toStrictEqual([2147483637, 1]);
+
+    await server.close();
+  });
+});
+
 it("rewrites ListView to List", () => {
   const arr = new Uint8Array(readFileSync(`${dataDir}/list_view.parquet`));
   const table = tableFromIPC(wasm.readParquet(arr).intoIPCStream());
