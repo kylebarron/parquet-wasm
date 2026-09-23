@@ -3,6 +3,8 @@ use std::collections::HashMap;
 use crate::common::properties::{Compression, Encoding, WriterVersion};
 use crate::error::WasmResult;
 use parquet::file::metadata::KeyValue;
+use parquet::file::properties::CdcOptions;
+use serde::Deserialize;
 use wasm_bindgen::prelude::*;
 
 /// Controls the level of statistics to be computed by the writer
@@ -56,6 +58,33 @@ extern "C" {
     /// Key value metadata
     #[wasm_bindgen(typescript_type = "KeyValueMetadata")]
     pub type KeyValueMetadata;
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const TS_ContentDefinedChunkingOptions: &'static str = r#"
+export type ContentDefinedChunkingOptions = {
+    /* Minimum chunk size in bytes, before encoding and compression. Defaults to 256 KiB. */
+    minChunkSize?: number;
+    /* Maximum chunk size in bytes, before encoding and compression. Defaults to 1 MiB. */
+    maxChunkSize?: number;
+    /* Normalization level; higher values find more chunk boundaries. Defaults to 0. */
+    normLevel?: number;
+};
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    /// Content-defined chunking options
+    #[wasm_bindgen(typescript_type = "ContentDefinedChunkingOptions")]
+    pub type ContentDefinedChunkingOptions;
+}
+
+#[derive(Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+struct JsContentDefinedChunkingOptions {
+    min_chunk_size: Option<usize>,
+    max_chunk_size: Option<usize>,
+    norm_level: Option<i32>,
 }
 
 /// Builder to create a writing configuration for `writeParquet`
@@ -115,6 +144,35 @@ impl WriterPropertiesBuilder {
     #[wasm_bindgen(js_name = setMaxRowGroupBytes)]
     pub fn set_max_row_group_bytes(self, value: usize) -> Self {
         Self(self.0.set_max_row_group_bytes(Some(value)))
+    }
+
+    /// EXPERIMENTAL: Enables content-defined chunking, which writes data pages at boundaries
+    /// determined by the column values so that unchanged data produces identical bytes
+    /// across file versions. Omitted options use the upstream defaults.
+    ///
+    /// Throws if `minChunkSize` is 0 or `maxChunkSize` is not greater than `minChunkSize`.
+    #[wasm_bindgen(js_name = setContentDefinedChunking)]
+    pub fn set_content_defined_chunking(
+        self,
+        options: Option<ContentDefinedChunkingOptions>,
+    ) -> WasmResult<WriterPropertiesBuilder> {
+        let options: JsContentDefinedChunkingOptions = match options {
+            Some(options) => serde_wasm_bindgen::from_value(options.obj)?,
+            None => Default::default(),
+        };
+        let defaults = CdcOptions::default();
+        let options = CdcOptions {
+            min_chunk_size: options.min_chunk_size.unwrap_or(defaults.min_chunk_size),
+            max_chunk_size: options.max_chunk_size.unwrap_or(defaults.max_chunk_size),
+            norm_level: options.norm_level.unwrap_or(defaults.norm_level),
+        };
+        // Upstream asserts these bounds, which would abort the wasm instance.
+        if options.min_chunk_size == 0 || options.max_chunk_size <= options.min_chunk_size {
+            return Err(JsError::new(
+                "minChunkSize must be greater than 0 and maxChunkSize must be greater than minChunkSize",
+            ));
+        }
+        Ok(Self(self.0.set_content_defined_chunking(Some(options))))
     }
 
     /// Sets "created by" property.
