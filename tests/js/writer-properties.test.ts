@@ -4,6 +4,8 @@ import {
   tableFromArrays,
   tableFromIPC,
   tableToIPC,
+  Utf8,
+  vectorFromArray,
 } from "apache-arrow";
 import { readFileSync } from "fs";
 import { describe, expect, it } from "vitest";
@@ -91,14 +93,28 @@ describe("WriterPropertiesBuilder row group limits", () => {
 });
 
 describe("WriterPropertiesBuilder content-defined chunking", () => {
-  // Distinct strings so that pages are large enough to be split into chunks.
-  const table = tableFromArrays({
-    text: Array.from({ length: 4096 }, (_, i) => `row-${i}-`.repeat(8)),
-  });
+  // Deterministic pseudo-random plain (non-dictionary) strings, so the rolling hash finds
+  // chunk boundaries.
+  const makeTable = (rows: number, parts = 24) => {
+    let seed = 42;
+    const next = () => {
+      seed = (Math.imul(seed, 1103515245) + 12345) >>> 0;
+      return seed.toString(36);
+    };
+    const values = Array.from({ length: rows }, () =>
+      Array.from({ length: parts }, next).join(""),
+    );
+    return tableFromArrays({ text: vectorFromArray(values, new Utf8()) });
+  };
+  const table = makeTable(512);
+  const small = { minChunkSize: 1024, maxChunkSize: 4096 };
 
-  function writeWith(builder: wasm.WriterPropertiesBuilder): Uint8Array {
+  function writeWith(
+    builder: wasm.WriterPropertiesBuilder,
+    data: Table = table,
+  ): Uint8Array {
     return writeParquet(
-      table,
+      data,
       builder
         .setCompression(wasm.Compression.UNCOMPRESSED)
         .setDictionaryEnabled(false)
@@ -128,10 +144,7 @@ describe("WriterPropertiesBuilder content-defined chunking", () => {
   it("changes the page layout when setContentDefinedChunking is called", () => {
     const defaultBytes = writeWith(new wasm.WriterPropertiesBuilder());
     const bytes = writeWith(
-      new wasm.WriterPropertiesBuilder().setContentDefinedChunking({
-        minChunkSize: 1024,
-        maxChunkSize: 4096,
-      }),
+      new wasm.WriterPropertiesBuilder().setContentDefinedChunking(small),
     );
     expect(equalBytes(bytes, defaultBytes)).toBe(false);
     testArrowTablesEqual(
@@ -140,9 +153,26 @@ describe("WriterPropertiesBuilder content-defined chunking", () => {
     );
   });
 
+  it("passes normLevel through", () => {
+    const norm0 = writeWith(
+      new wasm.WriterPropertiesBuilder().setContentDefinedChunking(small),
+    );
+    const norm1 = writeWith(
+      new wasm.WriterPropertiesBuilder().setContentDefinedChunking({
+        ...small,
+        normLevel: 1,
+      }),
+    );
+    expect(equalBytes(norm0, norm1)).toBe(false);
+  });
+
   it("uses upstream defaults for omitted options", () => {
+    // ~640 KB of seeded data that default CDC splits into 2 pages (1 page without CDC).
+    const large = makeTable(1024, 96);
+    const disabled = writeWith(new wasm.WriterPropertiesBuilder(), large);
     const defaults = writeWith(
       new wasm.WriterPropertiesBuilder().setContentDefinedChunking(),
+      large,
     );
     const explicit = writeWith(
       new wasm.WriterPropertiesBuilder().setContentDefinedChunking({
@@ -150,27 +180,26 @@ describe("WriterPropertiesBuilder content-defined chunking", () => {
         maxChunkSize: 1024 * 1024,
         normLevel: 0,
       }),
+      large,
     );
     const partial = writeWith(
       new wasm.WriterPropertiesBuilder().setContentDefinedChunking({
         maxChunkSize: 1024 * 1024,
       }),
+      large,
     );
+    expect(equalBytes(defaults, disabled)).toBe(false);
     expect(equalBytes(explicit, defaults)).toBe(true);
     expect(equalBytes(partial, defaults)).toBe(true);
   });
 
-  it.each([
-    { minChunkSize: 0 },
-    { minChunkSize: 1024, maxChunkSize: 1024 },
-    { minChunkSize: 4096, maxChunkSize: 1024 },
-    { minChunkSize: -1 },
-  ])("throws on invalid options without breaking the module: %j", (options) => {
-    expect(() =>
-      new wasm.WriterPropertiesBuilder().setContentDefinedChunking(options),
-    ).toThrow();
-    expect(writeWith(new wasm.WriterPropertiesBuilder()).length).toBeGreaterThan(
-      0,
+  it("throws a readable error on invalid options instead of panicking", () => {
+    const set = (options: wasm.ContentDefinedChunkingOptions) => () =>
+      new wasm.WriterPropertiesBuilder().setContentDefinedChunking(options);
+    // Matching the message rules out an upstream panic, which surfaces as "unreachable".
+    expect(set({ minChunkSize: 0 })).toThrow(/minChunkSize must be greater than 0/);
+    expect(set({ minChunkSize: 4096, maxChunkSize: 1024 })).toThrow(
+      /maxChunkSize must be greater than minChunkSize/,
     );
   });
 });

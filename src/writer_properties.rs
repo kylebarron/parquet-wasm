@@ -166,7 +166,7 @@ impl WriterPropertiesBuilder {
             max_chunk_size: options.max_chunk_size.unwrap_or(defaults.max_chunk_size),
             norm_level: options.norm_level.unwrap_or(defaults.norm_level),
         };
-        // Upstream asserts these bounds, which would abort the wasm instance.
+        // Upstream asserts these bounds; a panic surfaces in JS as an opaque `RuntimeError: unreachable`.
         if options.min_chunk_size == 0 || options.max_chunk_size <= options.min_chunk_size {
             return Err(JsError::new(
                 "minChunkSize must be greater than 0 and maxChunkSize must be greater than minChunkSize",
