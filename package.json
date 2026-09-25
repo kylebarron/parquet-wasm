@@ -12,7 +12,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
-    "@fastify/static": "^7.0.4",
+    "@fastify/static": "^10.1.4",
     "@types/node": "^26",
     "apache-arrow": "^21.2.0",
     "arrow-js-ffi": "^0.4.3",
