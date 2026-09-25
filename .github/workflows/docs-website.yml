@@ -6,6 +6,8 @@ on:
       - "v*"
       # Skip prereleases (e.g. v0.9.0-alpha.1) so they don't replace the published docs
       - "!v*-*"
+  # Republish the docs from main, e.g. after a failed tag run
+  workflow_dispatch:
 
 permissions:
   contents: write # push to the gh-pages branch
@@ -41,7 +43,12 @@ jobs:
         run: pnpm docs:build
 
       - name: Publish docs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # gh-pages pushes from its own clone of the origin URL, which doesn't get the
+          # credentials actions/checkout stores in this repo's git config
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           pnpm docs:publish
