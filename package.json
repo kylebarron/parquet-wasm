@@ -2,6 +2,8 @@
   "scripts": {
     "build": "bash ./scripts/build.sh",
     "build:test": "ENV='DEV' yarn build",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
     "docs:build": "typedoc",
     "docs:publish": "gh-pages -d docs_build",
     "docs:serve": "cd docs_build && python -m http.server 8081",
@@ -9,6 +11,7 @@
     "test": "vitest run ./tests/js/index.test.ts"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.14",
     "@fastify/static": "^7.0.4",
     "@types/node": "^26",
     "apache-arrow": "^21.2.0",

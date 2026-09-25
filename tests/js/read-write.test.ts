@@ -1,12 +1,12 @@
+import { readFileSync } from "node:fs";
 import { DataType, tableFromIPC, tableToIPC } from "apache-arrow";
-import { readFileSync } from "fs";
 import { describe, expect, it } from "vitest";
-import * as wasm from "../../pkg/node/parquet_wasm";
+import * as wasm from "../../pkg/node/parquet_wasm.js";
 import {
   readExpectedArrowData,
   temporaryServer,
   testArrowTablesEqual,
-} from "./utils";
+} from "./utils.js";
 
 // Path from repo root
 const dataDir = "tests/data";
@@ -25,7 +25,7 @@ const testFiles = [
   "2-partition-zstd.parquet",
 ];
 
-describe("read file", async (t) => {
+describe("read file", async () => {
   const expectedTable = readExpectedArrowData();
 
   for (const testFile of testFiles) {
@@ -38,7 +38,7 @@ describe("read file", async (t) => {
   }
 });
 
-it("read-write-read round trip (with writer properties)", async (t) => {
+it("read-write-read round trip (with writer properties)", async () => {
   const dataPath = `${dataDir}/1-partition-brotli.parquet`;
   const buffer = readFileSync(dataPath);
   const arr = new Uint8Array(buffer);
@@ -48,28 +48,28 @@ it("read-write-read round trip (with writer properties)", async (t) => {
 
   const parquetBuffer = wasm.writeParquet(
     wasm.Table.fromIPCStream(tableToIPC(initialTable, "stream")),
-    writerProperties
+    writerProperties,
   );
   const table = tableFromIPC(wasm.readParquet(parquetBuffer).intoIPCStream());
 
   testArrowTablesEqual(initialTable, table);
 });
 
-it("read-write-read round trip (no writer properties provided)", async (t) => {
+it("read-write-read round trip (no writer properties provided)", async () => {
   const dataPath = `${dataDir}/1-partition-brotli.parquet`;
   const buffer = readFileSync(dataPath);
   const arr = new Uint8Array(buffer);
   const initialTable = tableFromIPC(wasm.readParquet(arr).intoIPCStream());
 
   const parquetBuffer = wasm.writeParquet(
-    wasm.Table.fromIPCStream(tableToIPC(initialTable, "stream"))
+    wasm.Table.fromIPCStream(tableToIPC(initialTable, "stream")),
   );
   const table = tableFromIPC(wasm.readParquet(parquetBuffer).intoIPCStream());
 
   testArrowTablesEqual(initialTable, table);
 });
 
-it("error produced trying to read file with arrayBuffer", (t) => {
+it("error produced trying to read file with arrayBuffer", () => {
   const arrayBuffer = new ArrayBuffer(10);
   try {
     // @ts-expect-error input should be Uint8Array
@@ -77,12 +77,12 @@ it("error produced trying to read file with arrayBuffer", (t) => {
   } catch (err) {
     expect(err instanceof Error, "err expected to be an Error").toBeTruthy();
     expect(err.message, "Expected error message").toStrictEqual(
-      "Empty input provided or not a Uint8Array."
+      "Empty input provided or not a Uint8Array.",
     );
   }
 });
 
-it("reads empty file", async (t) => {
+it("reads empty file", async () => {
   const dataPath = `${dataDir}/empty.parquet`;
   const buffer = readFileSync(dataPath);
   const arr = new Uint8Array(buffer);
@@ -94,7 +94,7 @@ it("reads empty file", async (t) => {
   // console.log("empty table schema", table.schema);
 });
 
-it("read stream-write stream-read stream round trip (no writer properties provided)", async (t) => {
+it("read stream-write stream-read stream round trip (no writer properties provided)", async () => {
   const server = await temporaryServer();
   const listeningPort = server.addresses()[0].port;
   const rootUrl = `http://localhost:${listeningPort}`;
@@ -106,18 +106,18 @@ it("read stream-write stream-read stream round trip (no writer properties provid
 
   const stream = await wasm.transformParquetStream(originalStream);
   const accumulatedBuffer = new Uint8Array(
-    await new Response(stream).arrayBuffer()
+    await new Response(stream).arrayBuffer(),
   );
   const roundtripTable = tableFromIPC(
-    wasm.readParquet(accumulatedBuffer).intoIPCStream()
+    wasm.readParquet(accumulatedBuffer).intoIPCStream(),
   );
 
   testArrowTablesEqual(expectedTable, roundtripTable);
   await server.close();
 });
 
-describe("read string view file", async (t) => {
-  it("synchronous read", async (t) => {
+describe("read string view file", async () => {
+  it("synchronous read", async () => {
     const dataPath = `${dataDir}/string_view.parquet`;
     const arr = new Uint8Array(readFileSync(dataPath));
     const table = tableFromIPC(wasm.readParquet(arr).intoIPCStream());
@@ -129,15 +129,15 @@ describe("read string view file", async (t) => {
     expect(DataType.isBinary(binaryCol.type)).toBeTruthy();
   });
 
-  it("asynchronous read", async (t) => {
+  it("asynchronous read", async () => {
     const server = await temporaryServer();
     const listeningPort = server.addresses()[0].port;
     const rootUrl = `http://localhost:${listeningPort}`;
 
     const url = `${rootUrl}/string_view.parquet`;
-    let file = await wasm.ParquetFile.fromUrl(url);
-    let wasmTable = await file.read();
-    let jsTable = tableFromIPC(wasmTable.intoIPCStream());
+    const file = await wasm.ParquetFile.fromUrl(url);
+    const wasmTable = await file.read();
+    const jsTable = tableFromIPC(wasmTable.intoIPCStream());
 
     const stringCol = jsTable.getChild("string_view")!;
     expect(DataType.isUtf8(stringCol.type)).toBeTruthy();
@@ -151,8 +151,8 @@ describe("read string view file", async (t) => {
 
 // Regression tests for https://github.com/kylebarron/parquet-wasm/issues/810, where the projected
 // record batches were paired with the schema of the unprojected file.
-describe("read projected columns", async (t) => {
-  it("returns only the requested columns", async (t) => {
+describe("read projected columns", async () => {
+  it("returns only the requested columns", async () => {
     const server = await temporaryServer();
     const listeningPort = server.addresses()[0].port;
     const rootUrl = `http://localhost:${listeningPort}`;
@@ -180,7 +180,7 @@ describe("read projected columns", async (t) => {
     await server.close();
   });
 
-  it("returns only the requested columns of the requested row groups", async (t) => {
+  it("returns only the requested columns of the requested row groups", async () => {
     const server = await temporaryServer();
     const listeningPort = server.addresses()[0].port;
     const rootUrl = `http://localhost:${listeningPort}`;
