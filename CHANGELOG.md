@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.9.0] - 2026-09-25
+
+### What's Changed
+
+* feat: expose content-defined chunking options by @cfahlgren1 in https://github.com/kylebarron/parquet-wasm/pull/911
+* feat: add readMetadata to read Parquet metadata from bytes by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/918
+* chore: arrow and parquet 60 by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/914
+* ci: publish to npm with trusted publishing by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/916
+* test: Add test for writing list column from Arrow IPC by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/788
+* ci: fix the docs website publish by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/921
+* docs: explain which functions free their inputs by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/922
+
+#### Repo updates
+
+* chore: lint and format TS with Biome by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/912
+* chore: switch from yarn to pnpm by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/915
+
+### New Contributors
+
+* @cfahlgren1 made their first contribution in https://github.com/kylebarron/parquet-wasm/pull/911
+
+**Full Changelog**: https://github.com/kylebarron/parquet-wasm/compare/v0.8.0...v0.9.0
+
 ## [0.8.0] - 2026-09-17
 
 ### What's Changed
