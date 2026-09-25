@@ -126,7 +126,8 @@ describe("WriterPropertiesBuilder content-defined chunking", () => {
     return Buffer.compare(Buffer.from(a), Buffer.from(b)) === 0;
   }
 
-  it("round trips a parquet file", () => {
+  it("round trips a real file with CDC enabled", () => {
+    // Too small to hit a chunk boundary; this checks CDC doesn't break writing mixed types.
     const arr = new Uint8Array(
       readFileSync("tests/data/1-partition-snappy.parquet"),
     );
