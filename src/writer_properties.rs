@@ -63,11 +63,15 @@ extern "C" {
 #[wasm_bindgen(typescript_custom_section)]
 const TS_ContentDefinedChunkingOptions: &'static str = r#"
 export type ContentDefinedChunkingOptions = {
-    /* Minimum chunk size in bytes, before encoding and compression. Defaults to 256 KiB. */
+    /** Minimum chunk size in bytes, before encoding and compression. Defaults to 256 KiB. */
     minChunkSize?: number;
-    /* Maximum chunk size in bytes, before encoding and compression. Defaults to 1 MiB. */
+    /** Maximum chunk size in bytes, before encoding and compression. Defaults to 1 MiB. */
     maxChunkSize?: number;
-    /* Normalization level; higher values find more chunk boundaries. Defaults to 0. */
+    /**
+     * Normalization level. Higher values find more chunk boundaries (smaller pages); negative
+     * values find fewer. Defaults to 0. Values outside [-3, 3] are not recommended, and
+     * values that are too large for the chunk size range fail when the file is written.
+     */
     normLevel?: number;
 };
 "#;
@@ -150,7 +154,10 @@ impl WriterPropertiesBuilder {
     /// determined by the column values so that unchanged data produces identical bytes
     /// across file versions. Omitted options use the upstream defaults.
     ///
-    /// Throws if `minChunkSize` is 0 or `maxChunkSize` is not greater than `minChunkSize`.
+    /// Throws if:
+    /// - `minChunkSize` is 0
+    /// - `maxChunkSize` is not greater than `minChunkSize`
+    /// - `normLevel` is out of range for the chunk sizes
     #[wasm_bindgen(js_name = setContentDefinedChunking)]
     pub fn set_content_defined_chunking(
         self,
