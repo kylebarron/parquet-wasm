@@ -40,11 +40,10 @@ it("read schema via IPC", async () => {
   );
 });
 
-it("read metadata from full file bytes", async (t) => {
+it("read metadata from full file bytes", async () => {
   const dataPath = `${dataDir}/1-partition-brotli.parquet`;
   const buffer = readFileSync(dataPath);
   const arr = new Uint8Array(buffer);
-  // TODO: test with footer bytes alone as well
   const metadata = wasm.readMetadata(arr);
 
   // Convert the parquet file buffer from readFileSync to a Blob.
@@ -53,15 +52,25 @@ it("read metadata from full file bytes", async (t) => {
   // Test against the existing ParquetFile.metadata method.
   const expectedMetadata = pqFile.metadata();
 
-  expect(metadata.fileMetadata().createdBy()).toStrictEqual(expectedMetadata.fileMetadata().createdBy());
-  expect(metadata.fileMetadata().numRows()).toStrictEqual(expectedMetadata.fileMetadata().numRows());
-  expect(metadata.fileMetadata().version()).toStrictEqual(expectedMetadata.fileMetadata().version());
+  expect(metadata.fileMetadata().createdBy()).toStrictEqual(
+    expectedMetadata.fileMetadata().createdBy(),
+  );
+  expect(metadata.fileMetadata().numRows()).toStrictEqual(
+    expectedMetadata.fileMetadata().numRows(),
+  );
+  expect(metadata.fileMetadata().version()).toStrictEqual(
+    expectedMetadata.fileMetadata().version(),
+  );
   expect(metadata.numRowGroups()).toStrictEqual(1);
-  expect(metadata.numRowGroups()).toStrictEqual(expectedMetadata.numRowGroups());
-  expect(metadata.rowGroup(0).numRows()).toStrictEqual(expectedMetadata.rowGroup(0).numRows());
+  expect(metadata.numRowGroups()).toStrictEqual(
+    expectedMetadata.numRowGroups(),
+  );
+  expect(metadata.rowGroup(0).numRows()).toStrictEqual(
+    expectedMetadata.rowGroup(0).numRows(),
+  );
 });
 
-it("read metadata from footer bytes only", async (t) => {
+it("read metadata from footer bytes only", async () => {
   const dataPath = `${dataDir}/1-partition-brotli.parquet`;
   const buffer = readFileSync(dataPath);
   const arr = new Uint8Array(buffer);
@@ -74,10 +83,20 @@ it("read metadata from footer bytes only", async (t) => {
   // Test against the existing ParquetFile.metadata method.
   const expectedMetadata = pqFile.metadata();
 
-  expect(metadata.fileMetadata().createdBy()).toStrictEqual(expectedMetadata.fileMetadata().createdBy());
-  expect(metadata.fileMetadata().numRows()).toStrictEqual(expectedMetadata.fileMetadata().numRows());
-  expect(metadata.fileMetadata().version()).toStrictEqual(expectedMetadata.fileMetadata().version());
+  expect(metadata.fileMetadata().createdBy()).toStrictEqual(
+    expectedMetadata.fileMetadata().createdBy(),
+  );
+  expect(metadata.fileMetadata().numRows()).toStrictEqual(
+    expectedMetadata.fileMetadata().numRows(),
+  );
+  expect(metadata.fileMetadata().version()).toStrictEqual(
+    expectedMetadata.fileMetadata().version(),
+  );
   expect(metadata.numRowGroups()).toStrictEqual(1);
-  expect(metadata.numRowGroups()).toStrictEqual(expectedMetadata.numRowGroups());
-  expect(metadata.rowGroup(0).numRows()).toStrictEqual(expectedMetadata.rowGroup(0).numRows());
+  expect(metadata.numRowGroups()).toStrictEqual(
+    expectedMetadata.numRowGroups(),
+  );
+  expect(metadata.rowGroup(0).numRows()).toStrictEqual(
+    expectedMetadata.rowGroup(0).numRows(),
+  );
 });

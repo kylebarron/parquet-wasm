@@ -59,7 +59,7 @@ pub fn read_schema(parquet_file: Vec<u8>) -> Result<Schema> {
     Ok(schema.into())
 }
 
-/// Internal function to read a buffer with Parquet data into an Arrow schema
+/// Internal function to read Parquet metadata from a full file or from the footer bytes alone
 pub fn read_metadata(parquet_file: Vec<u8>) -> Result<ParquetMetaData> {
     // Create Parquet reader
     let cursor: Bytes = parquet_file.into();
