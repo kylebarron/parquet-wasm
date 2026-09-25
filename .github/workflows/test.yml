@@ -53,18 +53,21 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
+      - uses: pnpm/action-setup@v6
+
       - uses: actions/setup-node@v7
         with:
-          node-version: "24"
-
-      - name: Build bundle
-        run: yarn build:test
+          node-version-file: package.json
+          cache: pnpm
 
       - name: Install dev dependencies
-        run: yarn
+        run: pnpm install
+
+      - name: Build bundle
+        run: pnpm build:test
 
       - name: Run Node tests
-        run: yarn test
+        run: pnpm test
 
   fmt:
     name: fmt

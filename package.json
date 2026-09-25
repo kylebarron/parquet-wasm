@@ -1,9 +1,13 @@
 {
   "scripts": {
     "build": "bash ./scripts/build.sh",
-    "build:test": "ENV='DEV' yarn build",
-    "lint": "biome check .",
-    "lint:fix": "biome check --write .",
+    "build:test": "ENV='DEV' pnpm build",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
+    "format": "biome format .",
+    "format:fix": "biome format --write .",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
     "docs:build": "typedoc",
     "docs:publish": "gh-pages -d docs_build",
     "docs:serve": "cd docs_build && python -m http.server 8081",
@@ -23,8 +27,9 @@
     "typescript": "^6.0.3",
     "vitest": "^4.1.11"
   },
+  "packageManager": "pnpm@10.25.0",
   "volta": {
     "node": "24.18.0",
-    "yarn": "1.22.19"
+    "pnpm": "10.25.0"
   }
 }

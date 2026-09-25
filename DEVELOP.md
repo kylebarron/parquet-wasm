@@ -41,7 +41,7 @@ To publish:
 1. Set environment paths as required above, if building on MacOS
 2. Build and publish
     ```
-    yarn build
+    pnpm build
     cd pkg
     npm publish
     ```
