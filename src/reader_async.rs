@@ -41,7 +41,7 @@ const OBJECT_STORE_COALESCE_DEFAULT: u64 = 1024 * 1024;
 fn create_builder<T: AsyncFileReader + Unpin + 'static>(
     reader: T,
     meta: &ArrowReaderMetadata,
-    options: &JsReaderOptions,
+    options: &ReaderOptions,
 ) -> Result<ParquetRecordBatchStreamBuilder<T>> {
     // Cast any view types to non-view types
     let metadata = cast_metadata_view_types(meta)?;
@@ -148,7 +148,7 @@ impl ParquetFile {
     ///    - `offset`: Provide an offset to skip over the given number of rows.
     ///    - `columns`: The column names from the file to read.
     #[wasm_bindgen]
-    pub async fn read(&self, options: Option<ReaderOptions>) -> WasmResult<Table> {
+    pub async fn read(&self, options: Option<JsReaderOptions>) -> WasmResult<Table> {
         let options = options
             .map(|x| x.try_into())
             .transpose()?
@@ -180,9 +180,9 @@ impl ParquetFile {
     #[wasm_bindgen]
     pub async fn stream(
         &self,
-        options: Option<ReaderOptions>,
+        options: Option<JsReaderOptions>,
     ) -> WasmResult<wasm_streams::readable::sys::ReadableStream> {
-        let options: JsReaderOptions = options
+        let options: ReaderOptions = options
             .map(|x| x.try_into())
             .transpose()?
             .unwrap_or_default();

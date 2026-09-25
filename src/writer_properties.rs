@@ -80,12 +80,12 @@ export type ContentDefinedChunkingOptions = {
 extern "C" {
     /// Content-defined chunking options
     #[wasm_bindgen(typescript_type = "ContentDefinedChunkingOptions")]
-    pub type ContentDefinedChunkingOptions;
+    pub type JsContentDefinedChunkingOptions;
 }
 
 #[derive(Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
-struct JsContentDefinedChunkingOptions {
+struct ContentDefinedChunkingOptions {
     min_chunk_size: Option<usize>,
     max_chunk_size: Option<usize>,
     norm_level: Option<i32>,
@@ -161,10 +161,10 @@ impl WriterPropertiesBuilder {
     #[wasm_bindgen(js_name = setContentDefinedChunking)]
     pub fn set_content_defined_chunking(
         self,
-        options: Option<ContentDefinedChunkingOptions>,
+        options: Option<JsContentDefinedChunkingOptions>,
     ) -> WasmResult<WriterPropertiesBuilder> {
-        let options: JsContentDefinedChunkingOptions = match options {
-            Some(options) => serde_wasm_bindgen::from_value(options.obj)?,
+        let options: ContentDefinedChunkingOptions = match options {
+            Some(options) => options.try_into()?,
             None => Default::default(),
         };
         let defaults = CdcOptions::default();
