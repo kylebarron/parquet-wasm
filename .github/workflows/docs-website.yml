@@ -3,7 +3,12 @@ name: Publish docs website
 on:
   push:
     tags:
-      - "*"
+      - "v*"
+      # Skip prereleases (e.g. v0.9.0-alpha.1) so they don't replace the published docs
+      - "!v*-*"
+
+permissions:
+  contents: write # push to the gh-pages branch
 
 jobs:
   docs:
@@ -37,4 +42,6 @@ jobs:
 
       - name: Publish docs
         run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           pnpm docs:publish
