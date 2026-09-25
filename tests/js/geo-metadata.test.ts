@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { tableFromIPC } from "apache-arrow";
+import { tableFromArrays, tableFromIPC, tableToIPC } from "apache-arrow";
 import { expect, it } from "vitest";
 import * as wasm from "../../pkg/node/parquet_wasm.js";
 
@@ -50,3 +50,29 @@ it.skip("test geo-arrow-spec (geoarrow encoding) metadata passed through", () =>
 function isCloseEqual(a: number, b: number, eps: number = 0.0001): boolean {
   return Math.abs(a - b) < eps;
 }
+
+// https://github.com/kylebarron/parquet-wasm/issues/606
+it("reads an IPC stream with an unnamed list child field", () => {
+  // tableFromArrays gives the inner list field an empty name
+  const table = tableFromArrays({
+    column: [
+      [1, 2],
+      [3, 4],
+    ],
+  });
+  const wasmTable = wasm.Table.fromIPCStream(tableToIPC(table, "stream"));
+  const jsTable = tableFromIPC(wasmTable.intoIPCStream());
+
+  // Compare values rather than vectors: arrow JS infers the inner type as `Float`, but
+  // decoding IPC gives the `Float64` subclass, so the vectors aren't strictly equal.
+  const listValues = (t: typeof table) =>
+    t
+      .getChild("column")
+      ?.toArray()
+      .map((inner) => Array.from(inner));
+  expect(listValues(jsTable)).toStrictEqual([
+    [1, 2],
+    [3, 4],
+  ]);
+  expect(listValues(jsTable)).toStrictEqual(listValues(table));
+});
