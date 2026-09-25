@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::error::Result;
-use crate::read_options::JsReaderOptions;
+use crate::read_options::ReaderOptions;
 use arrow_schema::{DataType, FieldRef};
 use arrow_wasm::{Schema, Table};
 use bytes::Bytes;
@@ -10,7 +10,7 @@ use parquet::arrow::arrow_reader::{
 };
 
 /// Internal function to read a buffer with Parquet data into a buffer with Arrow IPC Stream data
-pub fn read_parquet(parquet_file: Vec<u8>, options: JsReaderOptions) -> Result<Table> {
+pub fn read_parquet(parquet_file: Vec<u8>, options: ReaderOptions) -> Result<Table> {
     // Create Parquet reader
     let cursor: Bytes = parquet_file.into();
 
