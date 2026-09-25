@@ -91,6 +91,24 @@ struct ContentDefinedChunkingOptions {
     norm_level: Option<i32>,
 }
 
+impl TryFrom<JsContentDefinedChunkingOptions> for ContentDefinedChunkingOptions {
+    type Error = serde_wasm_bindgen::Error;
+
+    fn try_from(value: JsContentDefinedChunkingOptions) -> Result<Self, Self::Error> {
+        serde_wasm_bindgen::from_value(value.obj)
+    }
+}
+
+impl From<ContentDefinedChunkingOptions> for CdcOptions {
+    fn from(options: ContentDefinedChunkingOptions) -> Self {
+        CdcOptions {
+            min_chunk_size: options.min_chunk_size.unwrap_or_default(),
+            max_chunk_size: options.max_chunk_size.unwrap_or_default(),
+            norm_level: options.norm_level.unwrap_or_default(),
+        }
+    }
+}
+
 /// Builder to create a writing configuration for `writeParquet`
 ///
 /// Call {@linkcode build} on the finished builder to create an immputable {@linkcode WriterProperties} to pass to `writeParquet`
@@ -163,16 +181,11 @@ impl WriterPropertiesBuilder {
         self,
         options: Option<JsContentDefinedChunkingOptions>,
     ) -> WasmResult<WriterPropertiesBuilder> {
-        let options: ContentDefinedChunkingOptions = match options {
-            Some(options) => options.try_into()?,
-            None => Default::default(),
-        };
-        let defaults = CdcOptions::default();
-        let options = CdcOptions {
-            min_chunk_size: options.min_chunk_size.unwrap_or(defaults.min_chunk_size),
-            max_chunk_size: options.max_chunk_size.unwrap_or(defaults.max_chunk_size),
-            norm_level: options.norm_level.unwrap_or(defaults.norm_level),
-        };
+        let options: ContentDefinedChunkingOptions = options
+            .map(|js_opt| js_opt.try_into())
+            .transpose()?
+            .unwrap_or_default();
+        let options = CdcOptions::from(options);
         // Upstream asserts these bounds; a panic surfaces in JS as an opaque `RuntimeError: unreachable`.
         if options.min_chunk_size == 0 || options.max_chunk_size <= options.min_chunk_size {
             return Err(JsError::new(
