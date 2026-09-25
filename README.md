@@ -40,6 +40,20 @@ Refer to these functions:
 
 Both sync and async functions return or accept a [`Table`](https://kylebarron.dev/parquet-wasm/classes/bundler_parquet_wasm.Table.html) class, an Arrow table in WebAssembly memory. Refer to its documentation for moving data into/out of WebAssembly.
 
+### Memory management
+
+Objects such as `Table`, `RecordBatch`, `ParquetFile` and `WriterProperties` hold data in WebAssembly memory. It's reclaimed eventually when the JS object is garbage-collected, but call `.free()` when you're done with an object to release it right away.
+
+Some functions and methods take ownership of their inputs and free them for you:
+
+- `writeParquet(table, writerProperties)` frees both `table` and `writerProperties`.
+- `transformParquetStream(stream, writerProperties)` frees `writerProperties`.
+- Methods whose names start with `into`, such as `Table.intoIPCStream()` and `Table.intoFFI()`, free the object they're called on.
+
+Don't call `.free()` on an object after that, or use it again: `.free()` throws `null pointer passed to rust`, and passing it to another function throws `Attempt to use a moved value`. To write the same data twice, create a new `Table`. To check whether an object has been freed, look at its `__wbg_ptr` property, which is `0` once freed. It's a wasm-bindgen internal, so it isn't in the TypeScript types.
+
+The generated types also support [`using` declarations](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/using), which call `.free()` at the end of the block. Only declare an object with `using` if you won't pass it to one of the functions above; otherwise the automatic `.free()` throws.
+
 ## Entry Points
 
 
@@ -176,13 +190,14 @@ const wasmTable = Table.fromIPCStream(arrow.tableToIPC(rainfall, "stream"));
 const writerProperties = new WriterPropertiesBuilder()
   .setCompression(Compression.ZSTD)
   .build();
+// writeParquet frees wasmTable and writerProperties, so don't use them after this
 const parquetUint8Array = writeParquet(wasmTable, writerProperties);
 
 // Read Parquet buffer back to Arrow Table
 // arrowWasmTable is an Arrow table in WebAssembly memory
 const arrowWasmTable = readParquet(parquetUint8Array);
 
-// table is now an Arrow table in JS memory
+// table is now an Arrow table in JS memory; intoIPCStream frees arrowWasmTable
 const table = arrow.tableFromIPC(arrowWasmTable.intoIPCStream());
 console.log(table.schema.toString());
 // Schema<{ 0: precipitation: Float32, 1: date: Date64<MILLISECOND> }>
