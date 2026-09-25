@@ -101,10 +101,11 @@ impl TryFrom<JsContentDefinedChunkingOptions> for ContentDefinedChunkingOptions 
 
 impl From<ContentDefinedChunkingOptions> for CdcOptions {
     fn from(options: ContentDefinedChunkingOptions) -> Self {
+        let defaults = CdcOptions::default();
         CdcOptions {
-            min_chunk_size: options.min_chunk_size.unwrap_or_default(),
-            max_chunk_size: options.max_chunk_size.unwrap_or_default(),
-            norm_level: options.norm_level.unwrap_or_default(),
+            min_chunk_size: options.min_chunk_size.unwrap_or(defaults.min_chunk_size),
+            max_chunk_size: options.max_chunk_size.unwrap_or(defaults.max_chunk_size),
+            norm_level: options.norm_level.unwrap_or(defaults.norm_level),
         }
     }
 }
