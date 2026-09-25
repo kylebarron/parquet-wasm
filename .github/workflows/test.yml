@@ -55,7 +55,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version: "24"
 
       - name: Build bundle
         run: yarn build:test
@@ -126,7 +126,7 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version: "24"
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
           packages: brotli pv parallel jq
