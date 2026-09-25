@@ -1,7 +1,7 @@
-import * as wasm from "../../pkg/node/parquet_wasm";
-import { readFileSync } from "fs";
+import { readFileSync } from "node:fs";
 import { tableFromIPC } from "apache-arrow";
-import { it, expect } from "vitest";
+import { expect, it } from "vitest";
+import * as wasm from "../../pkg/node/parquet_wasm.js";
 
 // Path from repo root
 const dataDir = "tests/data";
@@ -16,34 +16,34 @@ const EXPECTED_META_GEOARROW = `\
 
 // We skip these test for now because it's not clear whether Parquet metadata
 // should be assigned onto the Arrow table metadata.
-it.skip("test geo-arrow-spec (wkb) metadata passed through", (t) => {
+it.skip("test geo-arrow-spec (wkb) metadata passed through", () => {
   const dataPath = `${dataDir}/${NATURALEARTH_CITIES_WKB}`;
   const arr = new Uint8Array(readFileSync(dataPath));
   const table = tableFromIPC(wasm.readParquet(arr).intoIPCStream());
   expect(
     table.schema.metadata.get("geo"),
-    "arrow table metadata should match expected"
+    "arrow table metadata should match expected",
   ).toStrictEqual(EXPECTED_META_WKB);
 });
 
-it.skip("test geo-arrow-spec (geoarrow encoding) metadata passed through", (t) => {
+it.skip("test geo-arrow-spec (geoarrow encoding) metadata passed through", () => {
   const dataPath = `${dataDir}/${NATURALEARTH_CITIES_GEOARROW}`;
   const arr = new Uint8Array(readFileSync(dataPath));
   const table = tableFromIPC(wasm.readParquet(arr).intoIPCStream());
 
   expect(
     table.schema.metadata.get("geo"),
-    "arrow table metadata should match expected"
+    "arrow table metadata should match expected",
   ).toStrictEqual(EXPECTED_META_GEOARROW);
 
   const firstCoord = table.getChild("geometry").get(0).toArray();
   expect(
     isCloseEqual(firstCoord[0], 12.453386544971766),
-    "Nested list should be read correctly"
+    "Nested list should be read correctly",
   ).toBeTruthy();
   expect(
     isCloseEqual(firstCoord[1], 41.903282179960115),
-    "Nested list should be read correctly"
+    "Nested list should be read correctly",
   ).toBeTruthy();
 });
 

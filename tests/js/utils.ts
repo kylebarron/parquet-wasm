@@ -1,16 +1,19 @@
-import { expect } from "vitest";
-import { readFileSync } from "fs";
-import { tableFromIPC, Table } from "apache-arrow";
-import fastify, { FastifyInstance } from "fastify";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import fastifyStatic from "@fastify/static";
-import { join } from "path";
+import type { Table } from "apache-arrow";
+import { tableFromIPC } from "apache-arrow";
+import type { FastifyInstance } from "fastify";
+import fastify from "fastify";
+import { expect } from "vitest";
+
 const dataDir = "tests/data";
 
 /** Test that two Arrow tables are equal */
 export function testArrowTablesEqual(table1: Table, table2: Table): void {
   expect(table1.schema.metadata).toStrictEqual(table2.schema.metadata);
   expect(table1.schema.fields.length).toStrictEqual(
-    table2.schema.fields.length
+    table2.schema.fields.length,
   );
 
   // Note that calling deepEquals on the schema object correctly can fail when in one schema the
@@ -53,7 +56,7 @@ export function testArrowTablesEqual(table1: Table, table2: Table): void {
     // ...
     expect(
       vector1.toJSON(),
-      `data arrays should be equal for column ${fieldName}`
+      `data arrays should be equal for column ${fieldName}`,
     ).toStrictEqual(vector2.toJSON());
   }
 }

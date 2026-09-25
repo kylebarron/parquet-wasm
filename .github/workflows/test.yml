@@ -82,6 +82,17 @@ jobs:
       - name: Run
         run: cargo fmt --all -- --check
 
+  biome:
+    name: Biome
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: biomejs/setup-biome@v2
+
+      - name: Lint and format check
+        run: biome ci .
+
   clippy:
     name: Clippy
     runs-on: ubuntu-latest

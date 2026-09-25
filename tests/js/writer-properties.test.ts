@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import {
   RecordBatch,
   Table,
@@ -7,10 +8,9 @@ import {
   Utf8,
   vectorFromArray,
 } from "apache-arrow";
-import { readFileSync } from "fs";
 import { describe, expect, it } from "vitest";
-import * as wasm from "../../pkg/node/parquet_wasm";
-import { testArrowTablesEqual } from "./utils";
+import * as wasm from "../../pkg/node/parquet_wasm.js";
+import { testArrowTablesEqual } from "./utils.js";
 
 function writeParquet(table: Table, props: wasm.WriterProperties): Uint8Array {
   return wasm.writeParquet(
@@ -63,8 +63,10 @@ describe("WriterPropertiesBuilder row group limits", () => {
     const chunks = Array.from({ length: 10 }, (_, batch) =>
       tableFromArrays({
         s: Array.from({ length: 10 }, (_, i) =>
-          String(batch * 10 + i).padStart(100, "0")),
-      }));
+          String(batch * 10 + i).padStart(100, "0"),
+        ),
+      }),
+    );
     const schema = chunks[0].schema;
     const table = new Table(
       schema,
@@ -198,7 +200,9 @@ describe("WriterPropertiesBuilder content-defined chunking", () => {
     const set = (options: wasm.ContentDefinedChunkingOptions) => () =>
       new wasm.WriterPropertiesBuilder().setContentDefinedChunking(options);
     // Matching the message rules out an upstream panic, which surfaces as "unreachable".
-    expect(set({ minChunkSize: 0 })).toThrow(/minChunkSize must be greater than 0/);
+    expect(set({ minChunkSize: 0 })).toThrow(
+      /minChunkSize must be greater than 0/,
+    );
     expect(set({ minChunkSize: 4096, maxChunkSize: 1024 })).toThrow(
       /maxChunkSize must be greater than minChunkSize/,
     );
