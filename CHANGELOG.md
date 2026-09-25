@@ -1,5 +1,66 @@
 # Changelog
 
+## [0.8.0] - 2026-09-17
+
+### What's Changed
+
+* update publishing docs by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/868
+* Feat: bump arrow/parquet to 59, add support for `max_row_group_bytes` by @IvanVishnevskiy in https://github.com/kylebarron/parquet-wasm/pull/896
+* fix: take schema from reader instead of builder by @cornhundred in https://github.com/kylebarron/parquet-wasm/pull/904
+
+### New Contributors
+
+* @cornhundred made their first contribution in https://github.com/kylebarron/parquet-wasm/pull/904
+
+**Full Changelog**: https://github.com/kylebarron/parquet-wasm/compare/v0.7.2...v0.8.0
+
+## [0.7.2] - 2026-06-29
+
+### What's Changed
+
+* chore(deps): bump actions/upload-artifact from 4 to 5 by @dependabot[bot] in https://github.com/kylebarron/parquet-wasm/pull/823
+* chore(deps): bump actions/download-artifact from 5 to 6 by @dependabot[bot] in https://github.com/kylebarron/parquet-wasm/pull/822
+* feature: add support for slicing above i32 where u64 can safely be coerced to f64 losslessly by @mobiusklein in https://github.com/kylebarron/parquet-wasm/pull/861
+* fix: use correct module type for `node/` (cjs) by @IvanVishnevskiy in https://github.com/kylebarron/parquet-wasm/pull/865
+
+### New Contributors
+
+* @mobiusklein made their first contribution in https://github.com/kylebarron/parquet-wasm/pull/861
+* @IvanVishnevskiy made their first contribution in https://github.com/kylebarron/parquet-wasm/pull/865
+
+**Full Changelog**: https://github.com/kylebarron/parquet-wasm/compare/v0.7.1...v0.7.2
+
+## [0.7.1] - 2025-09-17
+
+### What's Changed
+
+- ci: Bump node version in docs publish CI by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/792
+- Readme edit for tl;dr in hyparquet comparison by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/793
+- Fix handling of `rowGroups` option in `ParquetFile.read` by @quidquid in https://github.com/kylebarron/parquet-wasm/pull/802
+
+### New Contributors
+
+- @quidquid made their first contribution in https://github.com/kylebarron/parquet-wasm/pull/802
+
+**Full Changelog**: https://github.com/kylebarron/parquet-wasm/compare/v0.7.0...v0.7.1
+
+## [0.7.0] - 2025-09-17
+
+### What's Changed
+
+- Streaming Writes implementation by @H-Plus-Time in https://github.com/kylebarron/parquet-wasm/pull/305
+- Expose schema on ParquetFile by @H-Plus-Time in https://github.com/kylebarron/parquet-wasm/pull/599
+- Small doc fixes by @severo in https://github.com/kylebarron/parquet-wasm/pull/762
+- Bump to arrow/parquet 56 by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/783
+- feat: Support reading Parquet data with embedded Arrow schema containing string view/binary view types by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/786
+- docs: Add section to docs about hyparquet comparison by @kylebarron in https://github.com/kylebarron/parquet-wasm/pull/790
+
+### New Contributors
+
+- @severo made their first contribution in https://github.com/kylebarron/parquet-wasm/pull/762
+
+**Full Changelog**: https://github.com/kylebarron/parquet-wasm/compare/v0.6.1...v0.7.0
+
 ## [0.6.1] - 2024-05-04
 
 ### What's Changed

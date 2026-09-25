@@ -1,7 +1,13 @@
 {
   "scripts": {
     "build": "bash ./scripts/build.sh",
-    "build:test": "ENV='DEV' yarn build",
+    "build:test": "ENV='DEV' pnpm build",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
+    "format": "biome format .",
+    "format:fix": "biome format --write .",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
     "docs:build": "typedoc",
     "docs:publish": "gh-pages -d docs_build",
     "docs:serve": "cd docs_build && python -m http.server 8081",
@@ -9,19 +15,21 @@
     "test": "vitest run ./tests/js/index.test.ts"
   },
   "devDependencies": {
-    "@fastify/static": "^7.0.4",
-    "@types/node": "^24",
-    "apache-arrow": "^20.0.0",
+    "@biomejs/biome": "2.5.14",
+    "@fastify/static": "^10.1.4",
+    "@types/node": "^26",
+    "apache-arrow": "^21.2.0",
     "arrow-js-ffi": "^0.4.3",
     "benny": "^3.7.1",
-    "fastify": "^4.28.1",
+    "fastify": "^5.12.5",
     "gh-pages": "^6.2.0",
-    "typedoc": "^0.28.13",
-    "typescript": "^5.6.3",
-    "vitest": "^3.2.4"
+    "typedoc": "^0.28.20",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.11"
   },
+  "packageManager": "pnpm@10.25.0",
   "volta": {
-    "node": "20.12.2",
-    "yarn": "1.22.19"
+    "node": "24.18.0",
+    "pnpm": "10.25.0"
   }
 }

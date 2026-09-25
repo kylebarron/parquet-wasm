@@ -10,7 +10,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -26,7 +26,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -38,12 +38,12 @@ jobs:
       - run: cargo install cargo-all-features
 
       - name: Check all combinations of features can build
-        run: cargo check-all-features --target wasm32-unknown-unknown
+        run: cargo check-all-features -- --target wasm32-unknown-unknown
 
   node-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -53,24 +53,27 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      - uses: actions/setup-node@v5
-        with:
-          node-version: "20"
+      - uses: pnpm/action-setup@v6
 
-      - name: Build bundle
-        run: yarn build:test
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
+          cache: pnpm
 
       - name: Install dev dependencies
-        run: yarn
+        run: pnpm install
+
+      - name: Build bundle
+        run: pnpm build:test
 
       - name: Run Node tests
-        run: yarn test
+        run: pnpm test
 
   fmt:
     name: fmt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -82,11 +85,22 @@ jobs:
       - name: Run
         run: cargo fmt --all -- --check
 
+  biome:
+    name: Biome
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: biomejs/setup-biome@v2
+
+      - name: Lint and format check
+        run: biome ci .
+
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -101,7 +115,7 @@ jobs:
   node-build-report:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
@@ -113,9 +127,9 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version: "24"
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
           packages: brotli pv parallel jq
@@ -140,7 +154,7 @@ jobs:
           if [[ "${{ github.event_type }}" != "pull_request" ]]; then
             cat ./pr/step_summary.md > $GITHUB_STEP_SUMMARY
           fi;
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: pr
           path: pr/
@@ -150,12 +164,12 @@ jobs:
       github.event_name == 'pull_request'
     needs: node-build-report
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v8
         with:
           name: pr
           path: pr/
       - name: "Generate size deltas"
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
@@ -246,7 +260,7 @@ jobs:
               ...lineFragments
             ]).write();
             fs.cpSync(process.env.GITHUB_STEP_SUMMARY, './pr/step_summary.md')
-      # - uses: actions/upload-artifact@v4
+      # - uses: actions/upload-artifact@v7
       #   with:
       #     name: pr
       #     path: pr/

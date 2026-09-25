@@ -1,16 +1,16 @@
-import * as wasm from "../../pkg/node/parquet_wasm";
-import { readFileSync } from "fs";
+import { readFileSync } from "node:fs";
 import * as arrow from "apache-arrow";
-import { readExpectedArrowData } from "./utils";
 import { parseSchema } from "arrow-js-ffi";
-import { it, expect } from "vitest";
+import { expect, it } from "vitest";
+import * as wasm from "../../pkg/node/parquet_wasm.js";
+import { readExpectedArrowData } from "./utils.js";
 
 // Path from repo root
 const dataDir = "tests/data";
 
 const WASM_MEMORY = wasm.wasmMemory();
 
-it("read schema via FFI", async (t) => {
+it("read schema via FFI", async () => {
   const expectedTable = readExpectedArrowData();
 
   const dataPath = `${dataDir}/1-partition-brotli.parquet`;
@@ -21,11 +21,11 @@ it("read schema via FFI", async (t) => {
   const schema = parseSchema(WASM_MEMORY.buffer, ffiSchema.addr());
 
   expect(expectedTable.schema.fields.length).toStrictEqual(
-    schema.fields.length
+    schema.fields.length,
   );
 });
 
-it("read schema via IPC", async (t) => {
+it("read schema via IPC", async () => {
   const expectedTable = readExpectedArrowData();
 
   const dataPath = `${dataDir}/1-partition-brotli.parquet`;
@@ -36,6 +36,6 @@ it("read schema via IPC", async (t) => {
   const schema = arrow.tableFromIPC(ipcSchema).schema;
 
   expect(expectedTable.schema.fields.length).toStrictEqual(
-    schema.fields.length
+    schema.fields.length,
   );
 });
