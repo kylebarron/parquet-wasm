@@ -1,6 +1,6 @@
 use crate::error::WasmResult;
 #[cfg(feature = "reader")]
-use crate::read_options::ReaderOptions;
+use crate::read_options::JsReaderOptions;
 use crate::utils::assert_parquet_file_not_empty;
 use arrow_wasm::{RecordBatch, Schema, Table};
 use wasm_bindgen::prelude::*;
@@ -65,7 +65,7 @@ use wasm_bindgen::prelude::*;
 ///    - `columns`: The column names from the file to read.
 #[wasm_bindgen(js_name = readParquet)]
 #[cfg(feature = "reader")]
-pub fn read_parquet(parquet_file: Vec<u8>, options: Option<ReaderOptions>) -> WasmResult<Table> {
+pub fn read_parquet(parquet_file: Vec<u8>, options: Option<JsReaderOptions>) -> WasmResult<Table> {
     assert_parquet_file_not_empty(parquet_file.as_slice())?;
     Ok(crate::reader::read_parquet(
         parquet_file,

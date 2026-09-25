@@ -7,7 +7,7 @@
   "license": "MIT OR Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kylebarron/parquet-wasm"
+    "url": "git+https://github.com/kylebarron/parquet-wasm.git"
   },
   "files": [
     "*"

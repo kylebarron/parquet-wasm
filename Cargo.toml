@@ -1,6 +1,6 @@
 [package]
 name = "parquet-wasm"
-version = "0.7.1"
+version = "0.8.0"
 authors = ["Kyle Barron <kylebarron2@gmail.com>"]
 edition = "2024"
 description = "WebAssembly Parquet reader and writer."
@@ -9,7 +9,7 @@ repository = "https://github.com/kylebarron/parquet-wasm"
 license = "MIT OR Apache-2.0"
 keywords = ["parquet", "webassembly", "arrow"]
 categories = ["wasm"]
-rust-version = "1.85"
+rust-version = "1.88"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -60,41 +60,38 @@ console_error_panic_hook = { version = "0.1.6", optional = true }
 js-sys = "0.3.72"
 thiserror = "2.0"
 
-arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "6da94ef0a1522a244984a7d3d58a0339d0851d96", default-features = false, features = [
+arrow-wasm = { git = "https://github.com/kylebarron/arrow-wasm", rev = "9f98417204dc3ab006d786abd8554cc7f63201e2", default-features = false, features = [
     "table",
     "record_batch",
     "schema",
 ] }
 
-arrow = { version = "56.1", default-features = false, features = [
-    "ipc",
-    "ffi",
-] }
-arrow-schema = "56.1"
-parquet = { version = "56.1", default-features = false, features = [
+arrow = { version = "60", default-features = false, features = ["ipc", "ffi"] }
+arrow-schema = "60"
+parquet = { version = "60", default-features = false, features = [
     "arrow",
     "base64",
 ] }
 bytes = "1"
 # We only bring this in for coalesce_ranges
-object_store = { version = "0.12", default-features = false }
+object_store = { version = "0.14", default-features = false }
 
 wasm-bindgen-futures = { version = "0.4.45", optional = true }
 futures = { version = "0.3", optional = true }
 range-reader = { version = "0.2", optional = true }
-reqwest = { version = "0.12.23", optional = true, default-features = false }
+reqwest = { version = "0.13.4", optional = true, default-features = false }
 
 # Pass "wasm" and "thin" down to the transitive zstd dependency
 zstd = { version = "*", features = [
     "wasm",
     "thin",
 ], default-features = false, optional = true }
-zstd-sys = { version = "=2.0.9", optional = true, default-features = false }
+zstd-sys = { version = "=2.1.0", optional = true, default-features = false }
 # 0.2.3 crashes the Node tests. See
 # https://github.com/kylebarron/parquet-wasm/pull/496#issuecomment-2057374608
 async-compat = { version = "=0.2.2", optional = true }
 async-stream = { version = "0.3.6", optional = true }
-wasm-streams = { version = "0.4.2", optional = true }
+wasm-streams = { version = "0.5.0", optional = true }
 async-trait = "0.1.89"
 url = "2.5.7"
 

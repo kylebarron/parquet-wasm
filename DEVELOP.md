@@ -36,9 +36,11 @@ See [this description](https://github.com/kylebarron/parquet-wasm/pull/2#issue-1
 
 There are good reasons to distribute as any of these... so why not distribute as all three? `wasm-pack` doesn't support this directly but the build script in `scripts/build.sh` calls `wasm-pack` three times and merges the outputs. This means that bundler users can use the default, Node users can use `parquet-wasm/node` and ES Modules users can use `parquet-wasm/web` in their imports.
 
-To publish:
+To publish, bump `version` in `Cargo.toml`, merge that to `main`, then push a matching tag:
 
 ```
-yarn build
-wasm-pack publish
+git tag v0.9.0
+git push origin v0.9.0
 ```
+
+The `release.yml` workflow runs the tests, builds `pkg/`, checks that the tag matches the package version, and publishes to npm with [trusted publishing](https://docs.npmjs.com/trusted-publishers), so no npm token is needed. Versions with a prerelease suffix (e.g. `0.9.0-beta.1`) are published under the `beta` dist-tag.
