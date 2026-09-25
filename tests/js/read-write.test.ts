@@ -210,3 +210,22 @@ it("rewrites ListView to List", () => {
   const table = tableFromIPC(wasm.readParquet(arr).intoIPCStream());
   expect(DataType.isList(table.getChild("list_view")!.type)).toBeTruthy();
 });
+
+// https://github.com/kylebarron/parquet-wasm/issues/522
+it("writeParquet frees its table and writer properties", () => {
+  const table = wasm.readParquet(
+    new Uint8Array(readFileSync(`${dataDir}/1-partition-snappy.parquet`)),
+  );
+  const writerProperties = new wasm.WriterPropertiesBuilder().build();
+  wasm.writeParquet(table, writerProperties);
+
+  // A pointer of 0 means wasm-bindgen has already freed the object. `__wbg_ptr` is internal,
+  // so it isn't in the generated types.
+  const ptr = (obj: object) => (obj as { __wbg_ptr: number }).__wbg_ptr;
+  expect(ptr(table)).toBe(0);
+  expect(ptr(writerProperties)).toBe(0);
+  expect(() => table.free()).toThrow(/null pointer passed to rust/);
+  expect(() => wasm.writeParquet(table)).toThrow(
+    /Attempt to use a moved value/,
+  );
+});

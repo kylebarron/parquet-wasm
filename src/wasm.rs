@@ -168,10 +168,15 @@ pub fn read_metadata(parquet_file: Vec<u8>) -> WasmResult<crate::metadata::Parqu
 /// If `writerProperties` is not provided or is `null`, the default writer properties will be used.
 /// This is equivalent to `new WriterPropertiesBuilder().build()`.
 ///
-/// @param table A {@linkcode Table} representation in WebAssembly memory.
+/// `writeParquet` takes ownership of `table` and `writerProperties` and frees them, so don't call
+/// `.free()` on either afterwards (it throws `null pointer passed to rust`) or pass them to another
+/// function (it throws `Attempt to use a moved value`). To write the same data again, create a new
+/// {@linkcode Table}.
+///
+/// @param table A {@linkcode Table} representation in WebAssembly memory. Freed by this function.
 /// @param writer_properties (optional) Configuration for writing to Parquet. Use the {@linkcode
 /// WriterPropertiesBuilder} to build a writing configuration, then call `.build()` to create an
-/// immutable writer properties to pass in here.
+/// immutable writer properties to pass in here. Freed by this function.
 /// @returns Uint8Array containing written Parquet data.
 #[wasm_bindgen(js_name = writeParquet)]
 #[cfg(feature = "writer")]
@@ -325,7 +330,8 @@ pub async fn read_parquet_stream(
 /// @param stream A {@linkcode ReadableStream} of {@linkcode RecordBatch} instances
 /// @param writer_properties (optional) Configuration for writing to Parquet. Use the {@linkcode
 /// WriterPropertiesBuilder} to build a writing configuration, then call `.build()` to create an
-/// immutable writer properties to pass in here.
+/// immutable writer properties to pass in here. Freed by this function, so don't call `.free()` on
+/// it afterwards or reuse it.
 /// @returns ReadableStream containing serialized Parquet data.
 #[wasm_bindgen(js_name = "transformParquetStream")]
 #[cfg(all(feature = "writer", feature = "async"))]
