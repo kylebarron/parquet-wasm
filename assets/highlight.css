@@ -68,4 +68,4 @@
 .hl-4 { color: var(--hl-4); }
 .hl-5 { color: var(--hl-5); }
 .hl-6 { color: var(--hl-6); }
-pre, code { background: var(--code-background); }
+pre, code, math[display='block'] { background: var(--code-background); }
