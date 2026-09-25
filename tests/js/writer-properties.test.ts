@@ -208,3 +208,32 @@ describe("WriterPropertiesBuilder content-defined chunking", () => {
     );
   });
 });
+
+describe("WriterPropertiesBuilder encoding", () => {
+  it("round trips floats written with ALP encoding", () => {
+    const table = tableFromArrays({
+      // Price-like values with two decimal places, the case ALP is designed for.
+      value: Float64Array.from(
+        { length: 1000 },
+        (_, i) => Math.round((10 + i * 0.01) * 100) / 100,
+      ),
+    });
+    const writeWithEncoding = (encoding: wasm.Encoding) =>
+      writeParquet(
+        table,
+        new wasm.WriterPropertiesBuilder()
+          .setCompression(wasm.Compression.UNCOMPRESSED)
+          .setDictionaryEnabled(false)
+          .setEncoding(encoding)
+          .build(),
+      );
+    const plain = writeWithEncoding(wasm.Encoding.PLAIN);
+    const alp = writeWithEncoding(wasm.Encoding.ALP);
+    // A much smaller file shows ALP was applied rather than ignored.
+    expect(alp.length).toBeLessThan(plain.length / 2);
+    testArrowTablesEqual(
+      table,
+      tableFromIPC(wasm.readParquet(alp).intoIPCStream()),
+    );
+  });
+});
