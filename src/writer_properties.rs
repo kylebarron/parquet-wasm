@@ -176,7 +176,6 @@ impl WriterPropertiesBuilder {
     /// Throws if:
     /// - `minChunkSize` is 0
     /// - `maxChunkSize` is not greater than `minChunkSize`
-    /// - `normLevel` is out of range for the chunk sizes
     #[wasm_bindgen(js_name = setContentDefinedChunking)]
     pub fn set_content_defined_chunking(
         self,
