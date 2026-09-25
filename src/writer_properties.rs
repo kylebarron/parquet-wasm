@@ -186,7 +186,8 @@ impl WriterPropertiesBuilder {
             .transpose()?
             .unwrap_or_default();
         let options = CdcOptions::from(options);
-        // Upstream asserts these bounds; a panic surfaces in JS as an opaque `RuntimeError: unreachable`.
+
+        // Upstream asserts these bounds instead of returning a result, so we check here
         if options.min_chunk_size == 0 || options.max_chunk_size <= options.min_chunk_size {
             return Err(JsError::new(
                 "minChunkSize must be greater than 0 and maxChunkSize must be greater than minChunkSize",
