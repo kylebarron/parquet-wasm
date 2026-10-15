@@ -97,6 +97,8 @@ pub struct ParquetFile {
 #[wasm_bindgen]
 impl ParquetFile {
     /// Construct a ParquetFile from a new URL.
+    ///
+    /// HTTP and metadata errors reject the returned promise.
     #[wasm_bindgen(js_name = fromUrl)]
     pub async fn from_url(url: String) -> WasmResult<ParquetFile> {
         let client = Client::new();
@@ -157,7 +159,7 @@ impl ParquetFile {
 
         let stream = builder.build()?;
         let schema = stream.schema().clone();
-        let batches = stream.try_collect::<Vec<_>>().await.unwrap();
+        let batches = stream.try_collect::<Vec<_>>().await?;
 
         Ok(Table::new(schema, batches))
     }
@@ -165,6 +167,7 @@ impl ParquetFile {
     /// Create a readable stream of record batches.
     ///
     /// Each item in the stream will be a {@linkcode RecordBatch}.
+    /// Errors encountered while reading row groups reject reads from this stream.
     ///
     /// @param options
     ///
@@ -196,16 +199,28 @@ impl ParquetFile {
         let meta = self.meta.clone();
 
         let buffered_stream = stream::iter(row_groups.into_iter().map(move |i| {
-            let builder = create_builder(reader.clone(), &meta.clone(), &options.clone())
-                .unwrap()
-                .with_row_groups(vec![i]);
-            builder.build().unwrap().try_collect::<Vec<_>>()
+            let builder =
+                create_builder(reader.clone(), &meta, &options).map_err(ParquetError::from);
+            async move {
+                builder?
+                    .with_row_groups(vec![i])
+                    .build()?
+                    .try_collect::<Vec<_>>()
+                    .await
+            }
         }))
         .buffered(concurrency);
-        let out_stream = buffered_stream.flat_map(|maybe_record_batches| {
-            stream::iter(maybe_record_batches.unwrap())
-                .map(|record_batch| Ok(RecordBatch::new(record_batch).into()))
-        });
+        // Keep row groups in order while preserving errors for the pending JS read.
+        let out_stream = buffered_stream
+            .map_ok(|batches| {
+                stream::iter(
+                    batches
+                        .into_iter()
+                        .map(|batch| Ok::<JsValue, ParquetError>(RecordBatch::new(batch).into())),
+                )
+            })
+            .try_flatten()
+            .map_err(|error| JsValue::from(js_sys::Error::new(&error.to_string())));
         Ok(wasm_streams::ReadableStream::from_stream(out_stream).into_raw())
     }
 }
@@ -232,18 +247,7 @@ impl MetadataSuffixFetch for &mut HTTPFileReader {
         async move {
             let range_str = range_from_end(suffix);
 
-            // Map reqwest error to parquet error
-            // let map_err = |err| parquet::errors::ParquetError::External(Box::new(err));
-
-            let bytes = make_range_request_with_client(
-                self.url.to_string(),
-                self.client.clone(),
-                range_str,
-            )
-            .await
-            .unwrap();
-
-            Ok(bytes)
+            request_range(self.url.to_string(), self.client.clone(), range_str).await
         }
         .boxed()
     }
@@ -256,13 +260,16 @@ async fn get_bytes_http(
 ) -> parquet::errors::Result<Bytes> {
     let range_str = range_from_start_and_length(range.start, range.end - range.start);
 
-    // Map reqwest error to parquet error
-    // let map_err = |err| parquet::errors::ParquetError::External(Box::new(err));
-
-    let bytes = make_range_request_with_client(url, client, range_str)
-        .await
-        .unwrap();
-
+    let bytes = request_range(url, client, range_str).await?;
+    let expected_length = range.end - range.start;
+    // coalesce_ranges slices by the requested offsets and panics on short bodies.
+    // Suffix requests use a separate path because they may exceed the file size.
+    if bytes.len() as u64 != expected_length {
+        return Err(ParquetError::EOF(format!(
+            "HTTP range {range:?} returned {} bytes; expected {expected_length}",
+            bytes.len()
+        )));
+    }
     Ok(bytes)
 }
 
@@ -433,21 +440,38 @@ pub async fn make_range_request_with_client(
     client: Client,
     range_str: String,
 ) -> std::result::Result<Bytes, JsValue> {
-    let (sender, receiver) = oneshot::channel();
+    // Preserve the public Rust API; AsyncFileReader needs Send-compatible errors.
+    request_range(url, client, range_str)
+        .await
+        .map_err(|error| JsValue::from(js_sys::Error::new(&error.to_string())))
+}
+
+async fn request_range(
+    url: String,
+    client: Client,
+    range_str: String,
+) -> parquet::errors::Result<Bytes> {
+    let (sender, receiver) = oneshot::channel::<parquet::errors::Result<Bytes>>();
     spawn_local(async move {
-        let resp = client
-            .get(url)
-            .header("Range", range_str)
-            .send()
-            .await
-            .unwrap()
-            .error_for_status()
-            .unwrap();
-        let bytes = resp.bytes().await.unwrap();
-        sender.send(bytes).unwrap();
+        // Panics in this task escape the awaiting JS promise; return errors as data.
+        let result = async {
+            let resp = client
+                .get(url)
+                .header("Range", range_str)
+                .send()
+                .await?
+                .error_for_status()?;
+            resp.bytes().await
+        }
+        .await
+        .map_err(|error| ParquetError::External(Box::new(error)));
+
+        // Cancellation can drop the receiver while a request is still in flight.
+        let _ = sender.send(result);
     });
-    let data = receiver.await.unwrap();
-    Ok(data)
+    receiver.await.map_err(|_| {
+        ParquetError::General("HTTP read task ended without returning a result".into())
+    })?
 }
 
 pub async fn read_metadata_async(
