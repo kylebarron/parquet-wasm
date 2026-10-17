@@ -156,7 +156,7 @@ describe("ParquetFile.fromUrlWithClient (custom client)", () => {
     async getRange(
       url: string,
       start: number,
-      end: number
+      end: number,
     ): Promise<Uint8Array> {
       const response = await fetch(url, {
         headers: { Range: `bytes=${start}-${end}` },
@@ -171,7 +171,7 @@ describe("ParquetFile.fromUrlWithClient (custom client)", () => {
     },
   };
 
-  it("reads full file", async (t) => {
+  it("reads full file", async () => {
     const server = await temporaryServer();
     const listeningPort = server.addresses()[0].port;
     const url = `http://localhost:${listeningPort}/2-partition-none.parquet`;
@@ -186,7 +186,7 @@ describe("ParquetFile.fromUrlWithClient (custom client)", () => {
     await server.close();
   });
 
-  it("reads a single row group", async (t) => {
+  it("reads a single row group", async () => {
     const server = await temporaryServer();
     const listeningPort = server.addresses()[0].port;
     const url = `http://localhost:${listeningPort}/2-partition-none.parquet`;
@@ -203,7 +203,7 @@ describe("ParquetFile.fromUrlWithClient (custom client)", () => {
     await server.close();
   });
 
-  it("surfaces client errors", async (t) => {
+  it("surfaces client errors", async () => {
     const failingClient = {
       async getRange(): Promise<Uint8Array> {
         throw new Error("range fetch rejected");
@@ -216,8 +216,8 @@ describe("ParquetFile.fromUrlWithClient (custom client)", () => {
     await expect(
       wasm.ParquetFile.fromUrlWithClient(
         "http://example.com/nonexistent.parquet",
-        failingClient
-      )
+        failingClient,
+      ),
     ).rejects.toThrow(/getSuffix/);
   });
 });
