@@ -1,6 +1,6 @@
+import { readFileSync } from "node:fs";
 import b from "benny";
 import * as parquet from "../pkg/node";
-import { readFileSync } from "fs";
 
 const dataDir = `${__dirname}/data`;
 
@@ -42,5 +42,5 @@ b.suite(
     version: "0.3.0",
     details: true,
     format: "chart.html",
-  })
+  }),
 );

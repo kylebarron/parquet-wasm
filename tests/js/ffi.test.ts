@@ -1,20 +1,20 @@
-import * as wasm from "../../pkg/node/parquet_wasm";
-import { readFileSync } from "fs";
+import { readFileSync } from "node:fs";
 import * as arrow from "apache-arrow";
+import { parseRecordBatch, parseTable } from "arrow-js-ffi";
+import { it } from "vitest";
+import * as wasm from "../../pkg/node/parquet_wasm.js";
 import {
-  testArrowTablesEqual,
   readExpectedArrowData,
   temporaryServer,
-} from "./utils";
-import { parseTable, parseRecordBatch } from "arrow-js-ffi";
-import { it } from "vitest";
+  testArrowTablesEqual,
+} from "./utils.js";
 
 // Path from repo root
 const dataDir = "tests/data";
 
 const WASM_MEMORY = wasm.wasmMemory();
 
-it("read via FFI", async (t) => {
+it("read via FFI", async () => {
   const expectedTable = readExpectedArrowData();
 
   const dataPath = `${dataDir}/1-partition-brotli.parquet`;
@@ -25,12 +25,12 @@ it("read via FFI", async (t) => {
   const table = parseTable(
     WASM_MEMORY.buffer,
     ffiTable.arrayAddrs(),
-    ffiTable.schemaAddr()
+    ffiTable.schemaAddr(),
   );
   testArrowTablesEqual(expectedTable, table);
 });
 
-it("read file stream", async (t) => {
+it("read file stream", async () => {
   const server = await temporaryServer();
   const listeningPort = server.addresses()[0].port;
   const rootUrl = `http://localhost:${listeningPort}`;
@@ -39,7 +39,7 @@ it("read file stream", async (t) => {
 
   const url = `${rootUrl}/1-partition-brotli.parquet`;
   const stream = (await wasm.readParquetStream(
-    url
+    url,
   )) as unknown as wasm.RecordBatch[];
 
   const batches = [];
@@ -49,7 +49,7 @@ it("read file stream", async (t) => {
       WASM_MEMORY.buffer,
       ffiRecordBatch.arrayAddr(),
       ffiRecordBatch.schemaAddr(),
-      true
+      true,
     );
     batches.push(recordBatch);
   }

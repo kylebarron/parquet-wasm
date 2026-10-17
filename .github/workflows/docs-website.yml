@@ -3,7 +3,14 @@ name: Publish docs website
 on:
   push:
     tags:
-      - "*"
+      - "v*"
+      # Skip prereleases (e.g. v0.9.0-alpha.1) so they don't replace the published docs
+      - "!v*-*"
+  # Republish the docs from main, e.g. after a failed tag run
+  workflow_dispatch:
+
+permissions:
+  contents: write # push to the gh-pages branch
 
 jobs:
   docs:
@@ -19,19 +26,29 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
+      - uses: pnpm/action-setup@v6
+
       - uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          node-version-file: package.json
+          cache: pnpm
 
       - name: Install JS dependencies
-        run: yarn
+        run: pnpm install
 
       - name: Build bundles
-        run: yarn build
+        run: pnpm build
 
       - name: Build docs
-        run: yarn docs:build
+        run: pnpm docs:build
 
       - name: Publish docs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          yarn docs:publish
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # gh-pages pushes from its own clone of the origin URL, which doesn't get the
+          # credentials actions/checkout stores in this repo's git config
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          pnpm docs:publish

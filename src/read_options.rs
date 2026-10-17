@@ -28,12 +28,12 @@ export type ReaderOptions = {
 extern "C" {
     /// Reader options
     #[wasm_bindgen(typescript_type = "ReaderOptions")]
-    pub type ReaderOptions;
+    pub type JsReaderOptions;
 }
 
 #[derive(Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
-pub struct JsReaderOptions {
+pub struct ReaderOptions {
     /// The number of rows in each batch. If not provided, the upstream parquet default is 1024.
     pub batch_size: Option<usize>,
 
@@ -53,7 +53,7 @@ pub struct JsReaderOptions {
     pub concurrency: Option<usize>,
 }
 
-impl JsReaderOptions {
+impl ReaderOptions {
     pub fn apply_to_builder<T>(
         &self,
         mut builder: ArrowReaderBuilder<T>,
@@ -85,10 +85,10 @@ impl JsReaderOptions {
     }
 }
 
-impl TryFrom<ReaderOptions> for JsReaderOptions {
+impl TryFrom<JsReaderOptions> for ReaderOptions {
     type Error = serde_wasm_bindgen::Error;
 
-    fn try_from(value: ReaderOptions) -> std::result::Result<Self, Self::Error> {
+    fn try_from(value: JsReaderOptions) -> std::result::Result<Self, Self::Error> {
         serde_wasm_bindgen::from_value(value.obj)
     }
 }

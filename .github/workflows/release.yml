@@ -1,0 +1,66 @@
+# https://docs.npmjs.com/trusted-publishers#step-2-configure-your-cicd-workflow
+name: Publish Package
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  id-token: write # Required for OIDC
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
+          registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false # never use caching in release builds
+
+      - run: pnpm install
+
+      # The tests need the `debug` feature (for `setPanicHook`), so run them
+      # against a dev build before making the release build that gets published.
+      - run: pnpm build:test
+      - run: pnpm test
+
+      - run: pnpm build
+
+      - name: Check that the tag matches the package version
+        run: |
+          VERSION=$(jq -r .version pkg/package.json)
+          if [[ "$GITHUB_REF_NAME" != "v$VERSION" ]]; then
+            echo "Tag $GITHUB_REF_NAME does not match package version $VERSION"
+            exit 1
+          fi
+
+      - name: Publish
+        working-directory: pkg
+        env:
+          # Clear the sentinel value setup-node writes; otherwise npm tries to
+          # use it as a bearer token and rejects OIDC.
+          # https://github.com/actions/setup-node/issues/1440#issuecomment-3571890875
+          NODE_AUTH_TOKEN: ""
+        run: |
+          VERSION=$(jq -r .version package.json)
+          if [[ "$VERSION" == *-* ]]; then
+            npm publish --tag beta
+          else
+            npm publish
+          fi

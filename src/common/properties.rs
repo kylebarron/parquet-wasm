@@ -115,6 +115,11 @@ pub enum Encoding {
     /// This itself does not reduce the size of the data but can lead to better compression
     /// afterwards.
     BYTE_STREAM_SPLIT,
+
+    /// Adaptive Lossless floating-Point encoding (ALP).
+    ///
+    /// Currently specified for FLOAT and DOUBLE.
+    ALP,
 }
 
 impl From<Encoding> for parquet::basic::Encoding {
@@ -130,6 +135,7 @@ impl From<Encoding> for parquet::basic::Encoding {
             Encoding::DELTA_BYTE_ARRAY => parquet::basic::Encoding::DELTA_BYTE_ARRAY,
             Encoding::RLE_DICTIONARY => parquet::basic::Encoding::RLE_DICTIONARY,
             Encoding::BYTE_STREAM_SPLIT => parquet::basic::Encoding::BYTE_STREAM_SPLIT,
+            Encoding::ALP => parquet::basic::Encoding::ALP,
         }
     }
 }
@@ -147,6 +153,7 @@ impl From<parquet::basic::Encoding> for Encoding {
             parquet::basic::Encoding::DELTA_BYTE_ARRAY => Encoding::DELTA_BYTE_ARRAY,
             parquet::basic::Encoding::RLE_DICTIONARY => Encoding::RLE_DICTIONARY,
             parquet::basic::Encoding::BYTE_STREAM_SPLIT => Encoding::BYTE_STREAM_SPLIT,
+            parquet::basic::Encoding::ALP => Encoding::ALP,
         }
     }
 }

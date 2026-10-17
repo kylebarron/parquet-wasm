@@ -1,6 +1,6 @@
 use crate::error::WasmResult;
 #[cfg(feature = "reader")]
-use crate::read_options::ReaderOptions;
+use crate::read_options::JsReaderOptions;
 use crate::utils::assert_parquet_file_not_empty;
 use arrow_wasm::{RecordBatch, Schema, Table};
 use wasm_bindgen::prelude::*;
@@ -65,7 +65,7 @@ use wasm_bindgen::prelude::*;
 ///    - `columns`: The column names from the file to read.
 #[wasm_bindgen(js_name = readParquet)]
 #[cfg(feature = "reader")]
-pub fn read_parquet(parquet_file: Vec<u8>, options: Option<ReaderOptions>) -> WasmResult<Table> {
+pub fn read_parquet(parquet_file: Vec<u8>, options: Option<JsReaderOptions>) -> WasmResult<Table> {
     assert_parquet_file_not_empty(parquet_file.as_slice())?;
     Ok(crate::reader::read_parquet(
         parquet_file,
@@ -130,6 +130,16 @@ pub fn read_schema(parquet_file: Vec<u8>) -> WasmResult<Schema> {
     Ok(crate::reader::read_schema(parquet_file)?)
 }
 
+/// Read Parquet metadata from a Parquet file (or footer-only) bytes in memory.
+#[wasm_bindgen(js_name = readMetadata)]
+#[cfg(feature = "reader")]
+pub fn read_metadata(parquet_file: Vec<u8>) -> WasmResult<crate::metadata::ParquetMetaData> {
+    assert_parquet_file_not_empty(parquet_file.as_slice())?;
+    let orig_metadata = crate::reader::read_metadata(parquet_file)?;
+    let metadata = crate::metadata::ParquetMetaData::from(orig_metadata);
+    Ok(metadata)
+}
+
 /// Write Arrow data to a Parquet file.
 ///
 /// For example, to create a Parquet file with Snappy compression:
@@ -158,10 +168,15 @@ pub fn read_schema(parquet_file: Vec<u8>) -> WasmResult<Schema> {
 /// If `writerProperties` is not provided or is `null`, the default writer properties will be used.
 /// This is equivalent to `new WriterPropertiesBuilder().build()`.
 ///
-/// @param table A {@linkcode Table} representation in WebAssembly memory.
+/// `writeParquet` takes ownership of `table` and `writerProperties` and frees them, so don't call
+/// `.free()` on either afterwards (it throws `null pointer passed to rust`) or pass them to another
+/// function (it throws `Attempt to use a moved value`). To write the same data again, create a new
+/// {@linkcode Table}.
+///
+/// @param table A {@linkcode Table} representation in WebAssembly memory. Freed by this function.
 /// @param writer_properties (optional) Configuration for writing to Parquet. Use the {@linkcode
 /// WriterPropertiesBuilder} to build a writing configuration, then call `.build()` to create an
-/// immutable writer properties to pass in here.
+/// immutable writer properties to pass in here. Freed by this function.
 /// @returns Uint8Array containing written Parquet data.
 #[wasm_bindgen(js_name = writeParquet)]
 #[cfg(feature = "writer")]
@@ -315,7 +330,8 @@ pub async fn read_parquet_stream(
 /// @param stream A {@linkcode ReadableStream} of {@linkcode RecordBatch} instances
 /// @param writer_properties (optional) Configuration for writing to Parquet. Use the {@linkcode
 /// WriterPropertiesBuilder} to build a writing configuration, then call `.build()` to create an
-/// immutable writer properties to pass in here.
+/// immutable writer properties to pass in here. Freed by this function, so don't call `.free()` on
+/// it afterwards or reuse it.
 /// @returns ReadableStream containing serialized Parquet data.
 #[wasm_bindgen(js_name = "transformParquetStream")]
 #[cfg(all(feature = "writer", feature = "async"))]

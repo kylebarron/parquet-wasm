@@ -40,6 +40,22 @@ Refer to these functions:
 
 Both sync and async functions return or accept a [`Table`](https://kylebarron.dev/parquet-wasm/classes/bundler_parquet_wasm.Table.html) class, an Arrow table in WebAssembly memory. Refer to its documentation for moving data into/out of WebAssembly.
 
+### Memory management
+
+Objects such as `Table`, `RecordBatch`, `ParquetFile` and `WriterProperties` hold data in WebAssembly memory. The memory will be reclaimed eventually when the JS object is garbage-collected, but if you want to force a memory cleanup, you can call `.free()` on each object.
+
+Some functions and methods take ownership of their inputs and call `.free` for you:
+
+- `writeParquet(table, writerProperties)` frees both `table` and `writerProperties`.
+- `transformParquetStream(stream, writerProperties)` frees `writerProperties`.
+- Methods whose names start with `into`, such as `Table.intoIPCStream()` and `Table.intoFFI()`, free the object they're called on.
+
+Don't call any method on an object after it has been freed, or an error will be thrown.
+
+To write the same data twice, create a new `Table`.
+
+The generated types also support [`using` declarations](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/using), which call `.free()` at the end of the block. Only declare an object with `using` if you won't pass it to one of the functions above; otherwise the automatic `.free()` throws.
+
 ## Entry Points
 
 
@@ -176,13 +192,14 @@ const wasmTable = Table.fromIPCStream(arrow.tableToIPC(rainfall, "stream"));
 const writerProperties = new WriterPropertiesBuilder()
   .setCompression(Compression.ZSTD)
   .build();
+// writeParquet frees wasmTable and writerProperties, so don't use them after this
 const parquetUint8Array = writeParquet(wasmTable, writerProperties);
 
 // Read Parquet buffer back to Arrow Table
 // arrowWasmTable is an Arrow table in WebAssembly memory
 const arrowWasmTable = readParquet(parquetUint8Array);
 
-// table is now an Arrow table in JS memory
+// table is now an Arrow table in JS memory; intoIPCStream frees arrowWasmTable
 const table = arrow.tableFromIPC(arrowWasmTable.intoIPCStream());
 console.log(table.schema.toString());
 // Schema<{ 0: precipitation: Float32, 1: date: Date64<MILLISECOND> }>

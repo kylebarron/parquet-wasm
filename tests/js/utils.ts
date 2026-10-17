@@ -1,16 +1,19 @@
-import { expect } from "vitest";
-import { readFileSync } from "fs";
-import { tableFromIPC, Table } from "apache-arrow";
-import fastify, { FastifyInstance } from "fastify";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import fastifyStatic from "@fastify/static";
-import { join } from "path";
+import type { Table } from "apache-arrow";
+import { tableFromIPC } from "apache-arrow";
+import type { FastifyInstance } from "fastify";
+import fastify from "fastify";
+import { expect } from "vitest";
+
 const dataDir = "tests/data";
 
 /** Test that two Arrow tables are equal */
 export function testArrowTablesEqual(table1: Table, table2: Table): void {
   expect(table1.schema.metadata).toStrictEqual(table2.schema.metadata);
   expect(table1.schema.fields.length).toStrictEqual(
-    table2.schema.fields.length
+    table2.schema.fields.length,
   );
 
   // Note that calling deepEquals on the schema object correctly can fail when in one schema the
@@ -53,7 +56,7 @@ export function testArrowTablesEqual(table1: Table, table2: Table): void {
     // ...
     expect(
       vector1.toJSON(),
-      `data arrays should be equal for column ${fieldName}`
+      `data arrays should be equal for column ${fieldName}`,
     ).toStrictEqual(vector2.toJSON());
   }
 }
@@ -74,4 +77,36 @@ export async function temporaryServer() {
     host: "localhost",
   });
   return server as FastifyInstance;
+}
+
+export function extractFooterBytes(parquetFile: Uint8Array): Uint8Array {
+  // Step 1: Obtain the last 8 bytes to get footer length and magic number.
+  const TAIL_LENGTH = 8;
+  const tailStartIndex = parquetFile.length - TAIL_LENGTH;
+  const tailBytes = parquetFile.subarray(tailStartIndex);
+  if (!tailBytes || tailBytes.length < TAIL_LENGTH) {
+    throw new Error("Failed to load the Parquet footer length.");
+  }
+
+  // Step 2: Parse the footer length and magic number.
+  // little-endian
+  const footerLength = new DataView(
+    tailBytes.buffer,
+    tailBytes.byteOffset,
+    tailBytes.byteLength,
+  ).getInt32(0, true);
+  const magic = new TextDecoder().decode(tailBytes.slice(4, 8));
+  if (magic !== "PAR1") {
+    throw new Error("Invalid Parquet file: missing PAR1 magic number.");
+  }
+
+  // Step 3. Extract the footer bytes.
+  const footerStartIndex = parquetFile.length - (footerLength + TAIL_LENGTH);
+  // Use .slice here to ensure a fresh arrayBuffer is created,
+  // so that downstream usage is not "seeing" the full parquetFile buffer.
+  const footerBytes = parquetFile.slice(footerStartIndex);
+  if (footerBytes.length !== footerLength + TAIL_LENGTH) {
+    throw new Error("Failed to load the Parquet footer bytes.");
+  }
+  return footerBytes;
 }
