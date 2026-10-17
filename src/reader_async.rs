@@ -12,6 +12,7 @@ use futures::channel::oneshot;
 use futures::future::BoxFuture;
 use object_store::coalesce_ranges;
 use parquet::errors::ParquetError;
+use std::future::Future;
 use std::ops::Range;
 use std::sync::Arc;
 use wasm_bindgen::prelude::*;
@@ -28,11 +29,81 @@ use parquet::arrow::async_reader::{
 };
 
 use async_compat::{Compat, CompatExt};
+use js_sys::Uint8Array;
 use parquet::file::metadata::{
     FileMetaData, PageIndexPolicy, ParquetMetaData, ParquetMetaDataReader,
 };
 use range_reader::RangedAsyncReader;
 use reqwest::Client;
+
+#[wasm_bindgen(typescript_custom_section)]
+const TS_JsClient: &'static str = r#"
+/**
+ * Interface for a custom HTTP client that can be used to read Parquet files.
+ * Implement this interface to add authentication or custom request handling.
+ *
+ * @example
+ * ```typescript
+ * import { AwsClient } from 'aws4fetch';
+ *
+ * const aws = new AwsClient({ accessKeyId, secretAccessKey, sessionToken });
+ *
+ * const client: JsClient = {
+ *   async getRange(url: string, start: number, end: number): Promise<Uint8Array> {
+ *     const response = await aws.fetch(url, {
+ *       headers: { Range: `bytes=${start}-${end}` }
+ *     });
+ *     return new Uint8Array(await response.arrayBuffer());
+ *   },
+ *
+ *   async getSuffix(url: string, length: number): Promise<Uint8Array> {
+ *     const response = await aws.fetch(url, {
+ *       headers: { Range: `bytes=-${length}` }
+ *     });
+ *     return new Uint8Array(await response.arrayBuffer());
+ *   }
+ * };
+ *
+ * const pf = await ParquetFile.fromUrlWithClient(url, client);
+ * const table = await pf.read({ rowGroups: [0, 1, 2] });
+ * ```
+ */
+export interface JsClient {
+    /**
+     * Fetch a byte range from the given URL.
+     * @param url - The URL to fetch from
+     * @param start - Start byte offset (inclusive)
+     * @param end - End byte offset (inclusive)
+     * @returns The bytes in the requested range
+     */
+    getRange(url: string, start: number, end: number): Promise<Uint8Array>;
+
+    /**
+     * Fetch the last `length` bytes from the given URL (suffix request).
+     * This is used to read the Parquet footer without knowing the file size.
+     * @param url - The URL to fetch from
+     * @param length - Number of bytes to fetch from the end of the file
+     * @returns The last `length` bytes of the file
+     */
+    getSuffix(url: string, length: number): Promise<Uint8Array>;
+}
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    /// A JavaScript client implementing the JsClient interface
+    #[wasm_bindgen(typescript_type = "JsClient")]
+    #[derive(Clone)]
+    pub type JsClient;
+
+    /// Get a byte range from a URL - returns a Promise<Uint8Array>
+    #[wasm_bindgen(method, js_name = getRange)]
+    fn get_range_js(this: &JsClient, url: &str, start: f64, end: f64) -> js_sys::Promise;
+
+    /// Get the last `length` bytes from a URL (suffix request) - returns a Promise<Uint8Array>
+    #[wasm_bindgen(method, js_name = getSuffix)]
+    fn get_suffix_js(this: &JsClient, url: &str, length: f64) -> js_sys::Promise;
+}
 
 /// Range requests with a gap less than or equal to this,
 /// will be coalesced into a single request by [`coalesce_ranges`]
@@ -50,13 +121,14 @@ fn create_builder<T: AsyncFileReader + Unpin + 'static>(
     options.apply_to_builder(builder)
 }
 
-/// An abstraction over either a browser File handle or an ObjectStore instance
+/// An abstraction over either a browser File handle, HTTP client, or custom JsClient
 ///
 /// This allows exposing a single ParquetFile class to the user.
 #[derive(Clone)]
 enum InnerParquetFile {
     File(JsFileReader),
     Http(HTTPFileReader),
+    JsClient(JsClientReader),
 }
 
 impl AsyncFileReader for InnerParquetFile {
@@ -64,6 +136,7 @@ impl AsyncFileReader for InnerParquetFile {
         match self {
             Self::File(reader) => reader.get_bytes(range),
             Self::Http(reader) => reader.get_bytes(range),
+            Self::JsClient(reader) => reader.get_bytes(range),
         }
     }
 
@@ -74,6 +147,7 @@ impl AsyncFileReader for InnerParquetFile {
         match self {
             Self::File(reader) => reader.get_byte_ranges(ranges),
             Self::Http(reader) => reader.get_byte_ranges(ranges),
+            Self::JsClient(reader) => reader.get_byte_ranges(ranges),
         }
     }
 
@@ -84,6 +158,7 @@ impl AsyncFileReader for InnerParquetFile {
         match self {
             Self::File(reader) => reader.get_metadata(options),
             Self::Http(reader) => reader.get_metadata(options),
+            Self::JsClient(reader) => reader.get_metadata(options),
         }
     }
 }
@@ -97,6 +172,11 @@ pub struct ParquetFile {
 #[wasm_bindgen]
 impl ParquetFile {
     /// Construct a ParquetFile from a new URL.
+    ///
+    /// Uses the default HTTP client (fetch). For authenticated endpoints,
+    /// use {@linkcode ParquetFile.fromUrlWithClient} instead.
+    ///
+    /// @param url The URL of the Parquet file to read.
     #[wasm_bindgen(js_name = fromUrl)]
     pub async fn from_url(url: String) -> WasmResult<ParquetFile> {
         let client = Client::new();
@@ -104,6 +184,48 @@ impl ParquetFile {
         let meta = ArrowReaderMetadata::load_async(&mut reader, Default::default()).await?;
         Ok(Self {
             reader: InnerParquetFile::Http(reader),
+            meta,
+        })
+    }
+
+    /// Construct a ParquetFile from a URL using a custom client.
+    ///
+    /// This allows reading from authenticated endpoints (e.g., AWS S3 private buckets)
+    /// by providing a custom client that implements the {@linkcode JsClient} interface.
+    ///
+    /// @param url The URL of the Parquet file to read.
+    /// @param client A client implementing the JsClient interface.
+    ///
+    /// @example
+    /// ```typescript
+    /// import { AwsClient } from 'aws4fetch';
+    ///
+    /// const aws = new AwsClient({ accessKeyId, secretAccessKey, sessionToken });
+    ///
+    /// const client = {
+    ///   async getRange(url, start, end) {
+    ///     const response = await aws.fetch(url, {
+    ///       headers: { Range: `bytes=${start}-${end}` }
+    ///     });
+    ///     return new Uint8Array(await response.arrayBuffer());
+    ///   },
+    ///   async getSuffix(url, length) {
+    ///     const response = await aws.fetch(url, {
+    ///       headers: { Range: `bytes=-${length}` }
+    ///     });
+    ///     return new Uint8Array(await response.arrayBuffer());
+    ///   }
+    /// };
+    ///
+    /// const pf = await ParquetFile.fromUrlWithClient(url, client);
+    /// const table = await pf.read({ rowGroups: [0, 1, 2] });
+    /// ```
+    #[wasm_bindgen(js_name = fromUrlWithClient)]
+    pub async fn from_url_with_client(url: String, client: JsClient) -> WasmResult<ParquetFile> {
+        let mut reader = JsClientReader::new(url, client, OBJECT_STORE_COALESCE_DEFAULT);
+        let meta = ArrowReaderMetadata::load_async(&mut reader, Default::default()).await?;
+        Ok(Self {
+            reader: InnerParquetFile::JsClient(reader),
             meta,
         })
     }
@@ -280,6 +402,145 @@ impl AsyncFileReader for HTTPFileReader {
                 &ranges,
                 |range| get_bytes_http(self.url.clone(), self.client.clone(), range),
                 self.coalesce_byte_size,
+            )
+            .await
+        }
+        .boxed()
+    }
+
+    fn get_metadata<'a>(
+        &'a mut self,
+        _options: Option<&'a ArrowReaderOptions>,
+    ) -> BoxFuture<'a, parquet::errors::Result<Arc<ParquetMetaData>>> {
+        async move {
+            let metadata = ParquetMetaDataReader::new()
+                .with_page_index_policy(PageIndexPolicy::Optional)
+                .load_via_suffix_and_finish(self)
+                .await?;
+            Ok(Arc::new(metadata))
+        }
+        .boxed()
+    }
+}
+
+/// A wrapper around a JsClient to make it Send + Sync
+/// Safety: This is not thread-safe. Do not use in multi-threaded environments.
+/// This follows the same pattern as WrappedFile in this module.
+#[derive(Clone)]
+struct WrappedJsClient {
+    inner: JsClient,
+}
+
+unsafe impl Send for WrappedJsClient {}
+unsafe impl Sync for WrappedJsClient {}
+
+impl std::fmt::Debug for WrappedJsClient {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("WrappedJsClient").finish()
+    }
+}
+
+/// A file reader that uses a custom JavaScript client implementing the JsClient interface.
+/// This allows users to provide their own HTTP implementation for authentication.
+#[derive(Debug, Clone)]
+pub struct JsClientReader {
+    url: String,
+    client: WrappedJsClient,
+    coalesce_byte_size: u64,
+}
+
+impl JsClientReader {
+    pub fn new(url: String, client: JsClient, coalesce_byte_size: u64) -> Self {
+        Self {
+            url,
+            client: WrappedJsClient { inner: client },
+            coalesce_byte_size,
+        }
+    }
+}
+
+/// Run a JS `Promise<Uint8Array>` on the local event loop and return a `Send`
+/// future resolving to its bytes.
+///
+/// JS values (like the user-provided client) are `!Send`, but `AsyncFileReader`
+/// requires `Send` futures. To bridge the two, the JS interaction runs inside
+/// `spawn_local` (which doesn't require `Send`) and the result is passed back
+/// over a oneshot channel, whose receiver is `Send`.
+fn fetch_js_bytes(
+    make_promise: impl FnOnce() -> js_sys::Promise + 'static,
+    context: &'static str,
+) -> impl Future<Output = parquet::errors::Result<Bytes>> + Send {
+    let (sender, receiver) = oneshot::channel::<std::result::Result<Bytes, String>>();
+
+    spawn_local(async move {
+        let result = async {
+            let js_result = wasm_bindgen_futures::JsFuture::from(make_promise())
+                .await
+                .map_err(|e| format!("{context} failed: {e:?}"))?;
+            Ok::<Bytes, String>(Uint8Array::new(&js_result).to_vec().into())
+        }
+        .await;
+
+        let _ = sender.send(result);
+    });
+
+    async move {
+        receiver
+            .await
+            .map_err(|_| {
+                parquet::errors::ParquetError::External(Box::new(std::io::Error::other(format!(
+                    "Channel receive error in {context}"
+                ))))
+            })?
+            .map_err(|e| {
+                parquet::errors::ParquetError::External(Box::new(std::io::Error::other(e)))
+            })
+    }
+}
+
+/// Fetch a byte range through the user-provided JsClient
+fn get_bytes_js_client(
+    reader: &JsClientReader,
+    range: Range<u64>,
+) -> impl Future<Output = parquet::errors::Result<Bytes>> + Send {
+    let url = reader.url.clone();
+    let client = reader.client.inner.clone();
+    // `range` has an exclusive end; JsClient.getRange takes an inclusive end
+    // offset, matching HTTP Range header semantics. `f64` is used because JS
+    // numbers can represent integers exactly up to 2^53.
+    fetch_js_bytes(
+        move || client.get_range_js(&url, range.start as f64, (range.end - 1) as f64),
+        "JsClient.getRange",
+    )
+}
+
+impl MetadataSuffixFetch for &mut JsClientReader {
+    fn fetch_suffix(&mut self, suffix: usize) -> BoxFuture<'_, parquet::errors::Result<Bytes>> {
+        let url = self.url.clone();
+        let client = self.client.inner.clone();
+        fetch_js_bytes(
+            move || client.get_suffix_js(&url, suffix as f64),
+            "JsClient.getSuffix",
+        )
+        .boxed()
+    }
+}
+
+impl AsyncFileReader for JsClientReader {
+    fn get_bytes(&mut self, range: Range<u64>) -> BoxFuture<'_, parquet::errors::Result<Bytes>> {
+        get_bytes_js_client(self, range).boxed()
+    }
+
+    fn get_byte_ranges(
+        &mut self,
+        ranges: Vec<Range<u64>>,
+    ) -> BoxFuture<'_, parquet::errors::Result<Vec<Bytes>>> {
+        let reader = self.clone();
+        async move {
+            coalesce_ranges(
+                &ranges,
+                |range| get_bytes_js_client(&reader, range),
+                reader.coalesce_byte_size,
             )
             .await
         }
