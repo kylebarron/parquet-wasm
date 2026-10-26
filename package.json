@@ -15,7 +15,7 @@
     "test": "vitest run ./tests/js/index.test.ts"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.14",
+    "@biomejs/biome": "2.6.2",
     "@fastify/static": "^10.1.4",
     "@types/node": "^26",
     "apache-arrow": "^21.2.0",
